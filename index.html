@@ -425,9 +425,10 @@
   }
   table.rated th, table.rated td {
     padding: 10px 8px;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid rgba(212,175,55,0.15);
   }
+  table.rated th[data-key="country"], table.rated td[data-key="country"] { text-align: left; }
   table.rated th {
     font-size: 11px;
     letter-spacing: 0.1em;
@@ -474,7 +475,7 @@
     table.rated td.total { font-size: 12px; }
     .table-scroll { overflow-x: visible; }
   }
-  table.rated td.num, table.rated th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.rated td.num, table.rated th.num { font-variant-numeric: tabular-nums; }
   table.rated td.total { font-weight: 700; color: var(--gold-pale); font-size: 14px; }
   table.rated tr.body-row { cursor: pointer; transition: background 0.1s; }
   table.rated tr.body-row:hover { background: rgba(212,175,55,0.06); }
