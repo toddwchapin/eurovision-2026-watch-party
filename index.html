@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eurovision 2026 Watch Party</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0a0a14;
+    --bg-mid: #1a1428;
+    --bg-card: rgba(28, 22, 48, 0.78);
+    --gold: #D4AF37;
+    --gold-pale: #E8C56A;
+    --gold-glow: rgba(212, 175, 55, 0.35);
+    --cream: #F5EFE0;
+    --cream-mute: #C9C2B0;
+    --line: rgba(212, 175, 55, 0.4);
+    --danger: #c94f4f;
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    font-family: 'Inter', -apple-system, "Segoe UI", system-ui, sans-serif;
+    color: var(--cream);
+    background:
+      radial-gradient(ellipse at top, #2a1a3a 0%, transparent 60%),
+      radial-gradient(ellipse at bottom right, #3a1f2a 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 100%);
+    background-attachment: fixed;
+    line-height: 1.5;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.06) 0, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(232, 197, 106, 0.05) 0, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  /* ====== Header ====== */
+  header.app-header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: 6px;
+  }
+
+  .heart-logo {
+    width: 64px;
+    height: 64px;
+    filter: drop-shadow(0 0 14px var(--gold-glow));
+  }
+
+  .title-block { text-align: left; }
+
+  h1.title {
+    margin: 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 44px);
+    letter-spacing: 0.02em;
+    color: var(--cream);
+    line-height: 1;
+  }
+
+  h1.title .flourish {
+    font-family: 'Allura', cursive;
+    font-weight: 400;
+    color: var(--gold-pale);
+    font-size: 1.4em;
+    margin-right: 0.05em;
+    vertical-align: -0.12em;
+    text-shadow: 0 0 18px var(--gold-glow);
+  }
+
+  .subtitle {
+    margin-top: 6px;
+    color: var(--cream-mute);
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .slogan-ribbon {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 6px 22px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.08), transparent);
+    font-family: 'Allura', cursive;
+    font-size: 26px;
+    color: var(--gold-pale);
+    text-shadow: 0 0 14px var(--gold-glow);
+  }
+
+  .secession-divider {
+    display: block;
+    margin: 22px auto 26px;
+    width: min(560px, 90%);
+    height: 18px;
+    opacity: 0.85;
+  }
+
+  .name-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(212,175,55,0.06);
+    color: var(--cream);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .name-pill:hover { background: rgba(212,175,55,0.12); border-color: var(--gold-pale); }
+  .name-pill .name-label { color: var(--cream-mute); letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; }
+  .name-pill .name-value { color: var(--gold-pale); font-weight: 600; }
+
+  /* ====== Stats ====== */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .stat {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    backdrop-filter: blur(6px);
+    box-shadow: var(--shadow);
+  }
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cream-mute);
+  }
+  .stat-value {
+    margin-top: 4px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gold-pale);
+  }
+  .stat-value .top-score { color: var(--cream-mute); font-weight: 400; }
+  .stat-value.small { font-size: 15px; line-height: 1.3; }
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: 1fr; }
+  }
+
+  /* ====== Start panel ====== */
+  .start-panel {
+    text-align: center;
+    margin: 32px 0;
+  }
+  .btn-start {
+    position: relative;
+    display: inline-block;
+    padding: 18px 48px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bg-deep);
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-pale) 50%, var(--gold) 100%);
+    background-size: 200% 200%;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 0 24px var(--gold-glow), 0 8px 20px rgba(0,0,0,0.4);
+    animation: shimmer 4s ease-in-out infinite;
+    transition: transform 0.15s;
+  }
+  .btn-start:hover { transform: translateY(-2px); }
+  .btn-start:active { transform: translateY(0); }
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* ====== Card ====== */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 24px;
+    backdrop-filter: blur(6px);
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+  }
+
+  /* ====== Entry panel ====== */
+  .entry-panel { display: none; }
+  .entry-panel.active { display: block; }
+
+  .act-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .act-flag { font-size: 56px; line-height: 1; }
+  .act-info { flex: 1; min-width: 200px; }
+  .act-country {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    color: var(--cream);
+    margin: 0;
+  }
+  .act-performer {
+    font-size: 18px;
+    color: var(--gold-pale);
+    margin-top: 2px;
+  }
+  .act-song {
+    font-style: italic;
+    color: var(--cream-mute);
+    margin-top: 2px;
+  }
+  .order-badge {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(212,175,55,0.08);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold-pale);
+    white-space: nowrap;
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+  .field label.q-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cream);
+  }
+  .field input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.3);
+    color: var(--cream);
+    font: inherit;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .field input[type="text"]:focus {
+    outline: none;
+    border-color: var(--gold-pale);
+    background: rgba(0,0,0,0.45);
+  }
+
+  .scale {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .scale-end {
+    font-size: 11px;
+    color: var(--cream-mute);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    min-width: 70px;
+  }
+  .scale-end.right { text-align: right; }
+  .scale-options {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    justify-content: center;
+  }
+  .scale-options input { display: none; }
+  .scale-options label {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--cream-mute);
+    font-weight: 600;
+    background: rgba(0,0,0,0.2);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .scale-options label:hover { border-color: var(--gold-pale); color: var(--cream); }
+  .scale-options input:checked + label {
+    background: linear-gradient(135deg, var(--gold), var(--gold-pale));
+    color: var(--bg-deep);
+    border-color: var(--gold);
+    box-shadow: 0 0 14px var(--gold-glow);
+  }
+  @media (max-width: 540px) {
+    .scale-end { min-width: 0; flex: 1; }
+    .scale-options { flex-basis: 100%; order: 3; }
+  }
+
+  .button-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--cream);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+  .btn:hover { border-color: var(--gold-pale); }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold-pale));
+    color: var(--bg-deep);
+    border-color: var(--gold);
+    box-shadow: 0 0 18px var(--gold-glow);
+  }
+  .btn.primary:hover { transform: translateY(-1px); }
+  .btn.ghost { color: var(--cream-mute); }
+  .btn.ghost:hover { color: var(--cream); }
+  .btn.danger { color: var(--danger); border-color: rgba(201,79,79,0.4); }
+  .btn.danger:hover { border-color: var(--danger); }
+
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--cream-mute);
+  }
+  .nav-link {
+    color: var(--cream-mute);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .nav-link:hover { color: var(--gold-pale); }
+  .nav-link[disabled] { opacity: 0.3; pointer-events: none; }
+
+  /* ====== Done banner ====== */
+  .done-banner {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .done-banner h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    color: var(--gold-pale);
+    margin: 0 0 8px;
+  }
+  .done-banner p { color: var(--cream-mute); }
+
+  /* ====== Rated table ====== */
+  .table-card { padding: 12px; }
+  .table-title {
+    padding: 10px 14px 14px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--cream);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .table-meta { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--cream-mute); }
+
+  .table-scroll { overflow-x: auto; }
+  table.rated {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 900px;
+  }
+  table.rated th, table.rated td {
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 1px solid rgba(212,175,55,0.15);
+  }
+  table.rated th {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cream-mute);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    background: rgba(28,22,48,0.95);
+  }
+  table.rated th:hover { color: var(--gold-pale); }
+  table.rated th .arrow { display: inline-block; width: 10px; opacity: 0.6; margin-left: 2px; }
+  table.rated th.sorted .arrow { opacity: 1; color: var(--gold-pale); }
+  table.rated td.num, table.rated th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.rated td.total { font-weight: 700; color: var(--gold-pale); font-size: 14px; }
+  table.rated tr.body-row { cursor: pointer; transition: background 0.1s; }
+  table.rated tr.body-row:hover { background: rgba(212,175,55,0.06); }
+  table.rated tr.body-row.editing { background: rgba(212,175,55,0.12); }
+  table.rated td.flag-cell { white-space: nowrap; }
+  .empty-row { text-align: center; padding: 24px; color: var(--cream-mute); font-style: italic; }
+
+  /* ====== Footer ====== */
+  footer.app-footer {
+    margin-top: 28px;
+    text-align: center;
+    color: var(--cream-mute);
+    font-size: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* ====== Modal ====== */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-backdrop.active { display: flex; }
+  .modal {
+    background: var(--bg-mid);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: var(--shadow);
+  }
+  .modal h3 {
+    margin: 0 0 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--gold-pale);
+  }
+  .modal p { margin: 0 0 16px; color: var(--cream-mute); font-size: 14px; }
+  .modal input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.3);
+    color: var(--cream);
+    font: inherit;
+    margin-bottom: 18px;
+  }
+  .modal input:focus { outline: none; border-color: var(--gold-pale); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ACTS DATA — edit the "order" field after the running order
+     is announced. Values:
+       ""  = unknown (default; sorted alphabetically)
+       "X" = not in final (excluded from rating queue)
+       integer = performance slot
+     ============================================================ -->
+<script type="application/json" id="acts-data">
+[
+  {"code":"AL","country":"Albania","flag":"🇦🇱","performer":"Alis","song":"Nân","order":""},
+  {"code":"AM","country":"Armenia","flag":"🇦🇲","performer":"SIMÓN","song":"Paloma Rumba","order":""},
+  {"code":"AU","country":"Australia","flag":"🇦🇺","performer":"Delta Goodrem","song":"Eclipse","order":""},
+  {"code":"AT","country":"Austria","flag":"🇦🇹","performer":"COSMÓ","song":"Tanzschein","order":""},
+  {"code":"AZ","country":"Azerbaijan","flag":"🇦🇿","performer":"JIVA","song":"Just Go","order":""},
+  {"code":"BE","country":"Belgium","flag":"🇧🇪","performer":"ESSYLA","song":"Dancing on the Ice","order":""},
+  {"code":"BG","country":"Bulgaria","flag":"🇧🇬","performer":"DARA","song":"Bangaranga","order":""},
+  {"code":"HR","country":"Croatia","flag":"🇭🇷","performer":"LELEK","song":"Andromeda","order":""},
+  {"code":"CY","country":"Cyprus","flag":"🇨🇾","performer":"Antigoni","song":"JALLA","order":""},
+  {"code":"CZ","country":"Czechia","flag":"🇨🇿","performer":"Daniel Zizka","song":"CROSSROADS","order":""},
+  {"code":"DK","country":"Denmark","flag":"🇩🇰","performer":"Søren Torpegaard Lund","song":"Før Vi Går Hjem","order":""},
+  {"code":"EE","country":"Estonia","flag":"🇪🇪","performer":"Vanilla Ninja","song":"Too Epic To Be True","order":""},
+  {"code":"FI","country":"Finland","flag":"🇫🇮","performer":"Linda Lampenius x Pete Parkkonen","song":"Liekinheitin","order":""},
+  {"code":"FR","country":"France","flag":"🇫🇷","performer":"Monroe","song":"Regarde !","order":""},
+  {"code":"GE","country":"Georgia","flag":"🇬🇪","performer":"Bzikebi","song":"On Replay","order":""},
+  {"code":"DE","country":"Germany","flag":"🇩🇪","performer":"Sarah Engels","song":"Fire","order":""},
+  {"code":"GR","country":"Greece","flag":"🇬🇷","performer":"Akylas","song":"Ferto","order":""},
+  {"code":"IL","country":"Israel","flag":"🇮🇱","performer":"Noam Bettan","song":"Michelle","order":""},
+  {"code":"IT","country":"Italy","flag":"🇮🇹","performer":"Sal Da Vinci","song":"Per Sempre Sì","order":""},
+  {"code":"LV","country":"Latvia","flag":"🇱🇻","performer":"Atvara","song":"Ēnā","order":""},
+  {"code":"LT","country":"Lithuania","flag":"🇱🇹","performer":"Lion Ceccah","song":"Sólo Quiero Más","order":""},
+  {"code":"LU","country":"Luxembourg","flag":"🇱🇺","performer":"Eva Marija","song":"Mother Nature","order":""},
+  {"code":"MT","country":"Malta","flag":"🇲🇹","performer":"AIDAN","song":"Bella","order":""},
+  {"code":"MD","country":"Moldova","flag":"🇲🇩","performer":"Satoshi","song":"Viva, Moldova!","order":""},
+  {"code":"ME","country":"Montenegro","flag":"🇲🇪","performer":"Tamara Živković","song":"Nova Zora","order":""},
+  {"code":"NO","country":"Norway","flag":"🇳🇴","performer":"JONAS LOVV","song":"YA YA YA","order":""},
+  {"code":"PL","country":"Poland","flag":"🇵🇱","performer":"ALICJA","song":"Pray","order":""},
+  {"code":"PT","country":"Portugal","flag":"🇵🇹","performer":"Bandidos do Cante","song":"Rosa","order":""},
+  {"code":"RO","country":"Romania","flag":"🇷🇴","performer":"Alexandra Căpitănescu","song":"Choke Me","order":""},
+  {"code":"SM","country":"San Marino","flag":"🇸🇲","performer":"SENHIT","song":"Superstar","order":""},
+  {"code":"RS","country":"Serbia","flag":"🇷🇸","performer":"LAVINA","song":"Kraj Mene","order":""},
+  {"code":"SE","country":"Sweden","flag":"🇸🇪","performer":"FELICIA","song":"My System","order":""},
+  {"code":"CH","country":"Switzerland","flag":"🇨🇭","performer":"Veronica Fusaro","song":"Alice","order":""},
+  {"code":"UA","country":"Ukraine","flag":"🇺🇦","performer":"LELÉKA","song":"Ridnym","order":""},
+  {"code":"GB","country":"United Kingdom","flag":"🇬🇧","performer":"LOOK MUM NO COMPUTER","song":"Eins, Zwei, Drei","order":""}
+]
+</script>
+
+<div class="wrap">
+
+  <header class="app-header">
+    <div class="logo-row">
+      <svg class="heart-logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#E8C56A"/>
+            <stop offset="100%" stop-color="#A88424"/>
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke="url(#goldGrad)" stroke-width="1.1" stroke-linejoin="round">
+          <path d="M32 56 C8 40 6 22 16 14 C24 8 30 14 32 20 C34 14 40 8 48 14 C58 22 56 40 32 56 Z" stroke-width="1.6"/>
+          <path d="M32 52 C12 38 11 23 19 17 C25 13 30 17 32 22 C34 17 39 13 45 17 C53 23 52 38 32 52 Z"/>
+          <path d="M32 48 C15 36 15 24 22 20 C27 17 31 21 32 24 C33 21 37 17 42 20 C49 24 49 36 32 48 Z"/>
+          <path d="M32 44 C18 34 19 26 24 22 C28 19 31 23 32 26 C33 23 36 19 40 22 C45 26 46 34 32 44 Z"/>
+          <path d="M32 40 C21 32 22 27 26 24 C29 22 31 25 32 27 C33 25 35 22 38 24 C42 27 43 32 32 40 Z"/>
+          <path d="M32 36 C24 30 25 28 28 26 C30 25 31 27 32 28 C33 27 34 25 36 26 C39 28 40 30 32 36 Z"/>
+        </g>
+      </svg>
+      <div class="title-block">
+        <h1 class="title"><span class="flourish">E</span>urovision Song Contest 2026</h1>
+        <div class="subtitle">Vienna · Watch Party</div>
+      </div>
+    </div>
+    <div class="slogan-ribbon">United By Music</div>
+
+    <svg class="secession-divider" viewBox="0 0 560 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g fill="none" stroke="#D4AF37" stroke-width="0.8" opacity="0.7">
+        <path d="M0 9 L220 9"/>
+        <path d="M340 9 L560 9"/>
+        <path d="M220 9 C240 9 245 1 260 1 C275 1 280 9 280 9 C280 9 285 17 300 17 C315 17 320 9 340 9"/>
+        <circle cx="280" cy="9" r="2.5" fill="#D4AF37"/>
+        <circle cx="232" cy="9" r="1.2" fill="#D4AF37"/>
+        <circle cx="328" cy="9" r="1.2" fill="#D4AF37"/>
+      </g>
+    </svg>
+
+    <div class="name-pill" id="namePill" title="Click to rename">
+      <span class="name-label">Voter</span>
+      <span class="name-value" id="nameValue">—</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Progress</div>
+        <div class="stat-value" id="statProgress">0 / 0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Your Average</div>
+        <div class="stat-value" id="statAvg">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Top Pick</div>
+        <div class="stat-value small" id="statTop">—</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="start-panel" id="startPanel">
+    <button class="btn-start" id="btnStart">Start Rating</button>
+  </div>
+
+  <section class="card entry-panel" id="entryPanel">
+    <div class="act-header">
+      <div class="act-flag" id="actFlag">🎤</div>
+      <div class="act-info">
+        <h2 class="act-country" id="actCountry"></h2>
+        <div class="act-performer" id="actPerformer"></div>
+        <div class="act-song" id="actSong"></div>
+      </div>
+      <div class="order-badge" id="orderBadge"></div>
+    </div>
+
+    <div class="field">
+      <label class="q-label" for="fRemind">Does this performance remind you of anyone?</label>
+      <input type="text" id="fRemind" placeholder="(optional) e.g. ABBA, Lady Gaga, my uncle Frank…" maxlength="200">
+    </div>
+
+    <div class="field">
+      <label class="q-label">Vocal quality</label>
+      <div class="scale" data-scale="vocals"></div>
+    </div>
+    <div class="field">
+      <label class="q-label">Performance flair</label>
+      <div class="scale" data-scale="performance"></div>
+    </div>
+    <div class="field">
+      <label class="q-label">Song quality</label>
+      <div class="scale" data-scale="song"></div>
+    </div>
+    <div class="field">
+      <label class="q-label">Originality</label>
+      <div class="scale" data-scale="original"></div>
+    </div>
+    <div class="field">
+      <label class="q-label">Stagecraft</label>
+      <div class="scale" data-scale="stage"></div>
+    </div>
+
+    <div class="button-row">
+      <button class="btn primary" id="btnSave">Save</button>
+      <button class="btn" id="btnClear">Clear</button>
+      <button class="btn ghost" id="btnSkip">Skip</button>
+    </div>
+
+    <div class="nav-row">
+      <a class="nav-link" id="navPrev">← Previous act</a>
+      <span id="editingNote"></span>
+      <a class="nav-link" id="navNext">Next act →</a>
+    </div>
+  </section>
+
+  <section class="card done-banner" id="donePanel" style="display:none">
+    <h2>All acts rated 🏆</h2>
+    <p>Sort the table below or click any row to revise a vote.</p>
+    <button class="btn" id="btnReturnStart" style="margin-top:14px">Back to start</button>
+  </section>
+
+  <section class="card table-card">
+    <div class="table-title">
+      Your ratings
+      <span class="table-meta" id="tableMeta"></span>
+    </div>
+    <div class="table-scroll">
+      <table class="rated" id="ratedTable">
+        <thead>
+          <tr id="tableHead"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="app-footer">
+    <a class="nav-link" id="footerRename">Rename voter</a>
+    <span>·</span>
+    <a class="nav-link danger" id="footerReset" style="color:var(--danger)">Reset all my votes</a>
+  </footer>
+
+</div>
+
+<!-- Name modal -->
+<div class="modal-backdrop" id="nameModal">
+  <div class="modal">
+    <h3>Welcome to the watch party!</h3>
+    <p>What's your name? It'll show in the header so you remember which device is yours.</p>
+    <input type="text" id="nameInput" maxlength="40" placeholder="Your name">
+    <div class="modal-actions">
+      <button class="btn" id="nameCancel" style="display:none">Cancel</button>
+      <button class="btn primary" id="nameSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const KEY_NAME = 'ev2026_guest_name';
+  const KEY_VOTES = 'ev2026_votes_v1';
+
+  const SCORE_FIELDS = ['vocals', 'performance', 'song', 'original', 'stage'];
+
+  const COLUMNS = [
+    { key: 'order',       label: 'Perf #',     type: 'order',  cls: 'num' },
+    { key: 'country',     label: 'Country',    type: 'string', cls: 'flag-cell' },
+    { key: 'performer',   label: 'Performer',  type: 'string' },
+    { key: 'song',        label: 'Song',       type: 'string' },
+    { key: 'remind',      label: 'Remind',     type: 'string' },
+    { key: 'vocals',      label: 'Vocals',     type: 'num',    cls: 'num' },
+    { key: 'performance', label: 'Performance',type: 'num',    cls: 'num' },
+    { key: 'song_q',      label: 'Song qual',  type: 'num',    cls: 'num' },
+    { key: 'original',    label: 'Original',   type: 'num',    cls: 'num' },
+    { key: 'stage',       label: 'Stage',      type: 'num',    cls: 'num' },
+    { key: 'total',       label: 'Total',      type: 'num',    cls: 'num total' }
+  ];
+
+  let acts = [];
+  let queue = [];
+  let queueIdx = 0;
+  let votes = {};
+  let guestName = '';
+  let editingCode = null;
+  let sort = { key: 'order', dir: 'asc' };
+
+  const $ = id => document.getElementById(id);
+  const startPanel = $('startPanel');
+  const entryPanel = $('entryPanel');
+  const donePanel = $('donePanel');
+  const nameModal = $('nameModal');
+
+  function init() {
+    acts = JSON.parse(document.getElementById('acts-data').textContent);
+    votes = loadVotes();
+    guestName = localStorage.getItem(KEY_NAME) || '';
+
+    buildScales();
+    buildTableHead();
+    bindEvents();
+    rebuildQueue();
+    renderName();
+    renderStats();
+    renderTable();
+
+    if (!guestName) {
+      openNameModal(true);
+    }
+  }
+
+  function loadVotes() {
+    try {
+      const raw = localStorage.getItem(KEY_VOTES);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function saveVotes() {
+    localStorage.setItem(KEY_VOTES, JSON.stringify(votes));
+  }
+
+  function rebuildQueue() {
+    const eligible = acts.filter(a => a.order !== 'X');
+    const anyNumeric = eligible.some(a => Number.isFinite(parseInt(a.order, 10)));
+    if (anyNumeric) {
+      queue = eligible.slice().sort((a, b) => {
+        const an = parseInt(a.order, 10);
+        const bn = parseInt(b.order, 10);
+        const aHas = Number.isFinite(an);
+        const bHas = Number.isFinite(bn);
+        if (aHas && bHas) return an - bn;
+        if (aHas) return -1;
+        if (bHas) return 1;
+        return a.country.localeCompare(b.country);
+      });
+    } else {
+      queue = eligible.slice().sort((a, b) => a.country.localeCompare(b.country));
+    }
+    queueIdx = 0;
+    let allRated = true;
+    for (let i = 0; i < queue.length; i++) {
+      if (!votes[queue[i].code]) { queueIdx = i; allRated = false; break; }
+    }
+    if (allRated) queueIdx = queue.length;
+  }
+
+  function buildScales() {
+    document.querySelectorAll('.scale').forEach(div => {
+      const field = div.dataset.scale;
+      const left = document.createElement('span');
+      left.className = 'scale-end';
+      left.textContent = '0 · Terrible';
+      const opts = document.createElement('div');
+      opts.className = 'scale-options';
+      for (let v = 0; v <= 5; v++) {
+        const id = 's_' + field + '_' + v;
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 's_' + field;
+        input.id = id;
+        input.value = String(v);
+        const lbl = document.createElement('label');
+        lbl.htmlFor = id;
+        lbl.textContent = String(v);
+        opts.appendChild(input);
+        opts.appendChild(lbl);
+      }
+      const right = document.createElement('span');
+      right.className = 'scale-end right';
+      right.textContent = '5 · Amazing';
+      div.appendChild(left);
+      div.appendChild(opts);
+      div.appendChild(right);
+    });
+  }
+
+  function buildTableHead() {
+    const tr = $('tableHead');
+    tr.replaceChildren();
+    COLUMNS.forEach(col => {
+      const th = document.createElement('th');
+      if (col.cls) th.className = col.cls;
+      th.dataset.key = col.key;
+      th.appendChild(document.createTextNode(col.label + ' '));
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      th.appendChild(arrow);
+      th.addEventListener('click', () => onSortClick(col.key));
+      tr.appendChild(th);
+    });
+  }
+
+  function bindEvents() {
+    $('btnStart').addEventListener('click', startRating);
+    $('btnSave').addEventListener('click', onSave);
+    $('btnClear').addEventListener('click', clearForm);
+    $('btnSkip').addEventListener('click', onSkip);
+    $('navPrev').addEventListener('click', () => navStep(-1));
+    $('navNext').addEventListener('click', () => navStep(1));
+    $('btnReturnStart').addEventListener('click', () => {
+      donePanel.style.display = 'none';
+      startPanel.style.display = 'block';
+    });
+    $('namePill').addEventListener('click', () => openNameModal(false));
+    $('footerRename').addEventListener('click', e => { e.preventDefault(); openNameModal(false); });
+    $('footerReset').addEventListener('click', e => { e.preventDefault(); resetVotes(); });
+    $('nameSave').addEventListener('click', saveName);
+    $('nameCancel').addEventListener('click', () => nameModal.classList.remove('active'));
+    $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+  }
+
+  function openNameModal(firstTime) {
+    $('nameInput').value = guestName;
+    $('nameCancel').style.display = firstTime ? 'none' : 'inline-block';
+    nameModal.classList.add('active');
+    setTimeout(() => $('nameInput').focus(), 50);
+  }
+  function saveName() {
+    const v = $('nameInput').value.trim();
+    if (!v) { $('nameInput').focus(); return; }
+    guestName = v;
+    localStorage.setItem(KEY_NAME, guestName);
+    renderName();
+    nameModal.classList.remove('active');
+  }
+  function renderName() {
+    $('nameValue').textContent = guestName || '—';
+  }
+
+  function startRating() {
+    if (queue.length === 0) return;
+    if (queueIdx >= queue.length) queueIdx = 0;
+    showCurrent();
+  }
+
+  function currentAct() {
+    if (editingCode) return acts.find(a => a.code === editingCode);
+    if (queueIdx >= queue.length) return null;
+    return queue[queueIdx];
+  }
+
+  function showCurrent() {
+    const act = currentAct();
+    startPanel.style.display = 'none';
+    donePanel.style.display = 'none';
+
+    if (!act) {
+      entryPanel.classList.remove('active');
+      donePanel.style.display = 'block';
+      return;
+    }
+
+    entryPanel.classList.add('active');
+
+    $('actFlag').textContent = act.flag;
+    $('actCountry').textContent = act.country;
+    $('actPerformer').textContent = act.performer;
+    $('actSong').textContent = '“' + act.song + '”';
+    let orderText;
+    if (act.order === '' || act.order === null || act.order === undefined) orderText = 'Order TBD';
+    else if (act.order === 'X') orderText = 'Not in final';
+    else orderText = 'Act #' + act.order;
+    $('orderBadge').textContent = orderText;
+
+    const v = votes[act.code];
+    if (v) {
+      $('fRemind').value = v.remind || '';
+      SCORE_FIELDS.forEach(f => {
+        const val = v[f];
+        const radios = document.querySelectorAll('input[name="s_' + f + '"]');
+        radios.forEach(r => { r.checked = (parseInt(r.value, 10) === val); });
+      });
+    } else {
+      clearForm();
+    }
+
+    let note;
+    if (editingCode) note = '✎ Editing saved vote';
+    else if (votes[act.code]) note = '↻ Updating prior vote';
+    else note = '';
+    $('editingNote').textContent = note;
+
+    const inQueueIdx = queue.findIndex(a => a.code === act.code);
+    setDisabled($('navPrev'), inQueueIdx <= 0);
+    setDisabled($('navNext'), inQueueIdx >= queue.length - 1);
+
+    window.scrollTo({ top: entryPanel.offsetTop - 20, behavior: 'smooth' });
+  }
+
+  function setDisabled(el, isDisabled) {
+    if (isDisabled) el.setAttribute('disabled', '');
+    else el.removeAttribute('disabled');
+  }
+
+  function clearForm() {
+    $('fRemind').value = '';
+    SCORE_FIELDS.forEach(f => {
+      document.querySelectorAll('input[name="s_' + f + '"]').forEach(r => { r.checked = false; });
+    });
+  }
+
+  function readForm() {
+    const obj = { remind: $('fRemind').value.trim() };
+    let total = 0;
+    SCORE_FIELDS.forEach(f => {
+      const checked = document.querySelector('input[name="s_' + f + '"]:checked');
+      const val = checked ? parseInt(checked.value, 10) : 0;
+      obj[f] = val;
+      total += val;
+    });
+    obj.total = total;
+    return obj;
+  }
+
+  function onSave() {
+    const act = currentAct();
+    if (!act) return;
+    votes[act.code] = readForm();
+    saveVotes();
+    renderStats();
+    renderTable();
+    advance();
+  }
+
+  function onSkip() {
+    const act = currentAct();
+    if (!act) return;
+    clearForm();
+    advance();
+  }
+
+  function advance() {
+    if (editingCode) {
+      editingCode = null;
+      showCurrent();
+      return;
+    }
+    queueIdx++;
+    if (queueIdx >= queue.length) {
+      entryPanel.classList.remove('active');
+      donePanel.style.display = 'block';
+      startPanel.style.display = 'none';
+      window.scrollTo({ top: donePanel.offsetTop - 20, behavior: 'smooth' });
+    } else {
+      showCurrent();
+    }
+  }
+
+  function navStep(delta) {
+    const act = currentAct();
+    if (!act) return;
+    const inQueueIdx = queue.findIndex(a => a.code === act.code);
+    const target = inQueueIdx + delta;
+    if (target < 0 || target >= queue.length) return;
+    if (editingCode) editingCode = null;
+    queueIdx = target;
+    showCurrent();
+  }
+
+  function editVote(code) {
+    const act = acts.find(a => a.code === code);
+    if (!act) return;
+    editingCode = code;
+    startPanel.style.display = 'none';
+    donePanel.style.display = 'none';
+    showCurrent();
+  }
+
+  function renderStats() {
+    const eligibleForCount = acts.filter(a => a.order !== 'X');
+    const ratedCount = eligibleForCount.filter(a => votes[a.code]).length;
+    $('statProgress').textContent = ratedCount + ' / ' + eligibleForCount.length;
+
+    const codes = Object.keys(votes);
+    if (codes.length === 0) {
+      $('statAvg').textContent = '—';
+      $('statTop').textContent = '—';
+      return;
+    }
+    let sum = 0;
+    codes.forEach(c => sum += (votes[c].total || 0));
+    $('statAvg').textContent = (sum / codes.length).toFixed(1);
+
+    let topCode = codes[0];
+    codes.forEach(c => { if ((votes[c].total || 0) > (votes[topCode].total || 0)) topCode = c; });
+    const topAct = acts.find(a => a.code === topCode);
+    const topEl = $('statTop');
+    topEl.replaceChildren();
+    if (topAct) {
+      topEl.appendChild(document.createTextNode(topAct.flag + ' ' + topAct.performer + ' '));
+      const sub = document.createElement('span');
+      sub.className = 'top-score';
+      sub.textContent = '(' + (votes[topCode].total || 0) + ')';
+      topEl.appendChild(sub);
+    }
+  }
+
+  function onSortClick(key) {
+    if (sort.key === key) {
+      sort.dir = (sort.dir === 'asc') ? 'desc' : 'asc';
+    } else {
+      sort.key = key;
+      sort.dir = 'asc';
+    }
+    renderTable();
+  }
+
+  function rowFor(act) {
+    const v = votes[act.code];
+    return {
+      code: act.code,
+      flag: act.flag,
+      country: act.country,
+      performer: act.performer,
+      song: act.song,
+      order: act.order,
+      remind: v.remind || '',
+      vocals: v.vocals,
+      performance: v.performance,
+      song_q: v.song,
+      original: v.original,
+      stage: v.stage,
+      total: v.total
+    };
+  }
+
+  function compareCells(a, b, key, dir) {
+    const col = COLUMNS.find(c => c.key === key);
+    let av = a[key], bv = b[key];
+
+    if (key === 'order') {
+      const an = parseInt(av, 10);
+      const bn = parseInt(bv, 10);
+      const aHas = Number.isFinite(an);
+      const bHas = Number.isFinite(bn);
+      if (aHas && bHas) return dir === 'asc' ? an - bn : bn - an;
+      if (aHas) return -1;
+      if (bHas) return 1;
+      return 0;
+    }
+
+    if (col.type === 'num') {
+      av = (typeof av === 'number') ? av : -Infinity;
+      bv = (typeof bv === 'number') ? bv : -Infinity;
+      return dir === 'asc' ? av - bv : bv - av;
+    }
+    av = (av || '').toString().toLowerCase();
+    bv = (bv || '').toString().toLowerCase();
+    if (av < bv) return dir === 'asc' ? -1 : 1;
+    if (av > bv) return dir === 'asc' ? 1 : -1;
+    return 0;
+  }
+
+  function renderTable() {
+    const ratedActs = acts.filter(a => votes[a.code]);
+    const rows = ratedActs.map(rowFor);
+    rows.sort((a, b) => compareCells(a, b, sort.key, sort.dir));
+
+    const tbody = $('tableBody');
+    tbody.replaceChildren();
+
+    if (rows.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = COLUMNS.length;
+      td.className = 'empty-row';
+      td.textContent = 'No ratings yet — hit Start above and rate your first act!';
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    } else {
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.className = 'body-row';
+        tr.dataset.code = r.code;
+        if (editingCode === r.code) tr.classList.add('editing');
+        COLUMNS.forEach(col => {
+          const td = document.createElement('td');
+          if (col.cls) td.className = col.cls;
+          let display;
+          if (col.key === 'country') {
+            display = r.flag + ' ' + r.country;
+          } else if (col.key === 'order') {
+            display = (r.order === '' || r.order == null) ? '—' : r.order;
+          } else {
+            const val = r[col.key];
+            if (val === undefined || val === null || val === '') {
+              display = (col.type === 'num') ? '0' : '—';
+            } else {
+              display = val;
+            }
+          }
+          td.textContent = String(display);
+          tr.appendChild(td);
+        });
+        tr.addEventListener('click', () => editVote(r.code));
+        tbody.appendChild(tr);
+      });
+    }
+
+    $('tableHead').querySelectorAll('th').forEach(th => {
+      const arrow = th.querySelector('.arrow');
+      if (th.dataset.key === sort.key) {
+        th.classList.add('sorted');
+        arrow.textContent = sort.dir === 'asc' ? '▲' : '▼';
+      } else {
+        th.classList.remove('sorted');
+        arrow.textContent = '';
+      }
+    });
+
+    $('tableMeta').textContent = rows.length === 0 ? '' : (rows.length + ' rated · click a row to edit');
+  }
+
+  function resetVotes() {
+    if (!confirm('Erase ALL your saved votes on this device? This cannot be undone.')) return;
+    votes = {};
+    localStorage.removeItem(KEY_VOTES);
+    editingCode = null;
+    rebuildQueue();
+    renderStats();
+    renderTable();
+    entryPanel.classList.remove('active');
+    donePanel.style.display = 'none';
+    startPanel.style.display = 'block';
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+
+</body>
+</html>
