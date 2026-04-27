@@ -444,9 +444,35 @@
   table.rated th .arrow { display: inline-block; width: 10px; opacity: 0.6; margin-left: 2px; }
   table.rated th.sorted .arrow { opacity: 1; color: var(--gold-pale); }
   table.rated th .lbl-short { display: none; }
+  table.rated td .c-extra { display: none; }
   @media (max-width: 720px) {
+    table.rated { min-width: 0; font-size: 11px; }
     table.rated th .lbl-full { display: none; }
     table.rated th .lbl-short { display: inline; }
+    table.rated th, table.rated td { padding: 6px 3px; }
+    table.rated th.num, table.rated td.num { padding: 6px 2px; }
+    table.rated th[data-key="performer"], table.rated td[data-key="performer"],
+    table.rated th[data-key="song"], table.rated td[data-key="song"] { display: none; }
+    table.rated td[data-key="country"] .c-name { font-weight: 600; }
+    table.rated td[data-key="country"] .c-extra {
+      display: block;
+      color: var(--cream-mute);
+      font-size: 10px;
+      font-style: italic;
+      margin-top: 1px;
+      max-width: 130px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    table.rated td[data-key="remind"] {
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    table.rated td.total { font-size: 12px; }
+    .table-scroll { overflow-x: visible; }
   }
   table.rated td.num, table.rated th.num { text-align: right; font-variant-numeric: tabular-nums; }
   table.rated td.total { font-weight: 700; color: var(--gold-pale); font-size: 14px; }
@@ -726,7 +752,7 @@
 
   const COLUMNS = [
     { key: 'order',       label: 'Perf #',     type: 'order',  cls: 'num' },
-    { key: 'country',     label: 'Country',    type: 'string', cls: 'flag-cell' },
+    { key: 'country',     label: 'Country',    type: 'string', cls: 'flag-cell', short: 'Act' },
     { key: 'performer',   label: 'Performer',  type: 'string' },
     { key: 'song',        label: 'Song',       type: 'string' },
     { key: 'remind',      label: 'Remind',     type: 'string', short: 'R' },
@@ -1149,20 +1175,35 @@
         COLUMNS.forEach(col => {
           const td = document.createElement('td');
           if (col.cls) td.className = col.cls;
-          let display;
+          td.dataset.key = col.key;
           if (col.key === 'country') {
-            display = r.flag + ' ' + r.country;
-          } else if (col.key === 'order') {
-            display = (r.order === '' || r.order == null) ? '—' : r.order;
+            const flag = document.createElement('span');
+            flag.className = 'c-flag';
+            flag.textContent = r.flag;
+            const name = document.createElement('span');
+            name.className = 'c-name';
+            name.textContent = ' ' + r.country;
+            const extra = document.createElement('span');
+            extra.className = 'c-extra';
+            extra.textContent = r.performer + ' · “' + r.song + '”';
+            td.appendChild(flag);
+            td.appendChild(name);
+            td.appendChild(extra);
           } else {
-            const val = r[col.key];
-            if (val === undefined || val === null || val === '') {
-              display = (col.type === 'num') ? '0' : '—';
+            let display;
+            if (col.key === 'order') {
+              display = (r.order === '' || r.order == null) ? '—' : r.order;
             } else {
-              display = val;
+              const val = r[col.key];
+              if (val === undefined || val === null || val === '') {
+                display = (col.type === 'num') ? '0' : '—';
+              } else {
+                display = val;
+              }
             }
+            td.textContent = String(display);
+            if (col.key === 'remind' && display && display !== '—') td.title = display;
           }
-          td.textContent = String(display);
           tr.appendChild(td);
         });
         tr.addEventListener('click', () => editVote(r.code));
