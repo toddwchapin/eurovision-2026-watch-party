@@ -443,6 +443,11 @@
   table.rated th:hover { color: var(--gold-pale); }
   table.rated th .arrow { display: inline-block; width: 10px; opacity: 0.6; margin-left: 2px; }
   table.rated th.sorted .arrow { opacity: 1; color: var(--gold-pale); }
+  table.rated th .lbl-short { display: none; }
+  @media (max-width: 720px) {
+    table.rated th .lbl-full { display: none; }
+    table.rated th .lbl-short { display: inline; }
+  }
   table.rated td.num, table.rated th.num { text-align: right; font-variant-numeric: tabular-nums; }
   table.rated td.total { font-weight: 700; color: var(--gold-pale); font-size: 14px; }
   table.rated tr.body-row { cursor: pointer; transition: background 0.1s; }
@@ -724,13 +729,13 @@
     { key: 'country',     label: 'Country',    type: 'string', cls: 'flag-cell' },
     { key: 'performer',   label: 'Performer',  type: 'string' },
     { key: 'song',        label: 'Song',       type: 'string' },
-    { key: 'remind',      label: 'Remind',     type: 'string' },
-    { key: 'vocals',      label: 'Vocals',     type: 'num',    cls: 'num' },
-    { key: 'performance', label: 'Performance',type: 'num',    cls: 'num' },
-    { key: 'song_q',      label: 'Song qual',  type: 'num',    cls: 'num' },
-    { key: 'original',    label: 'Original',   type: 'num',    cls: 'num' },
-    { key: 'stage',       label: 'Stage',      type: 'num',    cls: 'num' },
-    { key: 'total',       label: 'Total',      type: 'num',    cls: 'num total' }
+    { key: 'remind',      label: 'Remind',     type: 'string', short: 'R' },
+    { key: 'vocals',      label: 'Vocals',     type: 'num',    cls: 'num', short: 'V' },
+    { key: 'performance', label: 'Performance',type: 'num',    cls: 'num', short: 'P' },
+    { key: 'song_q',      label: 'Song qual',  type: 'num',    cls: 'num', short: 'Q' },
+    { key: 'original',    label: 'Original',   type: 'num',    cls: 'num', short: 'O' },
+    { key: 'stage',       label: 'Stage',      type: 'num',    cls: 'num', short: 'S' },
+    { key: 'total',       label: 'Total',      type: 'num',    cls: 'num total', short: 'T' }
   ];
 
   let acts = [];
@@ -839,7 +844,17 @@
       const th = document.createElement('th');
       if (col.cls) th.className = col.cls;
       th.dataset.key = col.key;
-      th.appendChild(document.createTextNode(col.label + ' '));
+      const full = document.createElement('span');
+      full.className = 'lbl-full';
+      full.textContent = col.label;
+      th.appendChild(full);
+      if (col.short) {
+        const shortLbl = document.createElement('span');
+        shortLbl.className = 'lbl-short';
+        shortLbl.textContent = col.short;
+        th.appendChild(shortLbl);
+      }
+      th.appendChild(document.createTextNode(' '));
       const arrow = document.createElement('span');
       arrow.className = 'arrow';
       th.appendChild(arrow);
