@@ -24,6 +24,10 @@
 
   * { box-sizing: border-box; }
 
+  @media (max-width: 720px) {
+    .md-only { display: none; }
+  }
+
   html, body {
     margin: 0;
     padding: 0;
@@ -615,8 +619,8 @@
         </g>
       </svg>
       <div class="title-block">
-        <h1 class="title"><span class="flourish">E</span>urovision Song Contest 2026</h1>
-        <div class="subtitle">Vienna · Watch Party</div>
+        <h1 class="title"><span class="flourish">E</span>urovision<span class="md-only"> Song Contest</span> 2026</h1>
+        <div class="subtitle">Vienna<span class="md-only"> · Watch Party</span></div>
       </div>
     </div>
     <div class="slogan-ribbon">United By Music</div>
