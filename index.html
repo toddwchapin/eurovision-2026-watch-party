@@ -339,12 +339,23 @@
   }
 
   .button-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
     gap: 12px;
-    flex-wrap: wrap;
     margin-top: 22px;
     padding-top: 18px;
     border-top: 1px solid var(--line);
+  }
+  .button-row > :nth-child(1) { justify-self: start; }
+  .button-row > :nth-child(2) { justify-self: center; }
+  .button-row > :nth-child(3) { justify-self: end; }
+  .editing-note {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--cream-mute);
+    min-height: 18px;
   }
   .btn {
     padding: 12px 24px;
@@ -371,14 +382,6 @@
   .btn.danger { color: var(--danger); border-color: rgba(201,79,79,0.4); }
   .btn.danger:hover { border-color: var(--danger); }
 
-  .nav-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-    font-size: 13px;
-    color: var(--cream-mute);
-  }
   .nav-link {
     color: var(--cream-mute);
     text-decoration: none;
@@ -687,16 +690,12 @@
       <div class="scale" data-scale="stage"></div>
     </div>
 
+    <div class="editing-note" id="editingNote"></div>
+
     <div class="button-row">
-      <button class="btn primary" id="btnSave">Save</button>
       <button class="btn" id="btnClear">Clear</button>
       <button class="btn ghost" id="btnSkip">Skip</button>
-    </div>
-
-    <div class="nav-row">
-      <a class="nav-link" id="navPrev">← Previous act</a>
-      <span id="editingNote"></span>
-      <a class="nav-link" id="navNext">Next act →</a>
+      <button class="btn primary" id="btnSave">Save</button>
     </div>
   </section>
 
@@ -895,8 +894,6 @@
     $('btnSave').addEventListener('click', onSave);
     $('btnClear').addEventListener('click', clearForm);
     $('btnSkip').addEventListener('click', onSkip);
-    $('navPrev').addEventListener('click', () => navStep(-1));
-    $('navNext').addEventListener('click', () => navStep(1));
     $('btnReturnStart').addEventListener('click', () => {
       donePanel.style.display = 'none';
       startPanel.style.display = 'block';
@@ -980,16 +977,7 @@
     else note = '';
     $('editingNote').textContent = note;
 
-    const inQueueIdx = queue.findIndex(a => a.code === act.code);
-    setDisabled($('navPrev'), inQueueIdx <= 0);
-    setDisabled($('navNext'), inQueueIdx >= queue.length - 1);
-
     window.scrollTo({ top: entryPanel.offsetTop - 20, behavior: 'smooth' });
-  }
-
-  function setDisabled(el, isDisabled) {
-    if (isDisabled) el.setAttribute('disabled', '');
-    else el.removeAttribute('disabled');
   }
 
   function clearForm() {
@@ -1044,17 +1032,6 @@
     } else {
       showCurrent();
     }
-  }
-
-  function navStep(delta) {
-    const act = currentAct();
-    if (!act) return;
-    const inQueueIdx = queue.findIndex(a => a.code === act.code);
-    const target = inQueueIdx + delta;
-    if (target < 0 || target >= queue.length) return;
-    if (editingCode) editingCode = null;
-    queueIdx = target;
-    showCurrent();
   }
 
   function editVote(code) {
