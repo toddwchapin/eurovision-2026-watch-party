@@ -763,14 +763,13 @@
 
   <section class="card table-card">
     <div class="table-title">
-      <span class="tt-label">Your ratings</span>
+      <span class="tt-label" id="ratingsCount">0 ratings</span>
       <div class="table-controls">
         <label class="sort-label">Sort:
           <select id="sortKey"></select>
         </label>
         <button class="btn-dir" id="sortDir" type="button" aria-label="Toggle sort direction">↓</button>
       </div>
-      <span class="table-meta" id="tableMeta"></span>
     </div>
     <div class="table-scroll">
       <table class="rated" id="ratedTable">
@@ -1309,7 +1308,7 @@
     const sortDirBtn = $('sortDir');
     if (sortDirBtn) sortDirBtn.textContent = sort.dir === 'asc' ? '↑' : '↓';
 
-    $('tableMeta').textContent = rows.length === 0 ? '' : (rows.length + ' rated · click a row to edit');
+    $('ratingsCount').textContent = rows.length + ' ratings';
   }
 
   function resetVotes() {
