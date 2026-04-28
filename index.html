@@ -231,43 +231,33 @@
   .entry-panel.active { display: block; }
 
   .act-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
     margin-bottom: 18px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--line);
   }
-  .act-flag { font-size: 56px; line-height: 1; }
-  .act-info { flex: 1; min-width: 200px; }
   .act-country {
     font-family: 'Cormorant Garamond', serif;
     font-size: 26px;
     color: var(--cream);
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.1;
   }
-  .act-performer {
+  .act-flag { font-size: 32px; line-height: 1; }
+  .act-line {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px;
     font-size: 18px;
-    color: var(--gold-pale);
-    margin-top: 2px;
+    line-height: 1.2;
   }
-  .act-song {
-    font-style: italic;
-    color: var(--cream-mute);
-    margin-top: 2px;
-  }
-  .order-badge {
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    background: rgba(212,175,55,0.08);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--gold-pale);
-    white-space: nowrap;
-  }
+  .act-performer { color: var(--gold-pale); }
+  .act-song-sep { color: var(--cream-mute); }
+  .act-song { font-style: italic; color: var(--cream-mute); }
 
   .field {
     margin-bottom: 18px;
@@ -711,13 +701,15 @@
 
   <section class="card entry-panel" id="entryPanel">
     <div class="act-header">
-      <div class="act-flag" id="actFlag">🎤</div>
-      <div class="act-info">
-        <h2 class="act-country" id="actCountry"></h2>
-        <div class="act-performer" id="actPerformer"></div>
-        <div class="act-song" id="actSong"></div>
+      <h2 class="act-country">
+        <span class="act-flag" id="actFlag">🎤</span>
+        <span id="actCountry"></span>
+      </h2>
+      <div class="act-line">
+        <span class="act-performer" id="actPerformer"></span>
+        <span class="act-song-sep"> · </span>
+        <span class="act-song" id="actSong"></span>
       </div>
-      <div class="order-badge" id="orderBadge"></div>
     </div>
 
     <div class="field">
@@ -1045,11 +1037,6 @@
     $('actCountry').textContent = act.country;
     $('actPerformer').textContent = act.performer;
     $('actSong').textContent = '“' + act.song + '”';
-    let orderText;
-    if (act.order === '' || act.order === null || act.order === undefined) orderText = 'Order TBD';
-    else if (act.order === 'X') orderText = 'Not in final';
-    else orderText = 'Act #' + act.order;
-    $('orderBadge').textContent = orderText;
 
     const v = votes[act.code];
     if (v) {
