@@ -469,12 +469,6 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    table.rated td[data-key="remind"] {
-      max-width: 60px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
     table.rated td.total { font-size: 12px; }
     .table-scroll { overflow-x: visible; }
   }
@@ -751,7 +745,6 @@
     { key: 'country',     label: 'Country',    type: 'string', cls: 'flag-cell', short: 'Act' },
     { key: 'performer',   label: 'Performer',  type: 'string' },
     { key: 'song',        label: 'Song',       type: 'string' },
-    { key: 'remind',      label: 'Remind',     type: 'string', short: 'R' },
     { key: 'vocals',      label: 'Vocals',     type: 'num',    cls: 'num', short: 'V' },
     { key: 'performance', label: 'Performance',type: 'num',    cls: 'num', short: 'P' },
     { key: 'song_q',      label: 'Song qual',  type: 'num',    cls: 'num', short: 'Q' },
@@ -1161,7 +1154,9 @@
             name.textContent = ' ' + r.country;
             const extra = document.createElement('span');
             extra.className = 'c-extra';
-            extra.textContent = r.performer + ' · “' + r.song + '”';
+            const songLine = r.performer + ' · “' + r.song + '”' + (r.remind ? ' — ' + r.remind : '');
+            extra.textContent = songLine;
+            extra.title = songLine;
             td.appendChild(flag);
             td.appendChild(name);
             td.appendChild(extra);
@@ -1169,6 +1164,9 @@
             let display;
             if (col.key === 'order') {
               display = (r.order === '' || r.order == null) ? '—' : r.order;
+            } else if (col.key === 'song') {
+              display = '“' + r.song + '”' + (r.remind ? ' — ' + r.remind : '');
+              td.title = display;
             } else {
               const val = r[col.key];
               if (val === undefined || val === null || val === '') {
@@ -1178,7 +1176,6 @@
               }
             }
             td.textContent = String(display);
-            if (col.key === 'remind' && display && display !== '—') td.title = display;
           }
           tr.appendChild(td);
         });
