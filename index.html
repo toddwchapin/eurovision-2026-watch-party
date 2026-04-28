@@ -469,14 +469,14 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
-    min-width: 900px;
   }
   table.rated th, table.rated td {
-    padding: 10px 8px;
+    padding: 8px 4px;
     text-align: center;
     border-bottom: 1px solid rgba(212,175,55,0.15);
   }
-  table.rated th[data-key="country"], table.rated td[data-key="country"] { text-align: left; }
+  table.rated th.num, table.rated td.num { padding: 8px 3px; }
+  table.rated th[data-key="country"], table.rated td[data-key="country"] { text-align: left; padding-left: 8px; }
   table.rated th {
     font-size: 11px;
     letter-spacing: 0.1em;
@@ -517,11 +517,11 @@
   table.rated tr.body-row:hover { background: rgba(212,175,55,0.06); }
   table.rated tr.body-row.editing { background: rgba(212,175,55,0.12); }
   table.rated td.act-cell {
-    min-width: 240px;
-    max-width: 380px;
+    min-width: 160px;
+    max-width: 260px;
     white-space: normal;
     vertical-align: top;
-    line-height: 1.35;
+    line-height: 1.3;
   }
   table.rated td.act-cell .c-country { font-weight: 600; color: var(--cream); font-size: 13px; }
   table.rated td.act-cell .c-performer { color: var(--gold-pale); font-size: 12px; margin-top: 1px; }
