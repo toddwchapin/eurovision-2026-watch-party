@@ -423,6 +423,46 @@
     gap: 8px;
   }
   .table-meta { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--cream-mute); }
+  .tt-label { flex: 0 0 auto; }
+  .table-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+  }
+  .sort-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--cream-mute);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  #sortKey {
+    padding: 5px 8px;
+    background: rgba(0,0,0,0.35);
+    color: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font: inherit;
+    cursor: pointer;
+  }
+  #sortKey:focus { outline: none; border-color: var(--gold-pale); }
+  .btn-dir {
+    width: 30px;
+    height: 30px;
+    background: rgba(0,0,0,0.35);
+    color: var(--gold-pale);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .btn-dir:hover { border-color: var(--gold-pale); }
 
   .table-scroll { overflow-x: auto; }
   table.rated {
@@ -453,27 +493,21 @@
   table.rated th .arrow { display: inline-block; width: 10px; opacity: 0.6; margin-left: 2px; }
   table.rated th.sorted .arrow { opacity: 1; color: var(--gold-pale); }
   table.rated th .lbl-short { display: none; }
-  table.rated td .c-extra { display: none; }
   @media (max-width: 720px) {
     table.rated { min-width: 0; font-size: 11px; }
     table.rated th .lbl-full { display: none; }
     table.rated th .lbl-short { display: inline; }
+    table.rated th[data-key="country"] .lbl-short,
+    table.rated th[data-key="order"] .lbl-short { display: none; }
+    table.rated th[data-key="country"] .lbl-full,
+    table.rated th[data-key="order"] .lbl-full { display: inline; }
     table.rated th, table.rated td { padding: 6px 3px; }
     table.rated th.num, table.rated td.num { padding: 6px 2px; }
-    table.rated th[data-key="performer"], table.rated td[data-key="performer"],
-    table.rated th[data-key="song"], table.rated td[data-key="song"] { display: none; }
-    table.rated td[data-key="country"] .c-name { font-weight: 600; }
-    table.rated td[data-key="country"] .c-extra {
-      display: block;
-      color: var(--cream-mute);
-      font-size: 10px;
-      font-style: italic;
-      margin-top: 1px;
-      max-width: 130px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    table.rated td.act-cell { min-width: 0; max-width: 220px; padding-right: 4px; }
+    table.rated td.act-cell .c-country { font-size: 12px; }
+    table.rated td.act-cell .c-performer,
+    table.rated td.act-cell .c-song { font-size: 11px; }
+    table.rated td.act-cell .c-notes { font-size: 10px; padding-left: 6px; }
     table.rated td.total { font-size: 12px; }
     .table-scroll { overflow-x: visible; }
   }
@@ -482,7 +516,24 @@
   table.rated tr.body-row { cursor: pointer; transition: background 0.1s; }
   table.rated tr.body-row:hover { background: rgba(212,175,55,0.06); }
   table.rated tr.body-row.editing { background: rgba(212,175,55,0.12); }
-  table.rated td.flag-cell { white-space: nowrap; }
+  table.rated td.act-cell {
+    min-width: 240px;
+    max-width: 380px;
+    white-space: normal;
+    vertical-align: top;
+    line-height: 1.35;
+  }
+  table.rated td.act-cell .c-country { font-weight: 600; color: var(--cream); font-size: 13px; }
+  table.rated td.act-cell .c-performer { color: var(--gold-pale); font-size: 12px; margin-top: 1px; }
+  table.rated td.act-cell .c-song { color: var(--cream-mute); font-style: italic; font-size: 12px; }
+  table.rated td.act-cell .c-notes {
+    color: var(--cream-mute);
+    font-size: 11px;
+    margin-top: 4px;
+    padding-left: 8px;
+    border-left: 2px solid var(--line);
+    word-break: break-word;
+  }
   .empty-row { text-align: center; padding: 24px; color: var(--cream-mute); font-style: italic; }
 
   /* ====== Footer ====== */
@@ -702,7 +753,13 @@
 
   <section class="card table-card">
     <div class="table-title">
-      Your ratings
+      <span class="tt-label">Your ratings</span>
+      <div class="table-controls">
+        <label class="sort-label">Sort:
+          <select id="sortKey"></select>
+        </label>
+        <button class="btn-dir" id="sortDir" type="button" aria-label="Toggle sort direction">↓</button>
+      </div>
       <span class="table-meta" id="tableMeta"></span>
     </div>
     <div class="table-scroll">
@@ -747,9 +804,7 @@
 
   const COLUMNS = [
     { key: 'order',       label: 'Perf #',     type: 'order',  cls: 'num' },
-    { key: 'country',     label: 'Country',    type: 'string', cls: 'flag-cell', short: 'Act' },
-    { key: 'performer',   label: 'Performer',  type: 'string' },
-    { key: 'song',        label: 'Song',       type: 'string' },
+    { key: 'country',     label: 'Act',        type: 'string', cls: 'act-cell' },
     { key: 'vocals',      label: 'Vocals',     type: 'num',    cls: 'num', short: 'V' },
     { key: 'performance', label: 'Performance',type: 'num',    cls: 'num', short: 'P' },
     { key: 'song_q',      label: 'Song qual',  type: 'num',    cls: 'num', short: 'Q' },
@@ -757,6 +812,19 @@
     { key: 'stage',       label: 'Stage',      type: 'num',    cls: 'num', short: 'S' },
     { key: 'total',       label: 'Total',      type: 'num',    cls: 'num total', short: 'T' }
   ];
+
+  const SORT_KEYS = {
+    order:       { type: 'order',  label: 'Performance #' },
+    country:     { type: 'string', label: 'Country' },
+    performer:   { type: 'string', label: 'Performer' },
+    song:        { type: 'string', label: 'Song' },
+    vocals:      { type: 'num',    label: 'Vocals (V)' },
+    performance: { type: 'num',    label: 'Performance (P)' },
+    song_q:      { type: 'num',    label: 'Song quality (Q)' },
+    original:    { type: 'num',    label: 'Originality (O)' },
+    stage:       { type: 'num',    label: 'Stage (S)' },
+    total:       { type: 'num',    label: 'Total (T)' }
+  };
 
   let acts = [];
   let queue = [];
@@ -779,6 +847,7 @@
 
     buildScales();
     buildTableHead();
+    buildSortControls();
     bindEvents();
     rebuildQueue();
     renderName();
@@ -854,6 +923,26 @@
       div.appendChild(left);
       div.appendChild(opts);
       div.appendChild(right);
+    });
+  }
+
+  function buildSortControls() {
+    const sel = $('sortKey');
+    Object.keys(SORT_KEYS).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = SORT_KEYS[key].label;
+      sel.appendChild(opt);
+    });
+    sel.value = sort.key;
+    $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
+    sel.addEventListener('change', () => {
+      sort.key = sel.value;
+      renderTable();
+    });
+    $('sortDir').addEventListener('click', () => {
+      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
+      renderTable();
     });
   }
 
@@ -1098,10 +1187,10 @@
   }
 
   function compareCells(a, b, key, dir) {
-    const col = COLUMNS.find(c => c.key === key);
+    const meta = SORT_KEYS[key] || { type: 'string' };
     let av = a[key], bv = b[key];
 
-    if (key === 'order') {
+    if (meta.type === 'order') {
       const an = parseInt(av, 10);
       const bn = parseInt(bv, 10);
       const aHas = Number.isFinite(an);
@@ -1112,7 +1201,7 @@
       return 0;
     }
 
-    if (col.type === 'num') {
+    if (meta.type === 'num') {
       av = (typeof av === 'number') ? av : -Infinity;
       bv = (typeof bv === 'number') ? bv : -Infinity;
       return dir === 'asc' ? av - bv : bv - av;
@@ -1151,27 +1240,28 @@
           if (col.cls) td.className = col.cls;
           td.dataset.key = col.key;
           if (col.key === 'country') {
-            const flag = document.createElement('span');
-            flag.className = 'c-flag';
-            flag.textContent = r.flag;
-            const name = document.createElement('span');
-            name.className = 'c-name';
-            name.textContent = ' ' + r.country;
-            const extra = document.createElement('span');
-            extra.className = 'c-extra';
-            const songLine = r.performer + ' · “' + r.song + '”' + (r.remind ? ' — ' + r.remind : '');
-            extra.textContent = songLine;
-            extra.title = songLine;
-            td.appendChild(flag);
-            td.appendChild(name);
-            td.appendChild(extra);
+            const country = document.createElement('div');
+            country.className = 'c-country';
+            country.textContent = r.flag + ' ' + r.country;
+            const performer = document.createElement('div');
+            performer.className = 'c-performer';
+            performer.textContent = r.performer;
+            const song = document.createElement('div');
+            song.className = 'c-song';
+            song.textContent = '“' + r.song + '”';
+            td.appendChild(country);
+            td.appendChild(performer);
+            td.appendChild(song);
+            if (r.remind) {
+              const notes = document.createElement('div');
+              notes.className = 'c-notes';
+              notes.textContent = '— ' + r.remind;
+              td.appendChild(notes);
+            }
           } else {
             let display;
             if (col.key === 'order') {
               display = (r.order === '' || r.order == null) ? '—' : r.order;
-            } else if (col.key === 'song') {
-              display = '“' + r.song + '”' + (r.remind ? ' — ' + r.remind : '');
-              td.title = display;
             } else {
               const val = r[col.key];
               if (val === undefined || val === null || val === '') {
@@ -1199,6 +1289,11 @@
         arrow.textContent = '';
       }
     });
+
+    const sortKeySel = $('sortKey');
+    if (sortKeySel) sortKeySel.value = sort.key;
+    const sortDirBtn = $('sortDir');
+    if (sortDirBtn) sortDirBtn.textContent = sort.dir === 'asc' ? '↑' : '↓';
 
     $('tableMeta').textContent = rows.length === 0 ? '' : (rows.length + ' rated · click a row to edit');
   }
