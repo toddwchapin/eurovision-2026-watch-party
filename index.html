@@ -521,7 +521,6 @@
     table.rated td.act-cell .c-country { font-size: 12px; }
     table.rated td.act-cell .c-performer,
     table.rated td.act-cell .c-song { font-size: 11px; }
-    table.rated td.act-cell .c-notes { font-size: 10px; padding-left: 6px; }
     table.rated td.total { font-size: 12px; }
     .table-scroll { overflow-x: visible; }
   }
@@ -543,10 +542,6 @@
   table.rated td.act-cell .c-song { color: var(--cream-mute); font-style: italic; }
   table.rated td.act-cell .c-notes {
     color: var(--cream-mute);
-    font-size: 11px;
-    margin-top: 4px;
-    padding-left: 8px;
-    border-left: 2px solid var(--line);
     word-break: break-word;
   }
   .empty-row { text-align: center; padding: 24px; color: var(--cream-mute); font-style: italic; }
@@ -1269,14 +1264,14 @@
             actLine.appendChild(performer);
             actLine.appendChild(document.createTextNode(' · '));
             actLine.appendChild(song);
+            if (r.remind) {
+              const notes = document.createElement('span');
+              notes.className = 'c-notes';
+              notes.textContent = ' — ' + r.remind;
+              actLine.appendChild(notes);
+            }
             td.appendChild(country);
             td.appendChild(actLine);
-            if (r.remind) {
-              const notes = document.createElement('div');
-              notes.className = 'c-notes';
-              notes.textContent = '— ' + r.remind;
-              td.appendChild(notes);
-            }
           } else {
             let display;
             if (col.key === 'order') {
