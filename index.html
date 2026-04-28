@@ -54,26 +54,26 @@
     z-index: 1;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 32px 20px 80px;
+    padding: 18px 20px 60px;
   }
 
   /* ====== Header ====== */
   header.app-header {
     text-align: center;
-    margin-bottom: 28px;
+    margin-bottom: 16px;
   }
 
   .logo-row {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 18px;
-    margin-bottom: 6px;
+    gap: 14px;
+    margin-bottom: 2px;
   }
 
   .heart-logo {
-    width: 64px;
-    height: 64px;
+    width: 44px;
+    height: 44px;
     filter: drop-shadow(0 0 14px var(--gold-glow));
   }
 
@@ -83,7 +83,7 @@
     margin: 0;
     font-family: 'Cormorant Garamond', serif;
     font-weight: 600;
-    font-size: clamp(28px, 4vw, 44px);
+    font-size: clamp(22px, 3.2vw, 34px);
     letter-spacing: 0.02em;
     color: var(--cream);
     line-height: 1;
@@ -100,84 +100,88 @@
   }
 
   .subtitle {
-    margin-top: 6px;
+    margin-top: 2px;
     color: var(--cream-mute);
-    font-size: 14px;
+    font-size: 11px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
   }
 
   .slogan-ribbon {
     display: inline-block;
-    margin-top: 14px;
-    padding: 6px 22px;
+    margin-top: 8px;
+    padding: 4px 18px;
     border: 1px solid var(--line);
     border-radius: 999px;
     background: linear-gradient(90deg, transparent, rgba(212,175,55,0.08), transparent);
     font-family: 'Allura', cursive;
-    font-size: 26px;
+    font-size: 22px;
     color: var(--gold-pale);
     text-shadow: 0 0 14px var(--gold-glow);
   }
 
   .secession-divider {
     display: block;
-    margin: 22px auto 26px;
-    width: min(560px, 90%);
-    height: 18px;
-    opacity: 0.85;
+    margin: 12px auto 14px;
+    width: min(420px, 80%);
+    height: 14px;
+    opacity: 0.7;
   }
 
   .name-pill {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    z-index: 5;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 18px;
     padding: 6px 14px;
     border: 1px solid var(--line);
     border-radius: 999px;
     background: rgba(212,175,55,0.06);
-    color: var(--cream);
+    color: var(--gold-pale);
     font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
+    max-width: 40vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .name-pill:hover { background: rgba(212,175,55,0.12); border-color: var(--gold-pale); }
-  .name-pill .name-label { color: var(--cream-mute); letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; }
-  .name-pill .name-value { color: var(--gold-pale); font-weight: 600; }
+  .name-pill .name-value { color: var(--gold-pale); }
 
   /* ====== Stats ====== */
   .stats {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-top: 24px;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
   }
+  .stat-top { grid-column: 1 / -1; }
   .stat {
     background: var(--bg-card);
     border: 1px solid var(--line);
     border-radius: 14px;
-    padding: 14px 16px;
+    padding: 10px 14px;
     backdrop-filter: blur(6px);
     box-shadow: var(--shadow);
   }
   .stat-label {
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--cream-mute);
   }
   .stat-value {
-    margin-top: 4px;
-    font-size: 20px;
+    margin-top: 2px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--gold-pale);
   }
   .stat-value .top-score { color: var(--cream-mute); font-weight: 400; }
-  .stat-value.small { font-size: 15px; line-height: 1.3; }
-  @media (max-width: 640px) {
-    .stats { grid-template-columns: 1fr; }
-  }
+  .stat-value.small { font-size: 14px; line-height: 1.3; }
 
   /* ====== Start panel ====== */
   .start-panel {
@@ -629,7 +633,6 @@
     </svg>
 
     <div class="name-pill" id="namePill" title="Click to rename">
-      <span class="name-label">Voter</span>
       <span class="name-value" id="nameValue">—</span>
     </div>
 
@@ -642,7 +645,7 @@
         <div class="stat-label">Your Average</div>
         <div class="stat-value" id="statAvg">—</div>
       </div>
-      <div class="stat">
+      <div class="stat stat-top">
         <div class="stat-label">Top Pick</div>
         <div class="stat-value small" id="statTop">—</div>
       </div>
@@ -1064,7 +1067,9 @@
     const topEl = $('statTop');
     topEl.replaceChildren();
     if (topAct) {
-      topEl.appendChild(document.createTextNode(topAct.flag + ' ' + topAct.performer + ' '));
+      topEl.appendChild(document.createTextNode(
+        topAct.flag + ' ' + topAct.performer + ' · “' + topAct.song + '” '
+      ));
       const sub = document.createElement('span');
       sub.className = 'top-score';
       sub.textContent = '(' + (votes[topCode].total || 0) + ')';
