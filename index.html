@@ -538,8 +538,9 @@
     line-height: 1.3;
   }
   table.rated td.act-cell .c-country { font-weight: 600; color: var(--cream); font-size: 13px; }
-  table.rated td.act-cell .c-performer { color: var(--gold-pale); font-size: 12px; margin-top: 1px; }
-  table.rated td.act-cell .c-song { color: var(--cream-mute); font-style: italic; font-size: 12px; }
+  table.rated td.act-cell .c-act-line { font-size: 12px; margin-top: 1px; }
+  table.rated td.act-cell .c-performer { color: var(--gold-pale); }
+  table.rated td.act-cell .c-song { color: var(--cream-mute); font-style: italic; }
   table.rated td.act-cell .c-notes {
     color: var(--cream-mute);
     font-size: 11px;
@@ -1257,15 +1258,19 @@
             const country = document.createElement('div');
             country.className = 'c-country';
             country.textContent = r.flag + ' ' + r.country;
-            const performer = document.createElement('div');
+            const actLine = document.createElement('div');
+            actLine.className = 'c-act-line';
+            const performer = document.createElement('span');
             performer.className = 'c-performer';
             performer.textContent = r.performer;
-            const song = document.createElement('div');
+            const song = document.createElement('span');
             song.className = 'c-song';
             song.textContent = '“' + r.song + '”';
+            actLine.appendChild(performer);
+            actLine.appendChild(document.createTextNode(' · '));
+            actLine.appendChild(song);
             td.appendChild(country);
-            td.appendChild(performer);
-            td.appendChild(song);
+            td.appendChild(actLine);
             if (r.remind) {
               const notes = document.createElement('div');
               notes.className = 'c-notes';
