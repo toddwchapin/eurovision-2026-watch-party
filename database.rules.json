@@ -2,9 +2,9 @@
   "rules": {
     "$year": {
       "parties": {
+        ".read": true,
         "$partyCode": {
           "users": {
-            ".read": true,
             "$userId": {
               ".write": true,
               "name": {
