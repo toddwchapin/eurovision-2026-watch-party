@@ -301,7 +301,6 @@
     opacity: 0;
     width: 0;
     height: 0;
-    pointer-events: none;
   }
   .scale-options label {
     width: 40px;
