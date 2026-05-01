@@ -581,6 +581,58 @@
     align-items: center;
   }
 
+  /* ====== Mobile rating-active compact mode ====== */
+  @media (max-width: 720px) {
+    body.rating-active .wrap { padding-top: 8px; padding-bottom: 24px; }
+    body.rating-active .heart-logo { width: 30px; height: 30px; top: 6px; left: 8px; }
+    body.rating-active h1.title { font-size: 16px; }
+    body.rating-active h1.title .flourish { font-size: 1.2em; }
+    body.rating-active .subtitle,
+    body.rating-active .secession-divider { display: none; }
+    body.rating-active .name-pill {
+      top: 6px; right: 8px;
+      padding: 3px 9px;
+      font-size: 11px;
+    }
+    body.rating-active .stats {
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 5px;
+      margin-top: 6px;
+    }
+    body.rating-active .stats .stat-top { grid-column: auto; }
+    body.rating-active .stat { padding: 4px 6px; border-radius: 8px; }
+    body.rating-active .stat-label { font-size: 8px; letter-spacing: 0.08em; }
+    body.rating-active .stat-value { font-size: 12px; }
+    body.rating-active .stat-value.small { font-size: 10px; line-height: 1.15; }
+    body.rating-active .party-bar { margin-top: 4px; font-size: 11px; }
+    body.rating-active .party-code { padding: 3px 10px; gap: 6px; }
+    body.rating-active .party-code strong { font-size: 12px; }
+
+    body.rating-active .card.entry-panel {
+      padding: 12px;
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+    body.rating-active .act-header { padding-bottom: 8px; margin-bottom: 10px; }
+    body.rating-active .act-country { font-size: 18px; gap: 8px; }
+    body.rating-active .act-flag { font-size: 22px; }
+    body.rating-active .act-line { font-size: 13px; margin-top: 2px; }
+    body.rating-active .field { margin-bottom: 8px; }
+    body.rating-active .field label.q-label { margin-bottom: 3px; font-size: 12px; }
+    body.rating-active .field input[type="text"] { padding: 8px 10px; }
+    body.rating-active .scale { gap: 6px; }
+    body.rating-active .scale-options { gap: 4px; }
+    body.rating-active .scale-options label { width: 32px; height: 32px; border-radius: 8px; }
+    body.rating-active .scale-end { font-size: 9px; }
+    body.rating-active .button-row {
+      margin-top: 10px;
+      padding-top: 10px;
+      gap: 8px;
+    }
+    body.rating-active .btn { padding: 8px 14px; }
+    body.rating-active .editing-note { margin-top: 6px; font-size: 11px; min-height: 14px; }
+  }
+
   /* ====== Modal ====== */
   .modal-backdrop {
     position: fixed;

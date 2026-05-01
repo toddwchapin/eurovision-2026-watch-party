@@ -632,6 +632,10 @@
     return queue[queueIdx];
   }
 
+  function setRatingActive(on) {
+    document.body.classList.toggle('rating-active', !!on);
+  }
+
   function showCurrent() {
     const act = currentAct();
     startPanel.style.display = 'none';
@@ -639,11 +643,13 @@
 
     if (!act) {
       entryPanel.classList.remove('active');
+      setRatingActive(false);
       donePanel.style.display = 'block';
       return;
     }
 
     entryPanel.classList.add('active');
+    setRatingActive(true);
     $('actFlag').textContent = act.flag;
     $('actCountry').textContent = act.country;
     $('actPerformer').textContent = act.performer;
@@ -707,6 +713,7 @@
     queueIdx++;
     if (queueIdx >= queue.length) {
       entryPanel.classList.remove('active');
+      setRatingActive(false);
       donePanel.style.display = 'block';
       startPanel.style.display = 'none';
       window.scrollTo({ top: donePanel.offsetTop - 20, behavior: 'smooth' });
@@ -950,6 +957,7 @@
     renderStats();
     renderTable();
     entryPanel.classList.remove('active');
+    setRatingActive(false);
     donePanel.style.display = 'none';
     startPanel.style.display = 'block';
   }
