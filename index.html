@@ -610,7 +610,7 @@
     $('btnCopyParty').addEventListener('click', copyPartyLink);
     $('btnSeeVotes').addEventListener('click', e => {
       e.stopPropagation();
-      window.open('all-parties.html', '_blank', 'noopener');
+      window.open('party-votes.html', '_blank', 'noopener');
     });
     $('partyBar').addEventListener('click', e => {
       if (e.target !== $('btnCopyParty') && e.target !== $('btnSeeVotes')) copyPartyLink();
