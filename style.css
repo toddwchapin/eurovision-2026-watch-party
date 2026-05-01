@@ -290,12 +290,19 @@
   }
   .scale-end.right { text-align: right; }
   .scale-options {
+    position: relative;
     display: flex;
     gap: 6px;
     flex: 1;
     justify-content: center;
   }
-  .scale-options input { display: none; }
+  .scale-options input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
   .scale-options label {
     width: 40px;
     height: 40px;
