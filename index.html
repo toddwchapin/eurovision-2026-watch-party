@@ -664,14 +664,14 @@
     $('actFlag').textContent = act.flag;
     $('actCountry').textContent = act.country;
     $('actPerformer').textContent = act.performer;
-    $('actSong').textContent = '”' + act.song + '”';
+    $('actSong').textContent = '“' + act.song + '”';
 
     clearForm();
     const v = votes[act.code];
     if (v) {
       $('fRemind').value = v.remind || '';
       SCORE_FIELDS.forEach(f => {
-        document.querySelectorAll('input[name=”s_' + f + '”]').forEach(r => {
+        document.querySelectorAll('input[name="s_' + f + '"]').forEach(r => {
           r.checked = (parseInt(r.value, 10) === v[f]);
         });
       });
@@ -686,7 +686,7 @@
   function clearForm() {
     $('fRemind').value = '';
     SCORE_FIELDS.forEach(f => {
-      document.querySelectorAll('input[name=”s_' + f + '”]').forEach(r => { r.checked = false; });
+      document.querySelectorAll('input[name="s_' + f + '"]').forEach(r => { r.checked = false; });
     });
   }
 
@@ -694,7 +694,7 @@
     const obj = { remind: $('fRemind').value.trim() };
     let total = 0;
     SCORE_FIELDS.forEach(f => {
-      const checked = document.querySelector('input[name=”s_' + f + '”]:checked');
+      const checked = document.querySelector('input[name="s_' + f + '"]:checked');
       const val = checked ? parseInt(checked.value, 10) : 0;
       obj[f] = val;
       total += val;
@@ -774,13 +774,10 @@
       return;
     }
 
-    let totalSum = 0, totalCount = 0;
-    ratedCodes.forEach(code => {
-      Object.values(allUserVotes).forEach(uv => {
-        if (uv[code]) { totalSum += (uv[code].total || 0); totalCount++; }
-      });
-    });
-    $('statAvg').textContent = totalCount ? (totalSum / totalCount).toFixed(1) : '—';
+    const myCodes = Object.keys(votes);
+    $('statAvg').textContent = myCodes.length
+      ? (myCodes.reduce((s, c) => s + (votes[c].total || 0), 0) / myCodes.length).toFixed(1)
+      : '—';
 
     let topCode = null, topAvg = -1;
     ratedCodes.forEach(code => {
@@ -809,7 +806,7 @@
       sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
     } else {
       sort.key = key;
-      sort.dir = (key === 'country' || key === 'performer' || key === 'song') ? 'asc' : 'desc';
+      sort.dir = (key === 'country' || key === 'performer' || key === 'song' || key === 'order') ? 'asc' : 'desc';
     }
     renderTable();
   }
@@ -849,8 +846,11 @@
       bv = (bv || '').toLowerCase();
       return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
     }
-    av = typeof av === 'number' ? av : -Infinity;
-    bv = typeof bv === 'number' ? bv : -Infinity;
+    const aMissing = typeof av !== 'number';
+    const bMissing = typeof bv !== 'number';
+    if (aMissing && bMissing) return 0;
+    if (aMissing) return 1;
+    if (bMissing) return -1;
     return dir === 'asc' ? av - bv : bv - av;
   }
 
@@ -898,7 +898,7 @@
             performer.textContent = r.performer;
             const songSpan = document.createElement('span');
             songSpan.className = 'c-song';
-            songSpan.textContent = '”' + r.song + '”';
+            songSpan.textContent = '“' + r.song + '”';
             actLine.appendChild(performer);
             actLine.appendChild(document.createTextNode(' · '));
             actLine.appendChild(songSpan);
