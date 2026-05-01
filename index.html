@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <style>
   :root {
     --bg-deep: #0a0a14;
@@ -536,6 +538,42 @@
   }
   .empty-row { text-align: center; padding: 24px; color: var(--cream-mute); font-style: italic; }
 
+  /* ====== Party section ====== */
+  .party-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    font-size: 13px;
+  }
+  .party-code {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(212,175,55,0.06);
+    color: var(--cream-mute);
+  }
+  .party-code strong {
+    color: var(--gold-pale);
+    letter-spacing: 0.18em;
+    font-size: 14px;
+  }
+  .btn-copy {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--cream-mute);
+    font: inherit;
+    font-size: 12px;
+    transition: color 0.15s;
+  }
+  .btn-copy:hover { color: var(--gold-pale); }
+
   /* ====== Footer ====== */
   footer.app-footer {
     margin-top: 28px;
@@ -592,6 +630,18 @@
 </style>
 </head>
 <body>
+
+<!-- ============================================================
+     PARTY CONFIG — update "year" each contest year.
+     Set firebaseConfig to your Firebase project config object
+     to enable real-time score sharing; leave null for local-only.
+     ============================================================ -->
+<script type="application/json" id="party-config">
+{
+  "year": "2026",
+  "firebaseConfig": null
+}
+</script>
 
 <!-- ============================================================
      ACTS DATA — edit the "order" field after the running order
@@ -693,6 +743,13 @@
         <div class="stat-value small" id="statTop">—</div>
       </div>
     </div>
+    <div class="party-bar" id="partyBar" style="display:none">
+      <div class="party-code">
+        <span>Party</span>
+        <strong id="partyCodeValue"></strong>
+        <button class="btn-copy" id="btnCopyParty" title="Copy invite link">Copy link</button>
+      </div>
+    </div>
   </header>
 
   <div class="start-panel" id="startPanel">
@@ -781,6 +838,19 @@
 
 </div>
 
+<!-- Party modal -->
+<div class="modal-backdrop" id="partyModal">
+  <div class="modal">
+    <h3>Join the watch party</h3>
+    <p>Create a new party or enter a code from someone else to share scores in real-time.</p>
+    <input type="text" id="joinCodeInput" maxlength="8" placeholder="Enter party code" style="text-transform:uppercase">
+    <div class="modal-actions">
+      <button class="btn ghost" id="btnCreateParty">Create new</button>
+      <button class="btn primary" id="btnJoinParty">Join</button>
+    </div>
+  </div>
+</div>
+
 <!-- Name modal -->
 <div class="modal-backdrop" id="nameModal">
   <div class="modal">
@@ -798,33 +868,34 @@
 (function () {
   'use strict';
 
-  const KEY_NAME = 'ev2026_guest_name';
-  const KEY_VOTES = 'ev2026_votes_v1';
+  // Read party-config JSON block
+  let PARTY_YEAR = '2026';
+  let FIREBASE_CONFIG = null;
+  try {
+    const cfg = JSON.parse(document.getElementById('party-config').textContent);
+    PARTY_YEAR = cfg.year || '2026';
+    FIREBASE_CONFIG = cfg.firebaseConfig || null;
+  } catch (e) {}
+
+  // Year-scoped localStorage keys
+  const KEY_NAME    = 'ev_' + PARTY_YEAR + '_guest_name';
+  const KEY_VOTES   = 'ev_' + PARTY_YEAR + '_votes_v1';
+  const KEY_PARTY   = 'ev_' + PARTY_YEAR + '_party';
+  const KEY_USER_ID = 'ev_' + PARTY_YEAR + '_user_id';
 
   const SCORE_FIELDS = ['vocals', 'performance', 'song', 'original', 'stage'];
 
-  const COLUMNS = [
-    { key: 'order',       label: '#',          type: 'order',  cls: 'num' },
-    { key: 'country',     label: 'Act',        type: 'string', cls: 'act-cell' },
-    { key: 'vocals',      label: 'Vocals',     type: 'num',    cls: 'num', short: 'V' },
-    { key: 'performance', label: 'Performance',type: 'num',    cls: 'num', short: 'P' },
-    { key: 'song_q',      label: 'Song qual',  type: 'num',    cls: 'num', short: 'Q' },
-    { key: 'original',    label: 'Original',   type: 'num',    cls: 'num', short: 'O' },
-    { key: 'stage',       label: 'Stage',      type: 'num',    cls: 'num', short: 'S' },
-    { key: 'total',       label: 'Total',      type: 'num',    cls: 'num total', short: 'T' }
+  const FIXED_COLS = [
+    { key: 'order',   label: '#',   cls: 'num' },
+    { key: 'country', label: 'Act', cls: 'act-cell' },
   ];
 
-  const SORT_KEYS = {
-    order:       { type: 'order',  label: 'Performance #' },
-    country:     { type: 'string', label: 'Country' },
-    performer:   { type: 'string', label: 'Performer' },
-    song:        { type: 'string', label: 'Song' },
-    vocals:      { type: 'num',    label: 'Vocals (V)' },
-    performance: { type: 'num',    label: 'Performance (P)' },
-    song_q:      { type: 'num',    label: 'Song quality (Q)' },
-    original:    { type: 'num',    label: 'Originality (O)' },
-    stage:       { type: 'num',    label: 'Stage (S)' },
-    total:       { type: 'num',    label: 'Total (T)' }
+  const BASE_SORT_KEYS = {
+    order:     { type: 'order',  label: 'Performance #' },
+    country:   { type: 'string', label: 'Country' },
+    performer: { type: 'string', label: 'Performer' },
+    song:      { type: 'string', label: 'Song' },
+    avg:       { type: 'num',    label: 'Avg Total' },
   };
 
   let acts = [];
@@ -833,32 +904,134 @@
   let votes = {};
   let guestName = '';
   let editingCode = null;
-  let sort = { key: 'total', dir: 'desc' };
+  let sort = { key: 'avg', dir: 'desc' };
+
+  // Party / sync state
+  let partyCode = '';
+  let userId = '';
+  let partyVotes = {};       // { [uid]: { name, votes } } — from Firebase
+  let db = null;
+  let dynamicUserCols = [];  // [{ userId, name, isLocal }] — local user first
 
   const $ = id => document.getElementById(id);
-  const startPanel = $('startPanel');
-  const entryPanel = $('entryPanel');
-  const donePanel = $('donePanel');
-  const nameModal = $('nameModal');
+  const startPanel  = $('startPanel');
+  const entryPanel  = $('entryPanel');
+  const donePanel   = $('donePanel');
+  const nameModal   = $('nameModal');
+  const partyModal  = $('partyModal');
+
+  // ——— Bootstrap ———
 
   function init() {
-    acts = JSON.parse(document.getElementById('acts-data').textContent);
-    votes = loadVotes();
+    acts      = JSON.parse(document.getElementById('acts-data').textContent);
+    votes     = loadVotes();
     guestName = localStorage.getItem(KEY_NAME) || '';
+    userId    = localStorage.getItem(KEY_USER_ID) || genId(12);
+    localStorage.setItem(KEY_USER_ID, userId);
 
     buildScales();
-    buildTableHead();
-    buildSortControls();
     bindEvents();
     rebuildQueue();
     renderName();
+
+    // Resolve party code: URL param > localStorage
+    const urlParty = new URLSearchParams(window.location.search).get('party');
+    if (urlParty) {
+      partyCode = urlParty.toUpperCase().slice(0, 8);
+      localStorage.setItem(KEY_PARTY, partyCode);
+    } else {
+      partyCode = localStorage.getItem(KEY_PARTY) || '';
+    }
+
+    if (FIREBASE_CONFIG && !partyCode) {
+      openPartyModal();
+    } else {
+      startSync();
+    }
+
+    if (!guestName) openNameModal(true);
+  }
+
+  function startSync() {
+    initFirebase();
+    rebuildDynamicColumns();
     renderStats();
     renderTable();
+    renderPartyBar();
+  }
 
-    if (!guestName) {
-      openNameModal(true);
+  // ——— Firebase ———
+
+  function initFirebase() {
+    if (!FIREBASE_CONFIG || !partyCode) return;
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.database();
+      listenForParty();
+    } catch (e) {
+      console.warn('Firebase init failed:', e);
     }
   }
+
+  function listenForParty() {
+    if (!db || !partyCode) return;
+    const ref = db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users');
+    ref.on('value', snapshot => {
+      partyVotes = snapshot.val() || {};
+      rebuildDynamicColumns();
+      renderStats();
+      renderTable();
+    });
+    syncLocalVotes();
+  }
+
+  function syncLocalVotes() {
+    if (!db || !partyCode || !userId) return;
+    db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId).set({
+      name: guestName || 'Guest',
+      votes: votes
+    }).catch(() => {});
+  }
+
+  // ——— Party UI ———
+
+  function genId(len) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s = '';
+    for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return s;
+  }
+
+  function openPartyModal() {
+    partyModal.classList.add('active');
+    setTimeout(() => $('joinCodeInput').focus(), 50);
+  }
+
+  function renderPartyBar() {
+    const bar = $('partyBar');
+    if (!partyCode) { bar.style.display = 'none'; return; }
+    bar.style.display = '';
+    $('partyCodeValue').textContent = partyCode;
+  }
+
+  function copyPartyLink() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('party', partyCode);
+    navigator.clipboard.writeText(url.toString()).then(() => {
+      const btn = $('btnCopyParty');
+      const prev = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = prev; }, 1500);
+    }).catch(() => {});
+  }
+
+  function updateUrlWithParty() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('party', partyCode);
+    history.replaceState(null, '', url.toString());
+  }
+
+  // ——— Persistence ———
 
   function loadVotes() {
     try {
@@ -868,19 +1041,21 @@
       return {};
     }
   }
+
   function saveVotes() {
     localStorage.setItem(KEY_VOTES, JSON.stringify(votes));
+    syncLocalVotes();
   }
+
+  // ——— Queue ———
 
   function rebuildQueue() {
     const eligible = acts.filter(a => a.order !== 'X');
     const anyNumeric = eligible.some(a => Number.isFinite(parseInt(a.order, 10)));
     if (anyNumeric) {
       queue = eligible.slice().sort((a, b) => {
-        const an = parseInt(a.order, 10);
-        const bn = parseInt(b.order, 10);
-        const aHas = Number.isFinite(an);
-        const bHas = Number.isFinite(bn);
+        const an = parseInt(a.order, 10), bn = parseInt(b.order, 10);
+        const aHas = Number.isFinite(an), bHas = Number.isFinite(bn);
         if (aHas && bHas) return an - bn;
         if (aHas) return -1;
         if (bHas) return 1;
@@ -896,6 +1071,516 @@
     }
     if (allRated) queueIdx = queue.length;
   }
+
+  // ——— Dynamic columns ———
+
+  function rebuildDynamicColumns() {
+    // Merge all known users: local first, then others from Firebase
+    const allUsers = {};
+    allUsers[userId] = { name: guestName || 'You', votes, isLocal: true };
+    Object.entries(partyVotes).forEach(([uid, data]) => {
+      if (uid !== userId) allUsers[uid] = { name: data.name || 'Guest', votes: data.votes || {}, isLocal: false };
+    });
+
+    dynamicUserCols = Object.entries(allUsers).map(([uid, data]) => ({
+      userId: uid,
+      name: data.isLocal ? (guestName || 'You') : data.name,
+      isLocal: !!data.isLocal,
+    }));
+    dynamicUserCols.sort((a, b) => {
+      if (a.isLocal) return -1;
+      if (b.isLocal) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    buildTableHead();
+    buildSortControls();
+  }
+
+  // ——— Table head (rebuilt on each party change) ———
+
+  function buildTableHead() {
+    const tr = $('tableHead');
+    tr.replaceChildren();
+
+    FIXED_COLS.forEach(col => {
+      const th = document.createElement('th');
+      th.className = col.cls;
+      th.dataset.key = col.key;
+      th.textContent = col.label;
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      th.appendChild(arrow);
+      th.addEventListener('click', () => onSortClick(col.key));
+      tr.appendChild(th);
+    });
+
+    dynamicUserCols.forEach(uc => {
+      const th = document.createElement('th');
+      th.className = 'num' + (uc.isLocal ? ' sorted-local' : '');
+      th.dataset.key = 'user_' + uc.userId;
+      th.textContent = uc.name + (uc.isLocal ? ' ★' : '');
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      th.appendChild(arrow);
+      th.addEventListener('click', () => onSortClick('user_' + uc.userId));
+      tr.appendChild(th);
+    });
+
+    const thAvg = document.createElement('th');
+    thAvg.className = 'num total';
+    thAvg.dataset.key = 'avg';
+    thAvg.textContent = 'Avg';
+    const arrowAvg = document.createElement('span');
+    arrowAvg.className = 'arrow';
+    thAvg.appendChild(arrowAvg);
+    thAvg.addEventListener('click', () => onSortClick('avg'));
+    tr.appendChild(thAvg);
+  }
+
+  // ——— Sort controls ———
+
+  function buildSortControls() {
+    const oldSel = $('sortKey');
+    const sel = oldSel.cloneNode(false); // fresh element, no old listeners
+    oldSel.parentNode.replaceChild(sel, oldSel);
+    sel.id = 'sortKey';
+
+    const allSortKeys = Object.assign({}, BASE_SORT_KEYS);
+    dynamicUserCols.forEach(uc => {
+      allSortKeys['user_' + uc.userId] = {
+        type: 'num',
+        label: uc.isLocal ? uc.name + ' (you)' : uc.name,
+      };
+    });
+
+    Object.keys(allSortKeys).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = allSortKeys[key].label;
+      sel.appendChild(opt);
+    });
+
+    if (!allSortKeys[sort.key]) sort.key = 'avg';
+    sel.value = sort.key;
+
+    sel.onchange = () => { sort.key = sel.value; renderTable(); };
+    $('sortDir').onclick = () => {
+      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
+      $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
+      renderTable();
+    };
+    $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
+  }
+
+  // ——— Events ———
+
+  function bindEvents() {
+    $('btnStart').addEventListener('click', startRating);
+    $('btnSave').addEventListener('click', onSave);
+    $('btnClear').addEventListener('click', clearForm);
+    $('btnSkip').addEventListener('click', onSkip);
+    $('btnReturnStart').addEventListener('click', () => {
+      donePanel.style.display = 'none';
+      startPanel.style.display = 'block';
+    });
+    $('namePill').addEventListener('click', () => openNameModal(false));
+    $('footerRename').addEventListener('click', e => { e.preventDefault(); openNameModal(false); });
+    $('footerReset').addEventListener('click', e => { e.preventDefault(); resetVotes(); });
+    $('nameSave').addEventListener('click', saveName);
+    $('nameCancel').addEventListener('click', () => nameModal.classList.remove('active'));
+    $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+
+    $('btnCreateParty').addEventListener('click', () => {
+      partyCode = genId(6);
+      localStorage.setItem(KEY_PARTY, partyCode);
+      partyModal.classList.remove('active');
+      updateUrlWithParty();
+      startSync();
+    });
+    $('btnJoinParty').addEventListener('click', () => {
+      const code = $('joinCodeInput').value.trim().toUpperCase();
+      if (!code) { $('joinCodeInput').focus(); return; }
+      partyCode = code;
+      localStorage.setItem(KEY_PARTY, partyCode);
+      partyModal.classList.remove('active');
+      updateUrlWithParty();
+      startSync();
+    });
+    $('joinCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnJoinParty').click(); });
+    $('btnCopyParty').addEventListener('click', copyPartyLink);
+    $('partyBar').addEventListener('click', e => {
+      if (e.target !== $('btnCopyParty')) copyPartyLink();
+    });
+  }
+
+  // ——— Name ———
+
+  function openNameModal(firstTime) {
+    $('nameInput').value = guestName;
+    $('nameCancel').style.display = firstTime ? 'none' : 'inline-block';
+    nameModal.classList.add('active');
+    setTimeout(() => $('nameInput').focus(), 50);
+  }
+
+  function saveName() {
+    const v = $('nameInput').value.trim();
+    if (!v) { $('nameInput').focus(); return; }
+    guestName = v;
+    localStorage.setItem(KEY_NAME, guestName);
+    renderName();
+    nameModal.classList.remove('active');
+    syncLocalVotes();         // update name in Firebase
+    rebuildDynamicColumns();  // update column header
+    renderTable();
+  }
+
+  function renderName() {
+    $('nameValue').textContent = guestName || '—';
+  }
+
+  // ——— Rating flow ———
+
+  function startRating() {
+    if (queue.length === 0) return;
+    if (queueIdx >= queue.length) queueIdx = 0;
+    showCurrent();
+  }
+
+  function currentAct() {
+    if (editingCode) return acts.find(a => a.code === editingCode);
+    if (queueIdx >= queue.length) return null;
+    return queue[queueIdx];
+  }
+
+  function showCurrent() {
+    const act = currentAct();
+    startPanel.style.display = 'none';
+    donePanel.style.display = 'none';
+
+    if (!act) {
+      entryPanel.classList.remove('active');
+      donePanel.style.display = 'block';
+      return;
+    }
+
+    entryPanel.classList.add('active');
+    $('actFlag').textContent = act.flag;
+    $('actCountry').textContent = act.country;
+    $('actPerformer').textContent = act.performer;
+    $('actSong').textContent = '”' + act.song + '”';
+
+    const v = votes[act.code];
+    if (v) {
+      $('fRemind').value = v.remind || '';
+      SCORE_FIELDS.forEach(f => {
+        document.querySelectorAll('input[name=”s_' + f + '”]').forEach(r => {
+          r.checked = (parseInt(r.value, 10) === v[f]);
+        });
+      });
+    } else {
+      clearForm();
+    }
+
+    $('editingNote').textContent = editingCode ? '✎ Editing saved vote'
+      : votes[act.code] ? '↻ Updating prior vote' : '';
+
+    window.scrollTo({ top: entryPanel.offsetTop - 20, behavior: 'smooth' });
+  }
+
+  function clearForm() {
+    $('fRemind').value = '';
+    SCORE_FIELDS.forEach(f => {
+      document.querySelectorAll('input[name=”s_' + f + '”]').forEach(r => { r.checked = false; });
+    });
+  }
+
+  function readForm() {
+    const obj = { remind: $('fRemind').value.trim() };
+    let total = 0;
+    SCORE_FIELDS.forEach(f => {
+      const checked = document.querySelector('input[name=”s_' + f + '”]:checked');
+      const val = checked ? parseInt(checked.value, 10) : 0;
+      obj[f] = val;
+      total += val;
+    });
+    obj.total = total;
+    return obj;
+  }
+
+  function onSave() {
+    const act = currentAct();
+    if (!act) return;
+    votes[act.code] = readForm();
+    saveVotes();
+    renderStats();
+    renderTable();
+    advance();
+  }
+
+  function onSkip() {
+    if (!currentAct()) return;
+    clearForm();
+    advance();
+  }
+
+  function advance() {
+    if (editingCode) { editingCode = null; showCurrent(); return; }
+    queueIdx++;
+    if (queueIdx >= queue.length) {
+      entryPanel.classList.remove('active');
+      donePanel.style.display = 'block';
+      startPanel.style.display = 'none';
+      window.scrollTo({ top: donePanel.offsetTop - 20, behavior: 'smooth' });
+    } else {
+      showCurrent();
+    }
+  }
+
+  function editVote(code) {
+    if (!acts.find(a => a.code === code)) return;
+    editingCode = code;
+    startPanel.style.display = 'none';
+    donePanel.style.display = 'none';
+    showCurrent();
+  }
+
+  // ——— Stats ———
+
+  function getUserVoteMap() {
+    const map = {};
+    map[userId] = votes;
+    Object.entries(partyVotes).forEach(([uid, data]) => {
+      map[uid] = data.votes || {};
+    });
+    return map;
+  }
+
+  function actAvg(code, allUserVotes) {
+    const scores = Object.values(allUserVotes)
+      .map(uv => uv[code] ? (uv[code].total || 0) : null)
+      .filter(s => s !== null);
+    return scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+  }
+
+  function renderStats() {
+    const eligible = acts.filter(a => a.order !== 'X');
+    const ratedCount = eligible.filter(a => votes[a.code]).length;
+    $('statProgress').textContent = ratedCount + ' / ' + eligible.length;
+
+    const allUserVotes = getUserVoteMap();
+    const ratedCodes = acts.map(a => a.code).filter(code =>
+      Object.values(allUserVotes).some(uv => uv[code])
+    );
+
+    if (ratedCodes.length === 0) {
+      $('statAvg').textContent = '—';
+      $('statTop').textContent = '—';
+      return;
+    }
+
+    let totalSum = 0, totalCount = 0;
+    ratedCodes.forEach(code => {
+      Object.values(allUserVotes).forEach(uv => {
+        if (uv[code]) { totalSum += (uv[code].total || 0); totalCount++; }
+      });
+    });
+    $('statAvg').textContent = totalCount ? (totalSum / totalCount).toFixed(1) : '—';
+
+    let topCode = null, topAvg = -1;
+    ratedCodes.forEach(code => {
+      const avg = actAvg(code, allUserVotes);
+      if (avg !== null && avg > topAvg) { topAvg = avg; topCode = code; }
+    });
+
+    const topAct = topCode ? acts.find(a => a.code === topCode) : null;
+    const topEl = $('statTop');
+    topEl.replaceChildren();
+    if (topAct) {
+      topEl.appendChild(document.createTextNode(
+        topAct.flag + ' ' + topAct.performer + ' · “' + topAct.song + '” '
+      ));
+      const sub = document.createElement('span');
+      sub.className = 'top-score';
+      sub.textContent = '(avg ' + topAvg.toFixed(1) + ')';
+      topEl.appendChild(sub);
+    }
+  }
+
+  // ——— Table ———
+
+  function onSortClick(key) {
+    if (sort.key === key) {
+      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sort.key = key;
+      sort.dir = (key === 'country' || key === 'performer' || key === 'song') ? 'asc' : 'desc';
+    }
+    renderTable();
+  }
+
+  function rowFor(act, allUserVotes) {
+    const localV = votes[act.code];
+    const row = {
+      code: act.code,
+      flag: act.flag,
+      country: act.country,
+      performer: act.performer,
+      song: act.song,
+      order: act.order,
+      remind: localV ? (localV.remind || '') : '',
+      avg: actAvg(act.code, allUserVotes),
+    };
+    dynamicUserCols.forEach(uc => {
+      const uv = allUserVotes[uc.userId];
+      row['user_' + uc.userId] = uv && uv[act.code] != null ? (uv[act.code].total ?? null) : null;
+    });
+    return row;
+  }
+
+  function compareCells(a, b, key, dir) {
+    let av = a[key], bv = b[key];
+
+    if (key === 'order') {
+      const an = parseInt(av, 10), bn = parseInt(bv, 10);
+      const aHas = Number.isFinite(an), bHas = Number.isFinite(bn);
+      if (aHas && bHas) return dir === 'asc' ? an - bn : bn - an;
+      if (aHas) return -1;
+      if (bHas) return 1;
+      return 0;
+    }
+    if (key === 'country' || key === 'performer' || key === 'song') {
+      av = (av || '').toLowerCase();
+      bv = (bv || '').toLowerCase();
+      return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    }
+    av = typeof av === 'number' ? av : -Infinity;
+    bv = typeof bv === 'number' ? bv : -Infinity;
+    return dir === 'asc' ? av - bv : bv - av;
+  }
+
+  function renderTable() {
+    const allUserVotes = getUserVoteMap();
+    const totalCols = FIXED_COLS.length + dynamicUserCols.length + 1;
+
+    const ratedActs = acts.filter(act =>
+      Object.values(allUserVotes).some(uv => uv[act.code])
+    );
+    const rows = ratedActs.map(act => rowFor(act, allUserVotes));
+    rows.sort((a, b) => compareCells(a, b, sort.key, sort.dir));
+
+    const tbody = $('tableBody');
+    tbody.replaceChildren();
+
+    if (rows.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = totalCols;
+      td.className = 'empty-row';
+      td.textContent = 'No ratings yet — hit Start above and rate your first act!';
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    } else {
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.className = 'body-row';
+        tr.dataset.code = r.code;
+        if (editingCode === r.code) tr.classList.add('editing');
+
+        // Fixed columns
+        FIXED_COLS.forEach(col => {
+          const td = document.createElement('td');
+          td.className = col.cls;
+          td.dataset.key = col.key;
+          if (col.key === 'country') {
+            const country = document.createElement('div');
+            country.className = 'c-country';
+            country.textContent = r.flag + ' ' + r.country;
+            const actLine = document.createElement('div');
+            actLine.className = 'c-act-line';
+            const performer = document.createElement('span');
+            performer.className = 'c-performer';
+            performer.textContent = r.performer;
+            const songSpan = document.createElement('span');
+            songSpan.className = 'c-song';
+            songSpan.textContent = '”' + r.song + '”';
+            actLine.appendChild(performer);
+            actLine.appendChild(document.createTextNode(' · '));
+            actLine.appendChild(songSpan);
+            if (r.remind) {
+              const notes = document.createElement('span');
+              notes.className = 'c-notes';
+              notes.textContent = ' - ' + r.remind;
+              actLine.appendChild(notes);
+            }
+            td.appendChild(country);
+            td.appendChild(actLine);
+          } else {
+            td.textContent = (r.order === '' || r.order == null) ? '—' : String(r.order);
+          }
+          tr.appendChild(td);
+        });
+
+        // Per-user total columns
+        dynamicUserCols.forEach(uc => {
+          const td = document.createElement('td');
+          td.className = 'num' + (uc.isLocal ? ' total' : '');
+          td.dataset.key = 'user_' + uc.userId;
+          const val = r['user_' + uc.userId];
+          td.textContent = val !== null && val !== undefined ? String(val) : '—';
+          tr.appendChild(td);
+        });
+
+        // Avg column
+        const tdAvg = document.createElement('td');
+        tdAvg.className = 'num total';
+        tdAvg.dataset.key = 'avg';
+        tdAvg.textContent = r.avg !== null ? r.avg.toFixed(1) : '—';
+        tr.appendChild(tdAvg);
+
+        tr.addEventListener('click', () => editVote(r.code));
+        tbody.appendChild(tr);
+      });
+    }
+
+    $('tableHead').querySelectorAll('th').forEach(th => {
+      const arrow = th.querySelector('.arrow');
+      if (th.dataset.key === sort.key) {
+        th.classList.add('sorted');
+        if (arrow) arrow.textContent = sort.dir === 'asc' ? '▲' : '▼';
+      } else {
+        th.classList.remove('sorted');
+        if (arrow) arrow.textContent = '';
+      }
+    });
+
+    const sortKeySel = $('sortKey');
+    if (sortKeySel) sortKeySel.value = sort.key;
+    const sortDirBtn = $('sortDir');
+    if (sortDirBtn) sortDirBtn.textContent = sort.dir === 'asc' ? '↑' : '↓';
+
+    $('ratingsCount').textContent = rows.length + (rows.length === 1 ? ' rating' : ' ratings');
+  }
+
+  // ——— Reset ———
+
+  function resetVotes() {
+    if (!confirm('Erase ALL your saved votes on this device? This cannot be undone.')) return;
+    votes = {};
+    localStorage.removeItem(KEY_VOTES);
+    if (db && partyCode && userId) {
+      db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId + '/votes').remove().catch(() => {});
+    }
+    editingCode = null;
+    rebuildQueue();
+    renderStats();
+    renderTable();
+    entryPanel.classList.remove('active');
+    donePanel.style.display = 'none';
+    startPanel.style.display = 'block';
+  }
+
+  // ——— Scales ———
 
   function buildScales() {
     document.querySelectorAll('.scale').forEach(div => {
@@ -925,390 +1610,6 @@
       div.appendChild(opts);
       div.appendChild(right);
     });
-  }
-
-  function buildSortControls() {
-    const sel = $('sortKey');
-    Object.keys(SORT_KEYS).forEach(key => {
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = SORT_KEYS[key].label;
-      sel.appendChild(opt);
-    });
-    sel.value = sort.key;
-    $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
-    sel.addEventListener('change', () => {
-      sort.key = sel.value;
-      renderTable();
-    });
-    $('sortDir').addEventListener('click', () => {
-      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
-      renderTable();
-    });
-  }
-
-  function buildTableHead() {
-    const tr = $('tableHead');
-    tr.replaceChildren();
-    COLUMNS.forEach(col => {
-      const th = document.createElement('th');
-      if (col.cls) th.className = col.cls;
-      th.dataset.key = col.key;
-      const full = document.createElement('span');
-      full.className = 'lbl-full';
-      full.textContent = col.label;
-      th.appendChild(full);
-      if (col.short) {
-        const shortLbl = document.createElement('span');
-        shortLbl.className = 'lbl-short';
-        shortLbl.textContent = col.short;
-        th.appendChild(shortLbl);
-      }
-      th.appendChild(document.createTextNode(' '));
-      const arrow = document.createElement('span');
-      arrow.className = 'arrow';
-      th.appendChild(arrow);
-      th.addEventListener('click', () => onSortClick(col.key));
-      tr.appendChild(th);
-    });
-  }
-
-  function bindEvents() {
-    $('btnStart').addEventListener('click', startRating);
-    $('btnSave').addEventListener('click', onSave);
-    $('btnClear').addEventListener('click', clearForm);
-    $('btnSkip').addEventListener('click', onSkip);
-    $('btnReturnStart').addEventListener('click', () => {
-      donePanel.style.display = 'none';
-      startPanel.style.display = 'block';
-    });
-    $('namePill').addEventListener('click', () => openNameModal(false));
-    $('footerRename').addEventListener('click', e => { e.preventDefault(); openNameModal(false); });
-    $('footerReset').addEventListener('click', e => { e.preventDefault(); resetVotes(); });
-    $('nameSave').addEventListener('click', saveName);
-    $('nameCancel').addEventListener('click', () => nameModal.classList.remove('active'));
-    $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
-  }
-
-  function openNameModal(firstTime) {
-    $('nameInput').value = guestName;
-    $('nameCancel').style.display = firstTime ? 'none' : 'inline-block';
-    nameModal.classList.add('active');
-    setTimeout(() => $('nameInput').focus(), 50);
-  }
-  function saveName() {
-    const v = $('nameInput').value.trim();
-    if (!v) { $('nameInput').focus(); return; }
-    guestName = v;
-    localStorage.setItem(KEY_NAME, guestName);
-    renderName();
-    nameModal.classList.remove('active');
-  }
-  function renderName() {
-    $('nameValue').textContent = guestName || '—';
-  }
-
-  function startRating() {
-    if (queue.length === 0) return;
-    if (queueIdx >= queue.length) queueIdx = 0;
-    showCurrent();
-  }
-
-  function currentAct() {
-    if (editingCode) return acts.find(a => a.code === editingCode);
-    if (queueIdx >= queue.length) return null;
-    return queue[queueIdx];
-  }
-
-  function showCurrent() {
-    const act = currentAct();
-    startPanel.style.display = 'none';
-    donePanel.style.display = 'none';
-
-    if (!act) {
-      entryPanel.classList.remove('active');
-      donePanel.style.display = 'block';
-      return;
-    }
-
-    entryPanel.classList.add('active');
-
-    $('actFlag').textContent = act.flag;
-    $('actCountry').textContent = act.country;
-    $('actPerformer').textContent = act.performer;
-    $('actSong').textContent = '“' + act.song + '”';
-
-    const v = votes[act.code];
-    if (v) {
-      $('fRemind').value = v.remind || '';
-      SCORE_FIELDS.forEach(f => {
-        const val = v[f];
-        const radios = document.querySelectorAll('input[name="s_' + f + '"]');
-        radios.forEach(r => { r.checked = (parseInt(r.value, 10) === val); });
-      });
-    } else {
-      clearForm();
-    }
-
-    let note;
-    if (editingCode) note = '✎ Editing saved vote';
-    else if (votes[act.code]) note = '↻ Updating prior vote';
-    else note = '';
-    $('editingNote').textContent = note;
-
-    window.scrollTo({ top: entryPanel.offsetTop - 20, behavior: 'smooth' });
-  }
-
-  function clearForm() {
-    $('fRemind').value = '';
-    SCORE_FIELDS.forEach(f => {
-      document.querySelectorAll('input[name="s_' + f + '"]').forEach(r => { r.checked = false; });
-    });
-  }
-
-  function readForm() {
-    const obj = { remind: $('fRemind').value.trim() };
-    let total = 0;
-    SCORE_FIELDS.forEach(f => {
-      const checked = document.querySelector('input[name="s_' + f + '"]:checked');
-      const val = checked ? parseInt(checked.value, 10) : 0;
-      obj[f] = val;
-      total += val;
-    });
-    obj.total = total;
-    return obj;
-  }
-
-  function onSave() {
-    const act = currentAct();
-    if (!act) return;
-    votes[act.code] = readForm();
-    saveVotes();
-    renderStats();
-    renderTable();
-    advance();
-  }
-
-  function onSkip() {
-    const act = currentAct();
-    if (!act) return;
-    clearForm();
-    advance();
-  }
-
-  function advance() {
-    if (editingCode) {
-      editingCode = null;
-      showCurrent();
-      return;
-    }
-    queueIdx++;
-    if (queueIdx >= queue.length) {
-      entryPanel.classList.remove('active');
-      donePanel.style.display = 'block';
-      startPanel.style.display = 'none';
-      window.scrollTo({ top: donePanel.offsetTop - 20, behavior: 'smooth' });
-    } else {
-      showCurrent();
-    }
-  }
-
-  function editVote(code) {
-    const act = acts.find(a => a.code === code);
-    if (!act) return;
-    editingCode = code;
-    startPanel.style.display = 'none';
-    donePanel.style.display = 'none';
-    showCurrent();
-  }
-
-  function renderStats() {
-    const eligibleForCount = acts.filter(a => a.order !== 'X');
-    const ratedCount = eligibleForCount.filter(a => votes[a.code]).length;
-    $('statProgress').textContent = ratedCount + ' / ' + eligibleForCount.length;
-
-    const codes = Object.keys(votes);
-    if (codes.length === 0) {
-      $('statAvg').textContent = '—';
-      $('statTop').textContent = '—';
-      return;
-    }
-    let sum = 0;
-    codes.forEach(c => sum += (votes[c].total || 0));
-    $('statAvg').textContent = (sum / codes.length).toFixed(1);
-
-    let topCode = codes[0];
-    codes.forEach(c => { if ((votes[c].total || 0) > (votes[topCode].total || 0)) topCode = c; });
-    const topAct = acts.find(a => a.code === topCode);
-    const topEl = $('statTop');
-    topEl.replaceChildren();
-    if (topAct) {
-      topEl.appendChild(document.createTextNode(
-        topAct.flag + ' ' + topAct.performer + ' · “' + topAct.song + '” '
-      ));
-      const sub = document.createElement('span');
-      sub.className = 'top-score';
-      sub.textContent = '(' + (votes[topCode].total || 0) + ')';
-      topEl.appendChild(sub);
-    }
-  }
-
-  function onSortClick(key) {
-    if (sort.key === key) {
-      sort.dir = (sort.dir === 'asc') ? 'desc' : 'asc';
-    } else {
-      sort.key = key;
-      sort.dir = 'asc';
-    }
-    renderTable();
-  }
-
-  function rowFor(act) {
-    const v = votes[act.code];
-    return {
-      code: act.code,
-      flag: act.flag,
-      country: act.country,
-      performer: act.performer,
-      song: act.song,
-      order: act.order,
-      remind: v.remind || '',
-      vocals: v.vocals,
-      performance: v.performance,
-      song_q: v.song,
-      original: v.original,
-      stage: v.stage,
-      total: v.total
-    };
-  }
-
-  function compareCells(a, b, key, dir) {
-    const meta = SORT_KEYS[key] || { type: 'string' };
-    let av = a[key], bv = b[key];
-
-    if (meta.type === 'order') {
-      const an = parseInt(av, 10);
-      const bn = parseInt(bv, 10);
-      const aHas = Number.isFinite(an);
-      const bHas = Number.isFinite(bn);
-      if (aHas && bHas) return dir === 'asc' ? an - bn : bn - an;
-      if (aHas) return -1;
-      if (bHas) return 1;
-      return 0;
-    }
-
-    if (meta.type === 'num') {
-      av = (typeof av === 'number') ? av : -Infinity;
-      bv = (typeof bv === 'number') ? bv : -Infinity;
-      return dir === 'asc' ? av - bv : bv - av;
-    }
-    av = (av || '').toString().toLowerCase();
-    bv = (bv || '').toString().toLowerCase();
-    if (av < bv) return dir === 'asc' ? -1 : 1;
-    if (av > bv) return dir === 'asc' ? 1 : -1;
-    return 0;
-  }
-
-  function renderTable() {
-    const ratedActs = acts.filter(a => votes[a.code]);
-    const rows = ratedActs.map(rowFor);
-    rows.sort((a, b) => compareCells(a, b, sort.key, sort.dir));
-
-    const tbody = $('tableBody');
-    tbody.replaceChildren();
-
-    if (rows.length === 0) {
-      const tr = document.createElement('tr');
-      const td = document.createElement('td');
-      td.colSpan = COLUMNS.length;
-      td.className = 'empty-row';
-      td.textContent = 'No ratings yet — hit Start above and rate your first act!';
-      tr.appendChild(td);
-      tbody.appendChild(tr);
-    } else {
-      rows.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.className = 'body-row';
-        tr.dataset.code = r.code;
-        if (editingCode === r.code) tr.classList.add('editing');
-        COLUMNS.forEach(col => {
-          const td = document.createElement('td');
-          if (col.cls) td.className = col.cls;
-          td.dataset.key = col.key;
-          if (col.key === 'country') {
-            const country = document.createElement('div');
-            country.className = 'c-country';
-            country.textContent = r.flag + ' ' + r.country;
-            const actLine = document.createElement('div');
-            actLine.className = 'c-act-line';
-            const performer = document.createElement('span');
-            performer.className = 'c-performer';
-            performer.textContent = r.performer;
-            const song = document.createElement('span');
-            song.className = 'c-song';
-            song.textContent = '“' + r.song + '”';
-            actLine.appendChild(performer);
-            actLine.appendChild(document.createTextNode(' · '));
-            actLine.appendChild(song);
-            if (r.remind) {
-              const notes = document.createElement('span');
-              notes.className = 'c-notes';
-              notes.textContent = ' - ' + r.remind;
-              actLine.appendChild(notes);
-            }
-            td.appendChild(country);
-            td.appendChild(actLine);
-          } else {
-            let display;
-            if (col.key === 'order') {
-              display = (r.order === '' || r.order == null) ? '—' : r.order;
-            } else {
-              const val = r[col.key];
-              if (val === undefined || val === null || val === '') {
-                display = (col.type === 'num') ? '0' : '—';
-              } else {
-                display = val;
-              }
-            }
-            td.textContent = String(display);
-          }
-          tr.appendChild(td);
-        });
-        tr.addEventListener('click', () => editVote(r.code));
-        tbody.appendChild(tr);
-      });
-    }
-
-    $('tableHead').querySelectorAll('th').forEach(th => {
-      const arrow = th.querySelector('.arrow');
-      if (th.dataset.key === sort.key) {
-        th.classList.add('sorted');
-        arrow.textContent = sort.dir === 'asc' ? '▲' : '▼';
-      } else {
-        th.classList.remove('sorted');
-        arrow.textContent = '';
-      }
-    });
-
-    const sortKeySel = $('sortKey');
-    if (sortKeySel) sortKeySel.value = sort.key;
-    const sortDirBtn = $('sortDir');
-    if (sortDirBtn) sortDirBtn.textContent = sort.dir === 'asc' ? '↑' : '↓';
-
-    $('ratingsCount').textContent = rows.length + ' ratings';
-  }
-
-  function resetVotes() {
-    if (!confirm('Erase ALL your saved votes on this device? This cannot be undone.')) return;
-    votes = {};
-    localStorage.removeItem(KEY_VOTES);
-    editingCode = null;
-    rebuildQueue();
-    renderStats();
-    renderTable();
-    entryPanel.classList.remove('active');
-    donePanel.style.display = 'none';
-    startPanel.style.display = 'block';
   }
 
   document.addEventListener('DOMContentLoaded', init);
