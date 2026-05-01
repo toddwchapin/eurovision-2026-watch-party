@@ -377,10 +377,16 @@
 
   function syncLocalVotes() {
     if (!db || !partyCode || !userId) return;
+    const syncable = {};
+    Object.entries(votes).forEach(([code, v]) => {
+      if (v && ['vocals','performance','song','original','stage','total'].every(
+        f => typeof v[f] === 'number'
+      )) syncable[code] = v;
+    });
     db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId).set({
       name: guestName || 'Guest',
-      votes: votes
-    }).catch(() => {});
+      votes: Object.keys(syncable).length ? syncable : null
+    }).catch(e => console.warn('Firebase sync failed:', e));
   }
 
   // ——— Party UI ———
@@ -740,7 +746,7 @@
     const map = {};
     map[userId] = votes;
     Object.entries(partyVotes).forEach(([uid, data]) => {
-      map[uid] = data.votes || {};
+      if (uid !== userId) map[uid] = data.votes || {};
     });
     return map;
   }
