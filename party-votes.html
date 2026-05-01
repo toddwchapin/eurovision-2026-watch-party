@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eurovision 2026 — All Parties</title>
+<title>Eurovision 2026 — Party Votes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -72,8 +72,8 @@
 
   <header class="app-header">
     <div class="title-block">
-      <h1 class="title"><span class="flourish">A</span>ll Parties — Eurovision 2026</h1>
-      <div class="subtitle"><span>Aggregate results across every watch party</span></div>
+      <h1 class="title"><span class="flourish">P</span>arty Votes — Eurovision 2026</h1>
+      <div class="subtitle"><span id="partySubtitle">Loading party…</span></div>
     </div>
     <svg class="secession-divider" viewBox="0 0 560 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <g fill="none" stroke="#D4AF37" stroke-width="0.8" opacity="0.7">
@@ -122,6 +122,8 @@
   const FIREBASE_CONFIG = cfg.firebaseConfig;
   const acts = JSON.parse(document.getElementById('acts-data').textContent);
 
+  const KEY_PARTY = 'ev_' + PARTY_YEAR + '_party';
+
   const FIXED_COLS = [
     { key: 'order',   label: '#',   cls: 'num' },
     { key: 'country', label: 'Act', cls: 'act-cell' },
@@ -134,36 +136,50 @@
     avg:       { type: 'num',    label: 'Avg Total' },
   };
 
-  let allParties = {};
+  let partyUsers = {};
   let userCols = [];
   let sort = { key: 'avg', dir: 'desc' };
 
   const $ = id => document.getElementById(id);
 
+  const partyCode = (
+    new URLSearchParams(window.location.search).get('party') ||
+    localStorage.getItem(KEY_PARTY) ||
+    ''
+  ).toUpperCase().slice(0, 8);
+
+  const subtitle = $('partySubtitle');
+
+  if (!partyCode) {
+    subtitle.textContent = 'No party selected — open this page from the party bar on the main page.';
+    return;
+  }
+
+  subtitle.textContent = 'Party ' + partyCode;
+
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
   const db = firebase.database();
-  db.ref(PARTY_YEAR + '/parties').on('value', snap => {
-    allParties = snap.val() || {};
+  db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users').on('value', snap => {
+    partyUsers = snap.val() || {};
     rebuildUserCols();
     buildSortControls();
     buildTableHead();
     renderTable();
   }, err => {
     console.warn('Firebase read failed:', err);
+    subtitle.textContent = 'Party ' + partyCode + ' — read failed (' + err.code + ')';
   });
 
   function rebuildUserCols() {
-    const seen = {};
-    Object.entries(allParties).forEach(([partyCode, party]) => {
-      const users = (party && party.users) || {};
-      Object.entries(users).forEach(([uid, data]) => {
-        if (!data) return;
-        const name = (data.name || 'Guest').trim();
-        const label = name.slice(0, 2) || '??';
-        seen[uid] = { uid, label, name, votes: data.votes || {} };
-      });
+    userCols = Object.entries(partyUsers).map(([uid, data]) => {
+      const name = ((data && data.name) || 'Guest').trim();
+      return {
+        uid,
+        label: name.slice(0, 2) || '??',
+        name,
+        votes: (data && data.votes) || {},
+      };
     });
-    userCols = Object.values(seen);
     userCols.sort((a, b) => a.label.localeCompare(b.label) || a.uid.localeCompare(b.uid));
   }
 
@@ -310,7 +326,7 @@
       const td = document.createElement('td');
       td.colSpan = totalCols;
       td.className = 'empty-row';
-      td.textContent = 'No votes yet across any party.';
+      td.textContent = 'No votes yet in this party.';
       tr.appendChild(td);
       tbody.appendChild(tr);
     } else {
