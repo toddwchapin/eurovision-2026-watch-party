@@ -995,7 +995,7 @@
         const lbl = document.createElement('label');
         lbl.htmlFor = id;
         lbl.textContent = String(v);
-        lbl.addEventListener('click', function () { input.checked = true; });
+        lbl.addEventListener('click', function () { input.click(); });
         opts.appendChild(input);
         opts.appendChild(lbl);
       }
