@@ -660,6 +660,7 @@
     $('actPerformer').textContent = act.performer;
     $('actSong').textContent = '”' + act.song + '”';
 
+    clearForm();
     const v = votes[act.code];
     if (v) {
       $('fRemind').value = v.remind || '';
@@ -668,8 +669,6 @@
           r.checked = (parseInt(r.value, 10) === v[f]);
         });
       });
-    } else {
-      clearForm();
     }
 
     $('editingNote').textContent = editingCode ? '✎ Editing saved vote'
