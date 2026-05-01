@@ -641,14 +641,28 @@
   "year": "2026",
   "firebaseConfig": {
   {
-  const firebaseConfig = {
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
   apiKey: "AIzaSyBQ1OT4gV8j0uOeltypIAq4IWZ1vkvIx2Y",
   authDomain: "eurovision-watch-party.firebaseapp.com",
+  databaseURL: "https://eurovision-watch-party-default-rtdb.firebaseio.com",
   projectId: "eurovision-watch-party",
   storageBucket: "eurovision-watch-party.firebasestorage.app",
   messagingSenderId: "267617361444",
   appId: "1:267617361444:web:cdcb248eacd071dde842b1",
   measurementId: "G-C8JWNHCKJJ"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
   }
 }
 </script>
