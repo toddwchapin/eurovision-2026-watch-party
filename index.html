@@ -283,12 +283,25 @@
     { key: 'country', label: 'Act', cls: 'act-cell' },
   ];
 
+  const SCORE_COLS = [
+    { key: 'score_vocals',      label: 'Vocal',       field: 'vocals' },
+    { key: 'score_performance', label: 'Performance', field: 'performance' },
+    { key: 'score_song',        label: 'Song',        field: 'song' },
+    { key: 'score_original',    label: 'Original',    field: 'original' },
+    { key: 'score_stage',       label: 'Stage',       field: 'stage' },
+  ];
+
   const BASE_SORT_KEYS = {
-    order:     { type: 'order',  label: 'Performance #' },
-    country:   { type: 'string', label: 'Country' },
-    performer: { type: 'string', label: 'Performer' },
-    song:      { type: 'string', label: 'Song' },
-    avg:       { type: 'num',    label: 'Avg Total' },
+    order:             { type: 'order',  label: 'Performance #' },
+    country:           { type: 'string', label: 'Country' },
+    performer:         { type: 'string', label: 'Performer' },
+    song:              { type: 'string', label: 'Song' },
+    score_vocals:      { type: 'num',    label: 'Vocal' },
+    score_performance: { type: 'num',    label: 'Performance' },
+    score_song:        { type: 'num',    label: 'Song quality' },
+    score_original:    { type: 'num',    label: 'Originality' },
+    score_stage:       { type: 'num',    label: 'Stagecraft' },
+    total:             { type: 'num',    label: 'Total' },
   };
 
   let acts = [];
@@ -297,14 +310,13 @@
   let votes = {};
   let guestName = '';
   let editingCode = null;
-  let sort = { key: 'avg', dir: 'desc' };
+  let sort = { key: 'total', dir: 'desc' };
 
   // Party / sync state
   let partyCode = '';
   let userId = '';
   let partyVotes = {};       // { [uid]: { name, votes } } — from Firebase
   let db = null;
-  let dynamicUserCols = [];  // [{ userId, name, isLocal }] — local user first
 
   const $ = id => document.getElementById(id);
   const startPanel  = $('startPanel');
@@ -347,7 +359,8 @@
 
   function startSync() {
     initFirebase();
-    rebuildDynamicColumns();
+    buildTableHead();
+    buildSortControls();
     renderStats();
     renderTable();
     renderPartyBar();
@@ -371,9 +384,7 @@
     const ref = db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users');
     ref.on('value', snapshot => {
       partyVotes = snapshot.val() || {};
-      rebuildDynamicColumns();
       renderStats();
-      renderTable();
     });
     syncLocalVotes();
   }
@@ -471,32 +482,7 @@
     if (allRated) queueIdx = queue.length;
   }
 
-  // ——— Dynamic columns ———
-
-  function rebuildDynamicColumns() {
-    // Merge all known users: local first, then others from Firebase
-    const allUsers = {};
-    allUsers[userId] = { name: guestName || 'You', votes, isLocal: true };
-    Object.entries(partyVotes).forEach(([uid, data]) => {
-      if (uid !== userId) allUsers[uid] = { name: data.name || 'Guest', votes: data.votes || {}, isLocal: false };
-    });
-
-    dynamicUserCols = Object.entries(allUsers).map(([uid, data]) => ({
-      userId: uid,
-      name: data.isLocal ? (guestName || 'You') : data.name,
-      isLocal: !!data.isLocal,
-    }));
-    dynamicUserCols.sort((a, b) => {
-      if (a.isLocal) return -1;
-      if (b.isLocal) return 1;
-      return a.name.localeCompare(b.name);
-    });
-
-    buildTableHead();
-    buildSortControls();
-  }
-
-  // ——— Table head (rebuilt on each party change) ———
+  // ——— Table head ———
 
   function buildTableHead() {
     const tr = $('tableHead');
@@ -514,27 +500,27 @@
       tr.appendChild(th);
     });
 
-    dynamicUserCols.forEach(uc => {
+    SCORE_COLS.forEach(col => {
       const th = document.createElement('th');
-      th.className = 'num' + (uc.isLocal ? ' sorted-local' : '');
-      th.dataset.key = 'user_' + uc.userId;
-      th.textContent = uc.name + (uc.isLocal ? ' ★' : '');
+      th.className = 'num';
+      th.dataset.key = col.key;
+      th.textContent = col.label;
       const arrow = document.createElement('span');
       arrow.className = 'arrow';
       th.appendChild(arrow);
-      th.addEventListener('click', () => onSortClick('user_' + uc.userId));
+      th.addEventListener('click', () => onSortClick(col.key));
       tr.appendChild(th);
     });
 
-    const thAvg = document.createElement('th');
-    thAvg.className = 'num total';
-    thAvg.dataset.key = 'avg';
-    thAvg.textContent = 'Avg';
-    const arrowAvg = document.createElement('span');
-    arrowAvg.className = 'arrow';
-    thAvg.appendChild(arrowAvg);
-    thAvg.addEventListener('click', () => onSortClick('avg'));
-    tr.appendChild(thAvg);
+    const thTotal = document.createElement('th');
+    thTotal.className = 'num total';
+    thTotal.dataset.key = 'total';
+    thTotal.textContent = 'Total';
+    const arrowTotal = document.createElement('span');
+    arrowTotal.className = 'arrow';
+    thTotal.appendChild(arrowTotal);
+    thTotal.addEventListener('click', () => onSortClick('total'));
+    tr.appendChild(thTotal);
   }
 
   // ——— Sort controls ———
@@ -545,22 +531,14 @@
     oldSel.parentNode.replaceChild(sel, oldSel);
     sel.id = 'sortKey';
 
-    const allSortKeys = Object.assign({}, BASE_SORT_KEYS);
-    dynamicUserCols.forEach(uc => {
-      allSortKeys['user_' + uc.userId] = {
-        type: 'num',
-        label: uc.isLocal ? uc.name + ' (you)' : uc.name,
-      };
-    });
-
-    Object.keys(allSortKeys).forEach(key => {
+    Object.keys(BASE_SORT_KEYS).forEach(key => {
       const opt = document.createElement('option');
       opt.value = key;
-      opt.textContent = allSortKeys[key].label;
+      opt.textContent = BASE_SORT_KEYS[key].label;
       sel.appendChild(opt);
     });
 
-    if (!allSortKeys[sort.key]) sort.key = 'avg';
+    if (!BASE_SORT_KEYS[sort.key]) sort.key = 'total';
     sel.value = sort.key;
 
     sel.onchange = () => { sort.key = sel.value; renderTable(); };
@@ -633,9 +611,7 @@
     localStorage.setItem(KEY_NAME, guestName);
     renderName();
     nameModal.classList.remove('active');
-    syncLocalVotes();         // update name in Firebase
-    rebuildDynamicColumns();  // update column header
-    renderTable();
+    syncLocalVotes();  // update name in Firebase
   }
 
   function renderName() {
@@ -818,8 +794,8 @@
     renderTable();
   }
 
-  function rowFor(act, allUserVotes) {
-    const localV = votes[act.code];
+  function rowFor(act) {
+    const v = votes[act.code];
     const row = {
       code: act.code,
       flag: act.flag,
@@ -827,12 +803,11 @@
       performer: act.performer,
       song: act.song,
       order: act.order,
-      remind: localV ? (localV.remind || '') : '',
-      avg: actAvg(act.code, allUserVotes),
+      remind: v ? (v.remind || '') : '',
+      total: v && typeof v.total === 'number' ? v.total : null,
     };
-    dynamicUserCols.forEach(uc => {
-      const uv = allUserVotes[uc.userId];
-      row['user_' + uc.userId] = uv && uv[act.code] != null ? (uv[act.code].total ?? null) : null;
+    SCORE_COLS.forEach(col => {
+      row[col.key] = v && typeof v[col.field] === 'number' ? v[col.field] : null;
     });
     return row;
   }
@@ -862,13 +837,10 @@
   }
 
   function renderTable() {
-    const allUserVotes = getUserVoteMap();
-    const totalCols = FIXED_COLS.length + dynamicUserCols.length + 1;
+    const totalCols = FIXED_COLS.length + SCORE_COLS.length + 1;
 
-    const ratedActs = acts.filter(act =>
-      Object.values(allUserVotes).some(uv => uv[act.code])
-    );
-    const rows = ratedActs.map(act => rowFor(act, allUserVotes));
+    const ratedActs = acts.filter(act => votes[act.code]);
+    const rows = ratedActs.map(rowFor);
     rows.sort((a, b) => compareCells(a, b, sort.key, sort.dir));
 
     const tbody = $('tableBody');
@@ -923,22 +895,22 @@
           tr.appendChild(td);
         });
 
-        // Per-user total columns
-        dynamicUserCols.forEach(uc => {
+        // Per-field score columns
+        SCORE_COLS.forEach(col => {
           const td = document.createElement('td');
-          td.className = 'num' + (uc.isLocal ? ' total' : '');
-          td.dataset.key = 'user_' + uc.userId;
-          const val = r['user_' + uc.userId];
+          td.className = 'num';
+          td.dataset.key = col.key;
+          const val = r[col.key];
           td.textContent = val !== null && val !== undefined ? String(val) : '—';
           tr.appendChild(td);
         });
 
-        // Avg column
-        const tdAvg = document.createElement('td');
-        tdAvg.className = 'num total';
-        tdAvg.dataset.key = 'avg';
-        tdAvg.textContent = r.avg !== null ? r.avg.toFixed(1) : '—';
-        tr.appendChild(tdAvg);
+        // Total column
+        const tdTotal = document.createElement('td');
+        tdTotal.className = 'num total';
+        tdTotal.dataset.key = 'total';
+        tdTotal.textContent = r.total !== null && r.total !== undefined ? String(r.total) : '—';
+        tr.appendChild(tdTotal);
 
         tr.addEventListener('click', () => editVote(r.code));
         tbody.appendChild(tr);
