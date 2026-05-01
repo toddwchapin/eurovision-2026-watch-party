@@ -138,6 +138,7 @@
         <span>Party</span>
         <strong id="partyCodeValue"></strong>
         <button class="btn-copy" id="btnCopyParty" title="Copy invite link">Copy link</button>
+        <button class="btn-copy" id="btnSeeVotes" title="See all party votes">See Votes</button>
       </div>
     </div>
   </header>
@@ -607,8 +608,12 @@
     });
     $('joinCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnJoinParty').click(); });
     $('btnCopyParty').addEventListener('click', copyPartyLink);
+    $('btnSeeVotes').addEventListener('click', e => {
+      e.stopPropagation();
+      window.open('all-parties.html', '_blank', 'noopener');
+    });
     $('partyBar').addEventListener('click', e => {
-      if (e.target !== $('btnCopyParty')) copyPartyLink();
+      if (e.target !== $('btnCopyParty') && e.target !== $('btnSeeVotes')) copyPartyLink();
     });
   }
 
