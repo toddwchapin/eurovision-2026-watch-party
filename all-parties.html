@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eurovision 2026 — All Parties</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<script type="application/json" id="party-config">
+{
+  "year": "2026",
+  "firebaseConfig": {
+    "apiKey": "AIzaSyBQ1OT4gV8j0uOeltypIAq4IWZ1vkvIx2Y",
+    "authDomain": "eurovision-watch-party.firebaseapp.com",
+    "databaseURL": "https://eurovision-watch-party-default-rtdb.firebaseio.com",
+    "projectId": "eurovision-watch-party",
+    "storageBucket": "eurovision-watch-party.firebasestorage.app",
+    "messagingSenderId": "267617361444",
+    "appId": "1:267617361444:web:cdcb248eacd071dde842b1"
+  }
+}
+</script>
+
+<script type="application/json" id="acts-data">
+[
+  {"code":"AL","country":"Albania","flag":"🇦🇱","performer":"Alis","song":"Nân","order":""},
+  {"code":"AM","country":"Armenia","flag":"🇦🇲","performer":"SIMÓN","song":"Paloma Rumba","order":""},
+  {"code":"AU","country":"Australia","flag":"🇦🇺","performer":"Delta Goodrem","song":"Eclipse","order":""},
+  {"code":"AT","country":"Austria","flag":"🇦🇹","performer":"COSMÓ","song":"Tanzschein","order":""},
+  {"code":"AZ","country":"Azerbaijan","flag":"🇦🇿","performer":"JIVA","song":"Just Go","order":""},
+  {"code":"BE","country":"Belgium","flag":"🇧🇪","performer":"ESSYLA","song":"Dancing on the Ice","order":""},
+  {"code":"BG","country":"Bulgaria","flag":"🇧🇬","performer":"DARA","song":"Bangaranga","order":""},
+  {"code":"HR","country":"Croatia","flag":"🇭🇷","performer":"LELEK","song":"Andromeda","order":""},
+  {"code":"CY","country":"Cyprus","flag":"🇨🇾","performer":"Antigoni","song":"JALLA","order":""},
+  {"code":"CZ","country":"Czechia","flag":"🇨🇿","performer":"Daniel Zizka","song":"CROSSROADS","order":""},
+  {"code":"DK","country":"Denmark","flag":"🇩🇰","performer":"Søren Torpegaard Lund","song":"Før Vi Går Hjem","order":""},
+  {"code":"EE","country":"Estonia","flag":"🇪🇪","performer":"Vanilla Ninja","song":"Too Epic To Be True","order":""},
+  {"code":"FI","country":"Finland","flag":"🇫🇮","performer":"Linda Lampenius x Pete Parkkonen","song":"Liekinheitin","order":""},
+  {"code":"FR","country":"France","flag":"🇫🇷","performer":"Monroe","song":"Regarde !","order":""},
+  {"code":"GE","country":"Georgia","flag":"🇬🇪","performer":"Bzikebi","song":"On Replay","order":""},
+  {"code":"DE","country":"Germany","flag":"🇩🇪","performer":"Sarah Engels","song":"Fire","order":""},
+  {"code":"GR","country":"Greece","flag":"🇬🇷","performer":"Akylas","song":"Ferto","order":""},
+  {"code":"IL","country":"Israel","flag":"🇮🇱","performer":"Noam Bettan","song":"Michelle","order":""},
+  {"code":"IT","country":"Italy","flag":"🇮🇹","performer":"Sal Da Vinci","song":"Per Sempre Sì","order":""},
+  {"code":"LV","country":"Latvia","flag":"🇱🇻","performer":"Atvara","song":"Ēnā","order":""},
+  {"code":"LT","country":"Lithuania","flag":"🇱🇹","performer":"Lion Ceccah","song":"Sólo Quiero Más","order":""},
+  {"code":"LU","country":"Luxembourg","flag":"🇱🇺","performer":"Eva Marija","song":"Mother Nature","order":""},
+  {"code":"MT","country":"Malta","flag":"🇲🇹","performer":"AIDAN","song":"Bella","order":""},
+  {"code":"MD","country":"Moldova","flag":"🇲🇩","performer":"Satoshi","song":"Viva, Moldova!","order":""},
+  {"code":"ME","country":"Montenegro","flag":"🇲🇪","performer":"Tamara Živković","song":"Nova Zora","order":""},
+  {"code":"NO","country":"Norway","flag":"🇳🇴","performer":"JONAS LOVV","song":"YA YA YA","order":""},
+  {"code":"PL","country":"Poland","flag":"🇵🇱","performer":"ALICJA","song":"Pray","order":""},
+  {"code":"PT","country":"Portugal","flag":"🇵🇹","performer":"Bandidos do Cante","song":"Rosa","order":""},
+  {"code":"RO","country":"Romania","flag":"🇷🇴","performer":"Alexandra Căpitănescu","song":"Choke Me","order":""},
+  {"code":"SM","country":"San Marino","flag":"🇸🇲","performer":"SENHIT","song":"Superstar","order":""},
+  {"code":"RS","country":"Serbia","flag":"🇷🇸","performer":"LAVINA","song":"Kraj Mene","order":""},
+  {"code":"SE","country":"Sweden","flag":"🇸🇪","performer":"FELICIA","song":"My System","order":""},
+  {"code":"CH","country":"Switzerland","flag":"🇨🇭","performer":"Veronica Fusaro","song":"Alice","order":""},
+  {"code":"UA","country":"Ukraine","flag":"🇺🇦","performer":"LELÉKA","song":"Ridnym","order":""},
+  {"code":"GB","country":"United Kingdom","flag":"🇬🇧","performer":"LOOK MUM NO COMPUTER","song":"Eins, Zwei, Drei","order":""}
+]
+</script>
+
+<div class="wrap">
+
+  <header class="app-header">
+    <div class="title-block">
+      <h1 class="title"><span class="flourish">A</span>ll Parties — Eurovision 2026</h1>
+      <div class="subtitle"><span>Aggregate results across every watch party</span></div>
+    </div>
+    <svg class="secession-divider" viewBox="0 0 560 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g fill="none" stroke="#D4AF37" stroke-width="0.8" opacity="0.7">
+        <path d="M0 9 L220 9"/>
+        <path d="M340 9 L560 9"/>
+        <path d="M220 9 C240 9 245 1 260 1 C275 1 280 9 280 9 C280 9 285 17 300 17 C315 17 320 9 340 9"/>
+        <circle cx="280" cy="9" r="2.5" fill="#D4AF37"/>
+        <circle cx="232" cy="9" r="1.2" fill="#D4AF37"/>
+        <circle cx="328" cy="9" r="1.2" fill="#D4AF37"/>
+      </g>
+    </svg>
+  </header>
+
+  <section class="card table-card">
+    <div class="table-title">
+      <span class="tt-label" id="ratingsCount">0 ratings</span>
+      <div class="table-controls">
+        <label class="sort-label">Sort:
+          <select id="sortKey"></select>
+        </label>
+        <button class="btn-dir" id="sortDir" type="button" aria-label="Toggle sort direction">↓</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="rated" id="ratedTable">
+        <thead>
+          <tr id="tableHead"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="app-footer">
+    <a class="nav-link" href="index.html">← Back to my watch party</a>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const cfg = JSON.parse(document.getElementById('party-config').textContent);
+  const PARTY_YEAR = cfg.year || '2026';
+  const FIREBASE_CONFIG = cfg.firebaseConfig;
+  const acts = JSON.parse(document.getElementById('acts-data').textContent);
+
+  const FIXED_COLS = [
+    { key: 'order',   label: '#',   cls: 'num' },
+    { key: 'country', label: 'Act', cls: 'act-cell' },
+  ];
+  const BASE_SORT_KEYS = {
+    order:     { type: 'order',  label: 'Performance #' },
+    country:   { type: 'string', label: 'Country' },
+    performer: { type: 'string', label: 'Performer' },
+    song:      { type: 'string', label: 'Song' },
+    avg:       { type: 'num',    label: 'Avg Total' },
+  };
+
+  let allParties = {};
+  let userCols = [];
+  let sort = { key: 'avg', dir: 'desc' };
+
+  const $ = id => document.getElementById(id);
+
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  const db = firebase.database();
+  db.ref(PARTY_YEAR + '/parties').on('value', snap => {
+    allParties = snap.val() || {};
+    rebuildUserCols();
+    buildSortControls();
+    buildTableHead();
+    renderTable();
+  }, err => {
+    console.warn('Firebase read failed:', err);
+  });
+
+  function rebuildUserCols() {
+    const seen = {};
+    Object.entries(allParties).forEach(([partyCode, party]) => {
+      const users = (party && party.users) || {};
+      Object.entries(users).forEach(([uid, data]) => {
+        if (!data) return;
+        const name = (data.name || 'Guest').trim();
+        const label = name.slice(0, 2) || '??';
+        seen[uid] = { uid, label, name, votes: data.votes || {} };
+      });
+    });
+    userCols = Object.values(seen);
+    userCols.sort((a, b) => a.label.localeCompare(b.label) || a.uid.localeCompare(b.uid));
+  }
+
+  function actAvg(code) {
+    const totals = userCols
+      .map(u => u.votes[code] ? (u.votes[code].total || 0) : null)
+      .filter(t => t !== null);
+    return totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
+  }
+
+  function buildTableHead() {
+    const tr = $('tableHead');
+    tr.replaceChildren();
+
+    FIXED_COLS.forEach(col => {
+      const th = document.createElement('th');
+      th.className = col.cls;
+      th.dataset.key = col.key;
+      th.textContent = col.label;
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      th.appendChild(arrow);
+      th.addEventListener('click', () => onSortClick(col.key));
+      tr.appendChild(th);
+    });
+
+    userCols.forEach(uc => {
+      const th = document.createElement('th');
+      th.className = 'num';
+      th.dataset.key = 'user_' + uc.uid;
+      th.textContent = uc.label;
+      th.title = uc.name;
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      th.appendChild(arrow);
+      th.addEventListener('click', () => onSortClick('user_' + uc.uid));
+      tr.appendChild(th);
+    });
+
+    const thAvg = document.createElement('th');
+    thAvg.className = 'num total';
+    thAvg.dataset.key = 'avg';
+    thAvg.textContent = 'Avg';
+    const arrowAvg = document.createElement('span');
+    arrowAvg.className = 'arrow';
+    thAvg.appendChild(arrowAvg);
+    thAvg.addEventListener('click', () => onSortClick('avg'));
+    tr.appendChild(thAvg);
+  }
+
+  function buildSortControls() {
+    const oldSel = $('sortKey');
+    const sel = oldSel.cloneNode(false);
+    oldSel.parentNode.replaceChild(sel, oldSel);
+    sel.id = 'sortKey';
+
+    const allKeys = Object.assign({}, BASE_SORT_KEYS);
+    userCols.forEach(uc => {
+      allKeys['user_' + uc.uid] = { type: 'num', label: uc.label };
+    });
+
+    Object.keys(allKeys).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = allKeys[key].label;
+      sel.appendChild(opt);
+    });
+
+    if (!allKeys[sort.key]) sort.key = 'avg';
+    sel.value = sort.key;
+
+    sel.onchange = () => { sort.key = sel.value; renderTable(); };
+    $('sortDir').onclick = () => {
+      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
+      $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
+      renderTable();
+    };
+    $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
+  }
+
+  function onSortClick(key) {
+    if (sort.key === key) {
+      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sort.key = key;
+      sort.dir = (key === 'country' || key === 'performer' || key === 'song' || key === 'order') ? 'asc' : 'desc';
+    }
+    renderTable();
+  }
+
+  function rowFor(act) {
+    const row = {
+      code: act.code,
+      flag: act.flag,
+      country: act.country,
+      performer: act.performer,
+      song: act.song,
+      order: act.order,
+      avg: actAvg(act.code),
+    };
+    userCols.forEach(uc => {
+      const v = uc.votes[act.code];
+      row['user_' + uc.uid] = v && v.total != null ? v.total : null;
+    });
+    return row;
+  }
+
+  function compareCells(a, b, key, dir) {
+    let av = a[key], bv = b[key];
+
+    if (key === 'order') {
+      const an = parseInt(av, 10), bn = parseInt(bv, 10);
+      const aHas = Number.isFinite(an), bHas = Number.isFinite(bn);
+      if (aHas && bHas) return dir === 'asc' ? an - bn : bn - an;
+      if (aHas) return -1;
+      if (bHas) return 1;
+      return 0;
+    }
+    if (key === 'country' || key === 'performer' || key === 'song') {
+      av = (av || '').toLowerCase();
+      bv = (bv || '').toLowerCase();
+      return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    }
+    const aMissing = typeof av !== 'number';
+    const bMissing = typeof bv !== 'number';
+    if (aMissing && bMissing) return 0;
+    if (aMissing) return 1;
+    if (bMissing) return -1;
+    return dir === 'asc' ? av - bv : bv - av;
+  }
+
+  function renderTable() {
+    const totalCols = FIXED_COLS.length + userCols.length + 1;
+
+    const ratedActs = acts.filter(act => userCols.some(u => u.votes[act.code]));
+    const rows = ratedActs.map(rowFor);
+    rows.sort((a, b) => compareCells(a, b, sort.key, sort.dir));
+
+    const tbody = $('tableBody');
+    tbody.replaceChildren();
+
+    if (rows.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = totalCols;
+      td.className = 'empty-row';
+      td.textContent = 'No votes yet across any party.';
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    } else {
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.className = 'body-row';
+        tr.dataset.code = r.code;
+
+        FIXED_COLS.forEach(col => {
+          const td = document.createElement('td');
+          td.className = col.cls;
+          td.dataset.key = col.key;
+          if (col.key === 'country') {
+            const country = document.createElement('div');
+            country.className = 'c-country';
+            country.textContent = r.flag + ' ' + r.country;
+            const actLine = document.createElement('div');
+            actLine.className = 'c-act-line';
+            const performer = document.createElement('span');
+            performer.className = 'c-performer';
+            performer.textContent = r.performer;
+            const songSpan = document.createElement('span');
+            songSpan.className = 'c-song';
+            songSpan.textContent = '“' + r.song + '”';
+            actLine.appendChild(performer);
+            actLine.appendChild(document.createTextNode(' · '));
+            actLine.appendChild(songSpan);
+            td.appendChild(country);
+            td.appendChild(actLine);
+          } else {
+            td.textContent = (r.order === '' || r.order == null) ? '—' : String(r.order);
+          }
+          tr.appendChild(td);
+        });
+
+        userCols.forEach(uc => {
+          const td = document.createElement('td');
+          td.className = 'num';
+          td.dataset.key = 'user_' + uc.uid;
+          const val = r['user_' + uc.uid];
+          td.textContent = val !== null && val !== undefined ? String(val) : '—';
+          tr.appendChild(td);
+        });
+
+        const tdAvg = document.createElement('td');
+        tdAvg.className = 'num total';
+        tdAvg.dataset.key = 'avg';
+        tdAvg.textContent = r.avg !== null ? r.avg.toFixed(1) : '—';
+        tr.appendChild(tdAvg);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    $('tableHead').querySelectorAll('th').forEach(th => {
+      const arrow = th.querySelector('.arrow');
+      if (th.dataset.key === sort.key) {
+        th.classList.add('sorted');
+        if (arrow) arrow.textContent = sort.dir === 'asc' ? '▲' : '▼';
+      } else {
+        th.classList.remove('sorted');
+        if (arrow) arrow.textContent = '';
+      }
+    });
+
+    const sortKeySel = $('sortKey');
+    if (sortKeySel) sortKeySel.value = sort.key;
+    $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
+
+    $('ratingsCount').textContent = rows.length + (rows.length === 1 ? ' rating' : ' ratings');
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "rules": {
+    "$year": {
+      "parties": {
+        ".read": true,
+        "$partyCode": {
+          "users": {
+            "$userId": {
+              ".write": true,
+              "name": {
+                ".validate": "newData.isString() && newData.val().length <= 40"
+              },
+              "votes": {
+                "$actCode": {
+                  ".validate": "newData.hasChildren(['vocals','performance','song','original','stage','total'])",
+                  "vocals":      { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
+                  "performance": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
+                  "song":        { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
+                  "original":    { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
+                  "stage":       { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
+                  "total":       { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 25" },
+                  "remind":      { ".validate": "newData.isString() && newData.val().length <= 200" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
