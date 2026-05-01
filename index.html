@@ -993,9 +993,11 @@
         input.id = id;
         input.value = String(v);
         const lbl = document.createElement('label');
-        lbl.htmlFor = id;
         lbl.textContent = String(v);
-        lbl.addEventListener('click', function () { input.click(); });
+        lbl.addEventListener('click', function () {
+          document.querySelectorAll('input[name="' + input.name + '"]').forEach(function(r) { r.checked = false; });
+          input.checked = true;
+        });
         opts.appendChild(input);
         opts.appendChild(lbl);
       }
