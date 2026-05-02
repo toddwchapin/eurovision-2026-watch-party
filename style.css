@@ -512,6 +512,7 @@
   }
   table.rated th.num, table.rated td.num { padding: 8px 3px; }
   table.rated th[data-key="country"], table.rated td[data-key="country"] { text-align: left; padding-left: 8px; }
+  table.rated th.act-cell, table.rated td.act-cell { text-align: left; padding-left: 8px; }
   table.rated th {
     font-size: 11px;
     letter-spacing: 0.1em;
