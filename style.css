@@ -178,9 +178,12 @@
   .stat-value .tp-line-1 .tp-flag { font-size: 1.1em; line-height: 1; }
   .stat-value .tp-line-2 { color: var(--gold-pale); }
   .stat-value .tp-line-3 { color: var(--cream-mute); font-style: italic; }
-  #statTop .tp-line-1 .tp-points { margin-left: auto; }
+  #statTop .tp-line-1 .tp-points,
+  .party-winner-host .tp-line-1 .tp-points { margin-left: auto; }
   #statTop .tp-line-2,
-  #statTop .tp-line-3 { justify-content: center; }
+  #statTop .tp-line-3,
+  .party-winner-host .tp-line-2,
+  .party-winner-host .tp-line-3 { justify-content: center; }
 
   /* Party Winner: same shape as Top Pick, but always sized to --top-pick-width */
   .party-winner-host { margin-top: 14px; }
