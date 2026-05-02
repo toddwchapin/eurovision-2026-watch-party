@@ -71,10 +71,27 @@
 <div class="wrap">
 
   <header class="app-header">
+    <svg class="heart-logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#E8C56A"/>
+          <stop offset="100%" stop-color="#A88424"/>
+        </linearGradient>
+      </defs>
+      <g fill="none" stroke="url(#goldGrad)" stroke-width="1.1" stroke-linejoin="round">
+        <path d="M32 56 C8 40 6 22 16 14 C24 8 30 14 32 20 C34 14 40 8 48 14 C58 22 56 40 32 56 Z" stroke-width="1.6"/>
+        <path d="M32 52 C12 38 11 23 19 17 C25 13 30 17 32 22 C34 17 39 13 45 17 C53 23 52 38 32 52 Z"/>
+        <path d="M32 48 C15 36 15 24 22 20 C27 17 31 21 32 24 C33 21 37 17 42 20 C49 24 49 36 32 48 Z"/>
+        <path d="M32 44 C18 34 19 26 24 22 C28 19 31 23 32 26 C33 23 36 19 40 22 C45 26 46 34 32 44 Z"/>
+        <path d="M32 40 C21 32 22 27 26 24 C29 22 31 25 32 27 C33 25 35 22 38 24 C42 27 43 32 32 40 Z"/>
+        <path d="M32 36 C24 30 25 28 28 26 C30 25 31 27 32 28 C33 27 34 25 36 26 C39 28 40 30 32 36 Z"/>
+      </g>
+    </svg>
     <div class="title-block">
-      <h1 class="title"><span class="flourish">P</span>arty Votes — Eurovision 2026</h1>
-      <div class="subtitle"><span id="partySubtitle">Loading party…</span></div>
+      <h1 class="title"><span class="flourish">E</span>urovision<span class="md-only"> Song Contest</span> 2026</h1>
+      <div class="subtitle"><span class="slogan-inline">United By Music</span><span>in Vienna<span class="md-only"> · Watch Party</span></span></div>
     </div>
+
     <svg class="secession-divider" viewBox="0 0 560 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <g fill="none" stroke="#D4AF37" stroke-width="0.8" opacity="0.7">
         <path d="M0 9 L220 9"/>
@@ -85,6 +102,37 @@
         <circle cx="328" cy="9" r="1.2" fill="#D4AF37"/>
       </g>
     </svg>
+
+    <div class="name-pill name-pill-static">
+      <span class="name-value">Party Votes</span>
+    </div>
+
+    <div class="party-bar" id="partyBar">
+      <div class="party-code">
+        <span>Party</span>
+        <strong id="partyCodeValue">—</strong>
+      </div>
+      <div class="party-status" id="partySubtitle">Loading party…</div>
+    </div>
+
+    <div class="party-winner-host">
+      <div class="stats">
+        <div class="stat stat-top party-winner-stat">
+          <div class="stat-value small" id="partyWinner">
+            <div class="pw-entry">
+              <div class="tp-line tp-line-1">
+                <span class="stat-label">Party Winner</span>
+                <span class="tp-points">—</span>
+                <span class="tp-flag"></span>
+                <span class="tp-country"></span>
+              </div>
+              <div class="tp-line tp-line-2"><span class="tp-performer"></span></div>
+              <div class="tp-line tp-line-3"><span class="tp-song"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </header>
 
   <section class="card table-card">
@@ -107,6 +155,21 @@
     </div>
   </section>
 
+  <section class="card table-card" id="breakdownCard" style="display:none">
+    <div class="table-title">
+      <span class="tt-label" id="breakdownTitle">—</span>
+      <button class="btn-copy" id="breakdownClose" type="button">Close</button>
+    </div>
+    <div class="table-scroll">
+      <table class="rated" id="breakdownTable">
+        <thead>
+          <tr id="breakdownHead"></tr>
+        </thead>
+        <tbody id="breakdownBody"></tbody>
+      </table>
+    </div>
+  </section>
+
   <footer class="app-footer">
     <a class="nav-link" href="index.html">← Back to my watch party</a>
   </footer>
@@ -124,6 +187,10 @@
 
   const KEY_PARTY = 'ev_' + PARTY_YEAR + '_party';
 
+  const SCORE_FIELDS = ['vocals', 'performance', 'song', 'original', 'stage'];
+  const BREAKDOWN_LABELS = ['User', 'Vocal', 'Performance', 'Song', 'Original', 'Stage', 'Total'];
+  const BREAKDOWN_KEYS = ['vocals', 'performance', 'song', 'original', 'stage', 'total'];
+
   const FIXED_COLS = [
     { key: 'order',   label: '#',   cls: 'num' },
     { key: 'country', label: 'Act', cls: 'act-cell' },
@@ -139,6 +206,7 @@
   let partyUsers = {};
   let userCols = [];
   let sort = { key: 'avg', dir: 'desc' };
+  let activeBreakdownCode = null;
 
   const $ = id => document.getElementById(id);
 
@@ -149,13 +217,15 @@
   ).toUpperCase().slice(0, 8);
 
   const subtitle = $('partySubtitle');
+  const partyCodeValue = $('partyCodeValue');
 
   if (!partyCode) {
     subtitle.textContent = 'No party selected — open this page from the party bar on the main page.';
     return;
   }
 
-  subtitle.textContent = 'Party ' + partyCode;
+  partyCodeValue.textContent = partyCode;
+  subtitle.textContent = '';
 
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
   const db = firebase.database();
@@ -165,9 +235,20 @@
     buildSortControls();
     buildTableHead();
     renderTable();
+    renderPartyWinner();
+    if (activeBreakdownCode) showBreakdown(activeBreakdownCode);
   }, err => {
     console.warn('Firebase read failed:', err);
-    subtitle.textContent = 'Party ' + partyCode + ' — read failed (' + err.code + ')';
+    subtitle.textContent = 'read failed (' + err.code + ')';
+  });
+
+  $('breakdownClose').addEventListener('click', hideBreakdown);
+
+  computePartyWinnerWidth();
+  let _resizeT;
+  window.addEventListener('resize', () => {
+    clearTimeout(_resizeT);
+    _resizeT = setTimeout(computePartyWinnerWidth, 150);
   });
 
   function rebuildUserCols() {
@@ -175,12 +256,11 @@
       const name = ((data && data.name) || 'Guest').trim();
       return {
         uid,
-        label: name.slice(0, 2) || '??',
         name,
         votes: (data && data.votes) || {},
       };
     });
-    userCols.sort((a, b) => a.label.localeCompare(b.label) || a.uid.localeCompare(b.uid));
+    userCols.sort((a, b) => a.name.localeCompare(b.name) || a.uid.localeCompare(b.uid));
   }
 
   function actAvg(code) {
@@ -206,19 +286,6 @@
       tr.appendChild(th);
     });
 
-    userCols.forEach(uc => {
-      const th = document.createElement('th');
-      th.className = 'num';
-      th.dataset.key = 'user_' + uc.uid;
-      th.textContent = uc.label;
-      th.title = uc.name;
-      const arrow = document.createElement('span');
-      arrow.className = 'arrow';
-      th.appendChild(arrow);
-      th.addEventListener('click', () => onSortClick('user_' + uc.uid));
-      tr.appendChild(th);
-    });
-
     const thAvg = document.createElement('th');
     thAvg.className = 'num total';
     thAvg.dataset.key = 'avg';
@@ -236,19 +303,14 @@
     oldSel.parentNode.replaceChild(sel, oldSel);
     sel.id = 'sortKey';
 
-    const allKeys = Object.assign({}, BASE_SORT_KEYS);
-    userCols.forEach(uc => {
-      allKeys['user_' + uc.uid] = { type: 'num', label: uc.label };
-    });
-
-    Object.keys(allKeys).forEach(key => {
+    Object.keys(BASE_SORT_KEYS).forEach(key => {
       const opt = document.createElement('option');
       opt.value = key;
-      opt.textContent = allKeys[key].label;
+      opt.textContent = BASE_SORT_KEYS[key].label;
       sel.appendChild(opt);
     });
 
-    if (!allKeys[sort.key]) sort.key = 'avg';
+    if (!BASE_SORT_KEYS[sort.key]) sort.key = 'avg';
     sel.value = sort.key;
 
     sel.onchange = () => { sort.key = sel.value; renderTable(); };
@@ -271,7 +333,7 @@
   }
 
   function rowFor(act) {
-    const row = {
+    return {
       code: act.code,
       flag: act.flag,
       country: act.country,
@@ -280,11 +342,6 @@
       order: act.order,
       avg: actAvg(act.code),
     };
-    userCols.forEach(uc => {
-      const v = uc.votes[act.code];
-      row['user_' + uc.uid] = v && v.total != null ? v.total : null;
-    });
-    return row;
   }
 
   function compareCells(a, b, key, dir) {
@@ -312,7 +369,7 @@
   }
 
   function renderTable() {
-    const totalCols = FIXED_COLS.length + userCols.length + 1;
+    const totalCols = FIXED_COLS.length + 1;
 
     const ratedActs = acts.filter(act => userCols.some(u => u.votes[act.code]));
     const rows = ratedActs.map(rowFor);
@@ -334,6 +391,8 @@
         const tr = document.createElement('tr');
         tr.className = 'body-row';
         tr.dataset.code = r.code;
+        if (activeBreakdownCode === r.code) tr.classList.add('editing');
+        tr.addEventListener('click', () => showBreakdown(r.code));
 
         FIXED_COLS.forEach(col => {
           const td = document.createElement('td');
@@ -359,15 +418,6 @@
           } else {
             td.textContent = (r.order === '' || r.order == null) ? '—' : String(r.order);
           }
-          tr.appendChild(td);
-        });
-
-        userCols.forEach(uc => {
-          const td = document.createElement('td');
-          td.className = 'num';
-          td.dataset.key = 'user_' + uc.uid;
-          const val = r['user_' + uc.uid];
-          td.textContent = val !== null && val !== undefined ? String(val) : '—';
           tr.appendChild(td);
         });
 
@@ -397,6 +447,211 @@
     $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
 
     $('ratingsCount').textContent = rows.length + (rows.length === 1 ? ' rating' : ' ratings');
+  }
+
+  function renderPartyWinner() {
+    const host = $('partyWinner');
+    host.replaceChildren();
+
+    const rated = acts
+      .map(a => ({ act: a, avg: actAvg(a.code) }))
+      .filter(x => x.avg !== null);
+
+    if (rated.length === 0) {
+      host.appendChild(buildWinnerEntry(null, true));
+      return;
+    }
+
+    const maxAvg = rated.reduce((m, x) => x.avg > m ? x.avg : m, -Infinity);
+    const maxRounded = maxAvg.toFixed(1);
+    const winners = rated.filter(x => x.avg.toFixed(1) === maxRounded);
+
+    winners.forEach((w, idx) => {
+      host.appendChild(buildWinnerEntry(w, idx === 0));
+    });
+  }
+
+  function buildWinnerEntry(winner, withLabel) {
+    const entry = document.createElement('div');
+    entry.className = 'pw-entry';
+
+    const line1 = document.createElement('div');
+    line1.className = 'tp-line tp-line-1';
+    if (withLabel) {
+      const label = document.createElement('span');
+      label.className = 'stat-label';
+      label.textContent = 'Party Winner';
+      line1.appendChild(label);
+    }
+    const points = document.createElement('span');
+    points.className = 'tp-points';
+    points.textContent = winner ? winner.avg.toFixed(1) + ' pts' : '—';
+    line1.appendChild(points);
+    const flag = document.createElement('span');
+    flag.className = 'tp-flag';
+    flag.textContent = winner ? winner.act.flag : '';
+    line1.appendChild(flag);
+    const country = document.createElement('span');
+    country.className = 'tp-country';
+    country.textContent = winner ? winner.act.country : '';
+    line1.appendChild(country);
+    entry.appendChild(line1);
+
+    const line2 = document.createElement('div');
+    line2.className = 'tp-line tp-line-2';
+    const performer = document.createElement('span');
+    performer.className = 'tp-performer';
+    performer.textContent = winner ? winner.act.performer : '';
+    line2.appendChild(performer);
+    entry.appendChild(line2);
+
+    const line3 = document.createElement('div');
+    line3.className = 'tp-line tp-line-3';
+    const song = document.createElement('span');
+    song.className = 'tp-song';
+    song.textContent = winner ? '“' + winner.act.song + '”' : '';
+    line3.appendChild(song);
+    entry.appendChild(line3);
+
+    return entry;
+  }
+
+  function makeWinnerLine(cls, fields) {
+    const line = document.createElement('div');
+    line.className = 'tp-line ' + cls;
+    line.style.whiteSpace = 'nowrap';
+    fields.forEach(f => {
+      const span = document.createElement('span');
+      span.className = f.cls;
+      if (f.text) span.textContent = f.text;
+      line.appendChild(span);
+    });
+    return line;
+  }
+
+  function computePartyWinnerWidth() {
+    if (!acts.length) return;
+    const liveTop = $('partyWinner');
+    if (!liveTop) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'party-winner-host';
+    wrap.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;';
+    const statsBox = document.createElement('div');
+    statsBox.className = 'stats';
+    const stat = document.createElement('div');
+    stat.className = 'stat stat-top party-winner-stat';
+    const inner = document.createElement('div');
+    inner.className = 'stat-value small';
+    inner.style.width = 'auto';
+
+    const entry = document.createElement('div');
+    entry.className = 'pw-entry';
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'stat-label';
+    labelSpan.textContent = 'Party Winner';
+    const line1 = makeWinnerLine('tp-line-1', [
+      { cls: 'tp-points' },
+      { cls: 'tp-flag' },
+      { cls: 'tp-country' },
+    ]);
+    line1.insertBefore(labelSpan, line1.firstChild);
+    const line2 = makeWinnerLine('tp-line-2', [{ cls: 'tp-performer' }]);
+    const line3 = makeWinnerLine('tp-line-3', [{ cls: 'tp-song' }]);
+    entry.appendChild(line1);
+    entry.appendChild(line2);
+    entry.appendChild(line3);
+    inner.appendChild(entry);
+
+    stat.appendChild(inner);
+    statsBox.appendChild(stat);
+    wrap.appendChild(statsBox);
+    document.body.appendChild(wrap);
+
+    const pointsEl = inner.querySelector('.tp-points');
+    const flagEl = inner.querySelector('.tp-flag');
+    const countryEl = inner.querySelector('.tp-country');
+    const performerEl = inner.querySelector('.tp-performer');
+    const songEl = inner.querySelector('.tp-song');
+
+    let max = 0;
+    acts.forEach(act => {
+      pointsEl.textContent = '25.0 pts';
+      flagEl.textContent = act.flag;
+      countryEl.textContent = act.country;
+      performerEl.textContent = act.performer;
+      songEl.textContent = '“' + act.song + '”';
+      const w = stat.offsetWidth;
+      if (w > max) max = w;
+    });
+
+    document.body.removeChild(wrap);
+
+    if (max > 0) document.documentElement.style.setProperty('--top-pick-width', max + 'px');
+  }
+
+  function showBreakdown(code) {
+    const act = acts.find(a => a.code === code);
+    if (!act) return;
+    activeBreakdownCode = code;
+
+    $('breakdownTitle').textContent =
+      act.flag + ' ' + act.country + ' — ' + act.performer + ' · “' + act.song + '”';
+
+    const head = $('breakdownHead');
+    head.replaceChildren();
+    BREAKDOWN_LABELS.forEach((label, i) => {
+      const th = document.createElement('th');
+      th.textContent = label;
+      th.className = i === 0 ? 'act-cell' : (i === BREAKDOWN_LABELS.length - 1 ? 'num total' : 'num');
+      head.appendChild(th);
+    });
+
+    const body = $('breakdownBody');
+    body.replaceChildren();
+
+    if (userCols.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = BREAKDOWN_LABELS.length;
+      td.className = 'empty-row';
+      td.textContent = 'No party members yet.';
+      tr.appendChild(td);
+      body.appendChild(tr);
+    } else {
+      userCols.forEach(uc => {
+        const tr = document.createElement('tr');
+        const nameTd = document.createElement('td');
+        nameTd.className = 'act-cell';
+        nameTd.textContent = uc.name;
+        tr.appendChild(nameTd);
+        const v = uc.votes[code];
+        BREAKDOWN_KEYS.forEach((k, idx) => {
+          const td = document.createElement('td');
+          td.className = idx === BREAKDOWN_KEYS.length - 1 ? 'num total' : 'num';
+          const val = v ? v[k] : null;
+          td.textContent = val != null ? String(val) : '—';
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+    }
+
+    $('tableBody').querySelectorAll('tr.body-row').forEach(tr => {
+      tr.classList.toggle('editing', tr.dataset.code === code);
+    });
+
+    const card = $('breakdownCard');
+    card.style.display = '';
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function hideBreakdown() {
+    activeBreakdownCode = null;
+    $('breakdownCard').style.display = 'none';
+    $('tableBody').querySelectorAll('tr.body-row.editing').forEach(tr => {
+      tr.classList.remove('editing');
+    });
   }
 })();
 </script>
