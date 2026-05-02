@@ -576,6 +576,25 @@
     transition: color 0.15s;
   }
   .btn-copy:hover { color: var(--gold-pale); }
+  .party-action {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(212,175,55,0.06);
+    color: var(--gold-pale);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .party-action:hover {
+    border-color: var(--gold-pale);
+    color: var(--cream);
+    background: rgba(212,175,55,0.12);
+  }
 
   /* ====== Footer ====== */
   footer.app-footer {
@@ -616,6 +635,7 @@
     body.rating-active .party-bar { margin-top: 4px; font-size: 11px; }
     body.rating-active .party-code { padding: 3px 10px; gap: 6px; }
     body.rating-active .party-code strong { font-size: 12px; }
+    body.rating-active .party-action { padding: 3px 10px; font-size: 11px; }
 
     body.rating-active .card.entry-panel {
       padding: 12px;
