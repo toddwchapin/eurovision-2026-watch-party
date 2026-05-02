@@ -967,9 +967,19 @@
   function buildScales() {
     document.querySelectorAll('.scale').forEach(div => {
       const field = div.dataset.scale;
+      const fieldEl = div.parentElement;
+      const labelEl = fieldEl && fieldEl.querySelector('.q-label');
+      const titleText = labelEl ? labelEl.textContent : '';
+      if (labelEl) labelEl.remove();
+
       const left = document.createElement('span');
       left.className = 'scale-end';
       left.textContent = '0 · Terrible';
+
+      const title = document.createElement('span');
+      title.className = 'scale-title';
+      title.textContent = titleText;
+
       const opts = document.createElement('div');
       opts.className = 'scale-options';
       for (let v = 0; v <= 5; v++) {
@@ -992,6 +1002,7 @@
       right.className = 'scale-end right';
       right.textContent = '5 · Amazing';
       div.appendChild(left);
+      div.appendChild(title);
       div.appendChild(opts);
       div.appendChild(right);
     });

@@ -276,24 +276,36 @@
   }
 
   .scale {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    column-gap: 10px;
+    row-gap: 4px;
   }
   .scale-end {
     font-size: 11px;
     color: var(--cream-mute);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    min-width: 70px;
+    grid-row: 1;
   }
-  .scale-end.right { text-align: right; }
+  .scale-end:first-child { grid-column: 1; }
+  .scale-end.right { grid-column: 3; text-align: right; }
+  .scale-title {
+    grid-row: 1;
+    grid-column: 2;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cream);
+  }
   .scale-options {
     position: relative;
     display: flex;
     gap: 6px;
-    flex: 1;
+    grid-row: 2;
+    grid-column: 1 / -1;
     justify-content: center;
   }
   .scale-options input {
@@ -325,8 +337,7 @@
     box-shadow: 0 0 14px var(--gold-glow);
   }
   @media (max-width: 540px) {
-    .scale-end { min-width: 0; flex: 1; }
-    .scale-options { flex-basis: 100%; order: 3; }
+    .scale-end { font-size: 10px; }
   }
 
   .button-row {
@@ -620,10 +631,11 @@
     body.rating-active .field { margin-bottom: 8px; }
     body.rating-active .field label.q-label { margin-bottom: 3px; font-size: 12px; }
     body.rating-active .field input[type="text"] { padding: 8px 10px; }
-    body.rating-active .scale { gap: 6px; }
+    body.rating-active .scale { column-gap: 6px; row-gap: 2px; }
     body.rating-active .scale-options { gap: 4px; }
     body.rating-active .scale-options label { width: 32px; height: 32px; border-radius: 8px; }
     body.rating-active .scale-end { font-size: 9px; }
+    body.rating-active .scale-title { font-size: 12px; }
     body.rating-active .button-row {
       margin-top: 10px;
       padding-top: 10px;
