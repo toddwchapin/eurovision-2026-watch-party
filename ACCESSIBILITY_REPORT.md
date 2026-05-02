@@ -1,9 +1,24 @@
 # Accessibility Audit — Eurovision 2026 Watch Party
 
-**Target:** `index.html` (single-page app) at https://toddwchapin.github.io/eurovision-2026-watch-party/
+**Targets:** `index.html` (rating / vote-entry SPA) and `party-votes.html` (party results SPA) at https://toddwchapin.github.io/eurovision-2026-watch-party/
 **Standard:** WCAG 2.1 Level AA
 **Audit date:** 2026-04-28
+**Re-audit date:** 2026-05-02
 **Auditor:** Static review of HTML/CSS/JS (no tooling run; no live SR test)
+
+---
+
+## Re-audit summary (2026-05-02)
+
+Re-checked every finding against the current `main` plus open PR #33 (modal rework). **No critical or high finding has been fully resolved.** Net changes:
+
+- **C-1** — Score radio inputs no longer use `display: none`; replaced with `position: absolute; opacity: 0; width: 0; height: 0;`. Inputs are now in the a11y tree and the keyboard tab order, but the labels are still not associated with their inputs via `for=` / nesting, and there is still no `:focus-visible` style on the label. **Partially fixed.**
+- **C-7** — Regressed. PR #19 ("Shorten ballot table headers") collapsed the `lbl-full` / `lbl-short` split into a single single-letter label that renders on all viewports. Screen reader users now hear `V`, `P`, `S`, `O`, `S` at every screen size — not just `≤720px`.
+- **H-10** — PR #33 (still open) replaces the modal `Cancel` button with an `×` close button (`.modal-close`, `aria-label="Close"`). Modal can now be closed via the X, but there is still no Esc handler, no backdrop click handler, and no focus trap. **Slight improvement; finding still applies.**
+- **New finding — H-28** — `.party-code` pill on both pages now carries a hover effect (`cursor: pointer`, color/border/background transitions) and click-delegation behavior, but is still a `<div>`. The interactive affordance is misleading for keyboard users, who cannot focus or activate it. See H-28 below.
+- **New target — `party-votes.html`** — built after the original audit. Inherits most of the `index.html` patterns (modal-less, but still has clickable rows, sortable headers, hover-styled non-interactive header pill, etc.). See addendum at the bottom of this report.
+
+All other Critical and High findings (C-2 through C-6, H-8, H-9, H-11 through H-16) remain unchanged — review the original entries below as the scope description still applies.
 
 ---
 
@@ -26,25 +41,17 @@ Recommended path: tackle the seven Critical items first — that lifts the page 
 
 ## Findings
 
-### C-1. Score radio inputs hidden with `display: none`
-- **Issue:** Each scale (Vocals, Performance, Song quality, Originality, Stagecraft) renders 0–5 as `<input type="radio">` styled with `display: none`, with a sibling `<label>` carrying the visual.
-- **Why it matters:** `display: none` removes the input from the accessibility tree and from the keyboard tab order. Keyboard-only users cannot select a score. Screen readers skip the radios entirely.
-- **Current code:** CSS rule `.scale-options input { display: none; }`.
-- **Fix:** Use a "visually hidden" pattern that keeps the input in the a11y tree:
-  ```css
-  .scale-options input {
-    position: absolute;
-    width: 1px; height: 1px;
-    padding: 0; margin: -1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
-  }
-  ```
-  Add `:focus-visible` style on the *label* via `.scale-options input:focus-visible + label { outline: 2px solid var(--gold-pale); }` so keyboard users see focus.
-- **Effort:** ~5 min.
+### C-1. Score radio inputs hidden / labels not associated *(partially fixed)*
+- **Issue:** Each scale (Vocals, Performance, Song quality, Originality, Stagecraft) renders 0–5 as `<input type="radio">` with a sibling `<label>` carrying the visual.
+- **Status (2026-05-02):** The hide style has changed from `display: none` to `position: absolute; opacity: 0; width: 0; height: 0;`. Inputs are now in the a11y tree and tab order. **Two related sub-issues remain:**
+  1. **Label not bound.** `buildScales()` creates the `<label>` without a `for=` attribute and does not nest the input inside the label. The label has a manual click handler that toggles the input — visual only. Screen readers see an unlabeled radio group; clicking the visual digit via keyboard does not propagate via the implicit label-input pairing.
+  2. **No keyboard focus indicator on the label.** Without `:focus-visible` on `.scale-options input:focus-visible + label`, keyboard users tabbing through the radios see no visual focus (the input is invisible).
+- **Why it matters:** Label/input association is what gives the radio its accessible name. Without it the SR announces "radio button, not pressed" with no value or context.
+- **Fix:**
+  - In `buildScales()` set `lbl.htmlFor = id;` so each label is associated with its input. Remove the manual click handler (label click natively toggles the input via `for=`).
+  - Add `.scale-options input:focus-visible + label { outline: 2px solid var(--gold-pale); outline-offset: 2px; }` for visible keyboard focus.
+  - Optionally swap the existing `opacity:0; width:0; height:0` for the canonical clip-path "visually hidden" pattern — functionally equivalent, more conventional.
+- **Effort:** ~10 min.
 
 ### C-2. Score scales lack `<fieldset>` / `<legend>`
 - **Issue:** Each rating prompt ("Vocal quality", "Performance flair", etc.) is a `<label class="q-label">` div sibling, not associated with the radio group. SR announces six unrelated radio buttons with no group label.
@@ -85,20 +92,33 @@ Recommended path: tackle the seven Critical items first — that lifts the page 
 - **Fix:** Make it a `<button>`. Style accordingly (remove default button chrome).
 - **Effort:** ~5 min.
 
-### C-7. Mobile short headers hide full label from screen readers
-- **Issue:** On viewports ≤720px, `lbl-full` spans (Vocals, Performance, etc.) are `display: none` and only single letters (V, P, Q, O, S, T) show. Screen reader users hear only the letters with no context.
-- **Fix:** Keep the full label rendered for SR but visually hidden using the same clip-path pattern from C-1. Show the short label visually.
-  ```css
-  @media (max-width: 720px) {
-    th .lbl-full {
-      position: absolute; width: 1px; height: 1px;
-      clip: rect(0 0 0 0); clip-path: inset(50%);
-      overflow: hidden;
-    }
-    th .lbl-short { display: inline; }
-  }
+### C-7. Single-letter score column headers (regressed since 2026-04-28)
+- **Issue:** Score columns in the rated table now render single letters (`V`, `P`, `S`, `O`, `S`) on **all viewports**, not just ≤720px. PR #19 ("Shorten ballot table headers", merged 2026-04-30) replaced the previous `lbl-full` / `lbl-short` split with a single short label. Screen reader users hear only the letters with no context, and the duplicate `S` (Song / Stage) is ambiguous even for sighted users.
+- **Current code:** `SCORE_COLS` in `index.html` and `buildTableHead()` set `th.textContent = col.label` directly with single-letter labels. No long-form alternative is rendered.
+- **Fix:** Restore a long-form label for assistive tech, render short visually:
+  ```js
+  // in buildTableHead()
+  const full = document.createElement('span');
+  full.className = 'lbl-full';
+  full.textContent = col.fullLabel;       // 'Vocals', 'Performance', ...
+  const short = document.createElement('span');
+  short.className = 'lbl-short';
+  short.setAttribute('aria-hidden', 'true');
+  short.textContent = col.label;           // 'V', 'P', ...
+  th.replaceChildren(full, short, arrow);
   ```
-- **Effort:** ~5 min.
+  ```css
+  /* visually hide the long label, show the short one to sighted users */
+  th .lbl-full {
+    position: absolute; width: 1px; height: 1px;
+    clip: rect(0 0 0 0); clip-path: inset(50%);
+    overflow: hidden;
+  }
+  th .lbl-short { display: inline; }
+  ```
+  Add a `fullLabel` field to each `SCORE_COLS` entry.
+- **Affects:** `index.html` and `party-votes.html` (the breakdown table on `party-votes.html` likewise uses single-letter labels — `Name | V | P | S | O | S | T`).
+- **Effort:** ~10 min.
 
 ---
 
@@ -118,10 +138,11 @@ Recommended path: tackle the seven Critical items first — that lifts the page 
 - **Fix:** On modal open, query the focusable elements within `.modal` and intercept Tab/Shift+Tab to wrap focus inside. Restore focus to the trigger element on close.
 - **Effort:** ~20 min (small focus-trap helper).
 
-### H-10. Modal does not close on Esc or backdrop click
+### H-10. Modal does not close on Esc or backdrop click *(partial improvement in PR #33)*
 - **Issue:** Standard expected behavior for modals.
+- **Status (2026-05-02):** PR #33 (open) replaces the bottom `Cancel` button with an `×` close button (`.modal-close`, `aria-label="Close"`) in the top-right of `.modal`. Modal can now be closed via that button. Esc and backdrop-click are still not wired.
 - **Fix:** Listen for `keydown` Esc on document while modal is open; add click handler on `.modal-backdrop` that closes when target is the backdrop itself (not the inner `.modal`).
-- **Caveat:** First-time name prompt should NOT be Esc-dismissable if a name is required to proceed. Use a `data-required` flag.
+- **Caveat:** First-time name prompt should NOT be Esc-dismissable if a name is required to proceed. The current `openNameModal(firstTime)` already hides the X close button on first-time entry — same gating should apply to Esc.
 - **Effort:** ~10 min.
 
 ### H-11. Name input lacks `<label>`
@@ -161,6 +182,13 @@ Recommended path: tackle the seven Critical items first — that lifts the page 
   ```
   Tune per-component as needed.
 - **Effort:** ~10 min including spot-checks.
+
+### H-28. Party-code pill is a hover-styled `<div>` *(new since 2026-04-28)*
+- **Issue:** PR #33 added `cursor: pointer` and a border / background / color hover transition to `.party-code` so the pill matches the See Votes button visually. The element is still a `<div>` — its click behavior is delegated through `.party-bar` (`bindEvents()`) and there is no `tabindex`, `role="button"`, or `keydown` handler. Keyboard users cannot focus it; the new hover affordance falsely advertises interactivity.
+- **Why it matters:** Same as C-6 (name pill). The hover styling makes the regression more visible to sighted-mouse users without making it usable for keyboard / SR users.
+- **Fix:** Convert the `.party-code` pill into a `<button class="party-code" type="button">`, attach `copyPartyLink` directly, and remove the click delegation special-casing in the `.party-bar` listener. Keep the existing CSS — `.party-code` styles already work for buttons after the standard reset (background/border/font reset).
+- **Affects:** Both `index.html` and `party-votes.html`.
+- **Effort:** ~10 min.
 
 ---
 
@@ -237,19 +265,19 @@ Recommended path: tackle the seven Critical items first — that lifts the page 
 
 ## Recommended action plan
 
-### Pass 1 — Critical fixes (~60 min total)
-Tackle C-1 through C-7 plus H-16 (focus rings). After this pass the app is keyboard-operable end to end and screen readers can complete the rating flow.
+### Pass 1 — Critical fixes (~70 min total)
+Tackle C-1 through C-7, plus H-16 (focus rings) and H-28 (party-code button). After this pass the app is keyboard-operable end to end and screen readers can complete the rating flow on both pages.
 
-### Pass 2 — High-value SR improvements (~45 min)
-H-8 through H-15. Makes modal, sort, stats, and edit-mode usable for screen reader users.
+### Pass 2 — High-value SR improvements (~50 min)
+H-8 through H-15 plus PV-1 (breakdown card focus / role). Makes modal, sort, stats, edit-mode, and the new breakdown card usable for screen reader users.
 
-### Pass 3 — Motion / touch / polish (~25 min)
-M-17 through M-22. Reduced-motion opt-out, larger tap targets, skip link, banners.
+### Pass 3 — Motion / touch / polish (~30 min)
+M-17 through M-22 plus PV-2 (Esc on breakdown). Reduced-motion opt-out, larger tap targets, skip link, banners.
 
 ### Pass 4 — Optional niceties (~15 min)
-L-23 (caption), L-24 (scope), L-27 (cursive label backup). Skip L-25 and L-26 unless you care.
+L-23 (caption — both tables), L-24 (scope), L-27 (cursive label backup). Skip L-25 and L-26 unless you care.
 
-**Total estimated effort for full AA compliance:** ~2.5 hours of focused work.
+**Total estimated effort for full AA compliance:** ~3 hours of focused work (up from 2.5h after the 2026-05-02 re-audit added party-votes.html and H-28).
 
 ---
 
@@ -265,11 +293,43 @@ L-23 (caption), L-24 (scope), L-27 (cursive label backup). Skip L-25 and L-26 un
 
 ## Quick reference — files / lines to touch
 
-All findings live in the single `index.html`. Key sections:
+Most findings live in `index.html`; some apply to `party-votes.html` as well (see addendum). Key sections:
 
 - Score scales: `buildScales()` in JS, `.scale-options` in CSS, the 5 `.field` blocks in the entry panel HTML.
 - Rated table: `buildTableHead()`, `renderTable()` in JS; `.table-card` block in CSS; `<table class="rated">` HTML.
-- Modal: `<div class="modal-backdrop" id="nameModal">` HTML; `openNameModal()` / `saveName()` in JS.
+- Modal: `<div class="modal-backdrop" id="nameModal">` HTML; `openNameModal()` / `saveName()` / `deleteUser()` in JS.
 - Footer links: `<footer class="app-footer">` HTML; `bindEvents()` in JS.
 - Voter pill: `<div class="name-pill" id="namePill">` HTML; `bindEvents()`.
-- Mobile labels: `@media (max-width: 720px)` rules in the table CSS section.
+- Party pill: `<div class="party-code">` HTML inside `.party-bar`; `bindEvents()` click delegation.
+- Score column labels: `SCORE_COLS` in JS, `buildTableHead()` in JS.
+
+---
+
+## Addendum — `party-votes.html` (added 2026-05-02)
+
+`party-votes.html` is a sibling SPA built after the original audit (PRs #20, #23, #25–#28, #32). Findings carry over by analogy:
+
+| Finding | Equivalent on party-votes.html | Notes |
+|---------|-------------------------------|-------|
+| C-3 (sortable headers) | Yes — `buildTableHead()` here builds the same `<th>` click pattern. | Identical fix needed. |
+| C-4 (clickable rows) | Yes — `renderTable()` binds `tr.body-row` click → `showBreakdown(code)`. | Identical fix needed (tabindex / role / keydown). Footnote: keyboard users currently cannot open the breakdown card at all. |
+| C-5 (footer links) | Yes — `<a class="nav-link">Back to ratings</a>` and similar. Confirm each. | Apply the same `<a>` → `<button>` (or `href`) treatment. |
+| C-7 (single-letter headers) | Yes — main table uses `Act`/`Avg`; breakdown table uses `Name | V | P | S | O | S | T`. | The breakdown labels need long-form for SR (same fix as C-7). |
+| H-12 (aria-sort) | Yes — main table sortable. | Identical fix. |
+| H-13 (sort direction button) | Yes — same `#sortDir` button. | Identical fix. |
+| H-14 (live regions for stats) | Yes — `#partyWinner` re-renders on Firebase updates. | Wrap `.party-winner-host` with `aria-live="polite"`. |
+| H-16 (focus rings) | Yes — same shared `style.css`. | Single fix covers both. |
+| H-28 (party-code div hover) | Yes — same shared markup pattern. | Single fix covers both. |
+| L-23 / L-24 (table caption / scope) | Yes — both `#ratedTable` and `#breakdownTable`. | Add a caption to each: "Party member scores", "Per-act voter breakdown". |
+
+### Party-votes-specific findings
+
+- **PV-1 (H).** Breakdown card is shown/hidden via `display: none`. When it appears, focus is not moved into it, and there is no `aria-live` or focus management. SR users who tap a row never learn the breakdown opened.
+  - **Fix:** Add `tabindex="-1"` to `#breakdownCard`, focus it on `showBreakdown`. Wrap with `role="region"` and `aria-labelledby="breakdownTitle"`.
+- **PV-2 (M).** The `#breakdownClose` button label "Close" is fine, but no Esc handler — same idiom as the modal Esc miss (H-10).
+- **PV-3 (L).** The `.name-pill name-pill-static` block in the header reads "Party Votes" and is now non-interactive (cursor: default per `.name-pill-static`). The `.name-pill` base styles still imply interactivity (border, gold color). Confirm SR users don't get a misleading "button" cue — the element is a `<div>`, so they shouldn't, but a quick check with VoiceOver would confirm.
+
+### Effort
+
+- All shared findings: see effort estimates on each parent finding above. A single fix typically covers both pages because they share `style.css` and the JS patterns are duplicated.
+- Party-votes-specific (PV-1 through PV-3): ~15 min total.
