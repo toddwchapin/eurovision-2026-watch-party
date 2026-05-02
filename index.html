@@ -914,9 +914,13 @@
             const songSpan = document.createElement('span');
             songSpan.className = 'c-song';
             songSpan.textContent = '“' + r.song + '”';
+            const sepSong = document.createElement('span');
+            sepSong.className = 'c-sep-song';
+            sepSong.appendChild(document.createTextNode('· '));
+            sepSong.appendChild(songSpan);
             actLine.appendChild(performer);
-            actLine.appendChild(document.createTextNode(' · '));
-            actLine.appendChild(songSpan);
+            actLine.appendChild(document.createTextNode(' '));
+            actLine.appendChild(sepSong);
             if (r.remind) {
               const notes = document.createElement('span');
               notes.className = 'c-notes';
