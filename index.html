@@ -121,8 +121,16 @@
 
     <div class="stats">
       <div class="stat stat-top">
-        <div class="stat-label">Top Pick</div>
-        <div class="stat-value small" id="statTop">—</div>
+        <div class="stat-value small" id="statTop">
+          <div class="tp-line tp-line-1">
+            <span class="stat-label">Top Pick</span>
+            <span class="tp-points">—</span>
+            <span class="tp-flag"></span>
+            <span class="tp-country"></span>
+          </div>
+          <div class="tp-line tp-line-2"><span class="tp-performer"></span></div>
+          <div class="tp-line tp-line-3"><span class="tp-song"></span></div>
+        </div>
       </div>
     </div>
     <div class="party-bar" id="partyBar" style="display:none">
@@ -216,7 +224,7 @@
   <footer class="app-footer">
     <a class="nav-link" id="footerRename">Rename voter</a>
     <span>·</span>
-    <a class="nav-link" id="footerPartyVotes" href="party-votes.html" target="_blank" rel="noopener">View party votes</a>
+    <a class="nav-link" id="footerPartyVotes" href="party-votes.html">View party votes</a>
     <span>·</span>
     <a class="nav-link danger" id="footerReset" style="color:var(--danger)">Reset all my votes</a>
   </footer>
@@ -272,7 +280,7 @@
 
   const FIXED_COLS = [
     { key: 'order',   label: '#', cls: 'num' },
-    { key: 'country', label: 'A', cls: 'act-cell' },
+    { key: 'country', label: 'Act', cls: 'act-cell' },
   ];
 
   const SCORE_COLS = [
@@ -330,6 +338,12 @@
     bindEvents();
     rebuildQueue();
     renderName();
+    computeTopPickWidth();
+    let _resizeT;
+    window.addEventListener('resize', () => {
+      clearTimeout(_resizeT);
+      _resizeT = setTimeout(computeTopPickWidth, 150);
+    });
 
     // Resolve party code: URL param > localStorage
     const urlParty = new URLSearchParams(window.location.search).get('party');
@@ -580,7 +594,7 @@
     $('btnCopyParty').addEventListener('click', copyPartyLink);
     $('btnSeeVotes').addEventListener('click', e => {
       e.stopPropagation();
-      window.open('party-votes.html', '_blank', 'noopener');
+      window.location.href = 'party-votes.html';
     });
     $('partyBar').addEventListener('click', e => {
       if (e.target !== $('btnCopyParty') && e.target !== $('btnSeeVotes')) copyPartyLink();
@@ -724,50 +738,83 @@
 
   // ——— Stats ———
 
-  function getUserVoteMap() {
-    const map = {};
-    map[userId] = votes;
-    Object.entries(partyVotes).forEach(([uid, data]) => {
-      if (uid !== userId) map[uid] = data.votes || {};
-    });
-    return map;
-  }
+  function computeTopPickWidth() {
+    if (!acts.length) return;
+    if (window.innerWidth > 720) {
+      document.documentElement.style.removeProperty('--top-pick-width');
+      return;
+    }
+    const liveTop = $('statTop');
+    if (!liveTop) return;
 
-  function actAvg(code, allUserVotes) {
-    const scores = Object.values(allUserVotes)
-      .map(uv => uv[code] ? (uv[code].total || 0) : null)
-      .filter(s => s !== null);
-    return scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;';
+    const statsBox = document.createElement('div');
+    statsBox.className = 'stats';
+    const stat = document.createElement('div');
+    stat.className = 'stat stat-top';
+    const inner = liveTop.cloneNode(true);
+    inner.removeAttribute('id');
+    inner.style.width = 'auto';
+    inner.querySelectorAll('.tp-line').forEach(l => { l.style.whiteSpace = 'nowrap'; });
+    stat.appendChild(inner);
+    statsBox.appendChild(stat);
+    wrap.appendChild(statsBox);
+    document.body.appendChild(wrap);
+
+    const hadActive = document.body.classList.contains('rating-active');
+    if (!hadActive) document.body.classList.add('rating-active');
+
+    const pointsEl = inner.querySelector('.tp-points');
+    const flagEl = inner.querySelector('.tp-flag');
+    const countryEl = inner.querySelector('.tp-country');
+    const performerEl = inner.querySelector('.tp-performer');
+    const songEl = inner.querySelector('.tp-song');
+
+    let max = 0;
+    acts.forEach(act => {
+      pointsEl.textContent = '25 pts';
+      flagEl.textContent = act.flag;
+      countryEl.textContent = act.country;
+      performerEl.textContent = act.performer;
+      songEl.textContent = '“' + act.song + '”';
+      const w = stat.offsetWidth;
+      if (w > max) max = w;
+    });
+
+    if (!hadActive) document.body.classList.remove('rating-active');
+    document.body.removeChild(wrap);
+
+    if (max > 0) document.documentElement.style.setProperty('--top-pick-width', max + 'px');
   }
 
   function renderStats() {
-    const allUserVotes = getUserVoteMap();
-    const ratedCodes = acts.map(a => a.code).filter(code =>
-      Object.values(allUserVotes).some(uv => uv[code])
-    );
+    const topEl = $('statTop');
+    const pointsEl = topEl.querySelector('.tp-points');
+    const flagEl = topEl.querySelector('.tp-flag');
+    const countryEl = topEl.querySelector('.tp-country');
+    const performerEl = topEl.querySelector('.tp-performer');
+    const songEl = topEl.querySelector('.tp-song');
 
-    if (ratedCodes.length === 0) {
-      $('statTop').textContent = '—';
-      return;
-    }
-
-    let topCode = null, topAvg = -1;
-    ratedCodes.forEach(code => {
-      const avg = actAvg(code, allUserVotes);
-      if (avg !== null && avg > topAvg) { topAvg = avg; topCode = code; }
+    let topCode = null, topTotal = -1;
+    Object.keys(votes).forEach(code => {
+      const total = votes[code].total || 0;
+      if (total > topTotal) { topTotal = total; topCode = code; }
     });
 
     const topAct = topCode ? acts.find(a => a.code === topCode) : null;
-    const topEl = $('statTop');
-    topEl.replaceChildren();
     if (topAct) {
-      topEl.appendChild(document.createTextNode(
-        topAct.flag + ' ' + topAct.performer + ' · “' + topAct.song + '” '
-      ));
-      const sub = document.createElement('span');
-      sub.className = 'top-score';
-      sub.textContent = topAvg.toFixed(1) + ' points';
-      topEl.appendChild(sub);
+      pointsEl.textContent = topTotal + ' pts';
+      flagEl.textContent = topAct.flag;
+      countryEl.textContent = topAct.country;
+      performerEl.textContent = topAct.performer;
+      songEl.textContent = '“' + topAct.song + '”';
+    } else {
+      pointsEl.textContent = '—';
+      flagEl.textContent = '';
+      countryEl.textContent = '';
+      performerEl.textContent = '';
+      songEl.textContent = '';
     }
   }
 
