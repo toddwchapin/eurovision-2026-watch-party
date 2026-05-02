@@ -173,6 +173,11 @@
   }
   .stat-value .top-score { color: var(--cream-mute); font-weight: 400; }
   .stat-value.small { font-size: 14px; line-height: 1.3; }
+  .stat-value .tp-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+  .stat-value .tp-line-1 .tp-points { color: var(--cream-mute); font-weight: 400; }
+  .stat-value .tp-line-1 .tp-flag { font-size: 1.1em; line-height: 1; }
+  .stat-value .tp-line-2 { color: var(--gold-pale); }
+  .stat-value .tp-line-3 { color: var(--cream-mute); font-style: italic; }
 
   /* ====== Start panel ====== */
   .start-panel {
@@ -623,15 +628,22 @@
       font-size: 11px;
     }
     body.rating-active .stats {
-      grid-template-columns: 1fr 1fr 1fr;
+      display: flex;
+      justify-content: center;
       gap: 5px;
       margin-top: 6px;
     }
-    body.rating-active .stats .stat-top { grid-column: auto; }
+    body.rating-active .stats .stat-top {
+      grid-column: auto;
+      width: var(--top-pick-width, auto);
+      max-width: 100%;
+    }
     body.rating-active .stat { padding: 4px 6px; border-radius: 8px; }
     body.rating-active .stat-label { font-size: 8px; letter-spacing: 0.08em; }
     body.rating-active .stat-value { font-size: 12px; }
     body.rating-active .stat-value.small { font-size: 10px; line-height: 1.15; }
+    body.rating-active .stat-value .tp-line { gap: 4px; }
+    body.rating-active .stat-value .tp-line-1 { row-gap: 0; }
     body.rating-active .party-bar { margin-top: 4px; font-size: 11px; }
     body.rating-active .party-code { padding: 3px 10px; gap: 6px; }
     body.rating-active .party-code strong { font-size: 12px; }
@@ -642,10 +654,27 @@
       margin-top: 10px;
       margin-bottom: 14px;
     }
-    body.rating-active .act-header { padding-bottom: 8px; margin-bottom: 10px; }
-    body.rating-active .act-country { font-size: 18px; gap: 8px; }
+    body.rating-active .act-header {
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: baseline;
+      gap: 10px;
+      min-width: 0;
+    }
+    body.rating-active .act-country { font-size: 18px; gap: 8px; flex-shrink: 0; }
     body.rating-active .act-flag { font-size: 22px; }
-    body.rating-active .act-line { font-size: 13px; margin-top: 2px; }
+    body.rating-active .act-line {
+      font-size: 13px;
+      margin-top: 0;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      display: block;
+    }
     body.rating-active .field { margin-bottom: 8px; }
     body.rating-active .field label.q-label { margin-bottom: 3px; font-size: 12px; }
     body.rating-active .field input[type="text"] { padding: 8px 10px; }
