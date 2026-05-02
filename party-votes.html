@@ -483,10 +483,6 @@
       label.textContent = 'Party Winner';
       line1.appendChild(label);
     }
-    const points = document.createElement('span');
-    points.className = 'tp-points';
-    points.textContent = winner ? winner.avg.toFixed(1) + ' pts' : '—';
-    line1.appendChild(points);
     const flag = document.createElement('span');
     flag.className = 'tp-flag';
     flag.textContent = winner ? winner.act.flag : '';
@@ -495,6 +491,10 @@
     country.className = 'tp-country';
     country.textContent = winner ? winner.act.country : '';
     line1.appendChild(country);
+    const points = document.createElement('span');
+    points.className = 'tp-points';
+    points.textContent = winner ? winner.avg.toFixed(1) + ' pts' : '—';
+    line1.appendChild(points);
     entry.appendChild(line1);
 
     const line2 = document.createElement('div');
@@ -551,9 +551,9 @@
     labelSpan.className = 'stat-label';
     labelSpan.textContent = 'Party Winner';
     const line1 = makeWinnerLine('tp-line-1', [
-      { cls: 'tp-points' },
       { cls: 'tp-flag' },
       { cls: 'tp-country' },
+      { cls: 'tp-points' },
     ]);
     line1.insertBefore(labelSpan, line1.firstChild);
     const line2 = makeWinnerLine('tp-line-2', [{ cls: 'tp-performer' }]);
