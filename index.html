@@ -120,14 +120,6 @@
     </div>
 
     <div class="stats">
-      <div class="stat">
-        <div class="stat-label">Progress</div>
-        <div class="stat-value" id="statProgress">0 / 0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Your Average</div>
-        <div class="stat-value" id="statAvg">—</div>
-      </div>
       <div class="stat stat-top">
         <div class="stat-label">Top Pick</div>
         <div class="stat-value small" id="statTop">—</div>
@@ -203,7 +195,7 @@
 
   <section class="card table-card">
     <div class="table-title">
-      <span class="tt-label" id="ratingsCount">0 ratings</span>
+      <span class="tt-label" id="ratingsCount">0 / 0</span>
       <div class="table-controls">
         <label class="sort-label">Sort:
           <select id="sortKey"></select>
@@ -749,25 +741,15 @@
   }
 
   function renderStats() {
-    const eligible = acts.filter(a => a.order !== 'X');
-    const ratedCount = eligible.filter(a => votes[a.code]).length;
-    $('statProgress').textContent = ratedCount + ' / ' + eligible.length;
-
     const allUserVotes = getUserVoteMap();
     const ratedCodes = acts.map(a => a.code).filter(code =>
       Object.values(allUserVotes).some(uv => uv[code])
     );
 
     if (ratedCodes.length === 0) {
-      $('statAvg').textContent = '—';
       $('statTop').textContent = '—';
       return;
     }
-
-    const myCodes = Object.keys(votes);
-    $('statAvg').textContent = myCodes.length
-      ? (myCodes.reduce((s, c) => s + (votes[c].total || 0), 0) / myCodes.length).toFixed(1)
-      : '—';
 
     let topCode = null, topAvg = -1;
     ratedCodes.forEach(code => {
@@ -784,7 +766,7 @@
       ));
       const sub = document.createElement('span');
       sub.className = 'top-score';
-      sub.textContent = '(avg ' + topAvg.toFixed(1) + ')';
+      sub.textContent = topAvg.toFixed(1) + ' points';
       topEl.appendChild(sub);
     }
   }
@@ -940,7 +922,8 @@
     const sortDirBtn = $('sortDir');
     if (sortDirBtn) sortDirBtn.textContent = sort.dir === 'asc' ? '↑' : '↓';
 
-    $('ratingsCount').textContent = rows.length + (rows.length === 1 ? ' rating' : ' ratings');
+    const eligibleTotal = acts.filter(a => a.order !== 'X').length;
+    $('ratingsCount').textContent = rows.length + ' / ' + eligibleTotal;
   }
 
   // ——— Reset ———
