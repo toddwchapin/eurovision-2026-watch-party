@@ -279,16 +279,16 @@
   const SCORE_FIELDS = ['vocals', 'performance', 'song', 'original', 'stage'];
 
   const FIXED_COLS = [
-    { key: 'order',   label: '#',   cls: 'num' },
-    { key: 'country', label: 'Act', cls: 'act-cell' },
+    { key: 'order',   label: '#', cls: 'num' },
+    { key: 'country', label: 'A', cls: 'act-cell' },
   ];
 
   const SCORE_COLS = [
-    { key: 'score_vocals',      label: 'Vocal',       field: 'vocals' },
-    { key: 'score_performance', label: 'Performance', field: 'performance' },
-    { key: 'score_song',        label: 'Song',        field: 'song' },
-    { key: 'score_original',    label: 'Original',    field: 'original' },
-    { key: 'score_stage',       label: 'Stage',       field: 'stage' },
+    { key: 'score_vocals',      label: 'V', field: 'vocals' },
+    { key: 'score_performance', label: 'P', field: 'performance' },
+    { key: 'score_song',        label: 'S', field: 'song' },
+    { key: 'score_original',    label: 'O', field: 'original' },
+    { key: 'score_stage',       label: 'S', field: 'stage' },
   ];
 
   const BASE_SORT_KEYS = {
@@ -515,7 +515,7 @@
     const thTotal = document.createElement('th');
     thTotal.className = 'num total';
     thTotal.dataset.key = 'total';
-    thTotal.textContent = 'Total';
+    thTotal.textContent = 'T';
     const arrowTotal = document.createElement('span');
     arrowTotal.className = 'arrow';
     thTotal.appendChild(arrowTotal);
