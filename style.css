@@ -179,6 +179,27 @@
   .stat-value .tp-line-2 { color: var(--gold-pale); }
   .stat-value .tp-line-3 { color: var(--cream-mute); font-style: italic; }
 
+  /* Party Winner: same shape as Top Pick, but always sized to --top-pick-width */
+  .party-winner-host { margin-top: 14px; }
+  .party-winner-host .stats {
+    display: flex;
+    justify-content: center;
+    margin-top: 0;
+  }
+  .party-winner-host .stat-top {
+    grid-column: auto;
+    width: var(--top-pick-width, auto);
+    max-width: 100%;
+  }
+  .party-winner-host .pw-entry + .pw-entry {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(212,175,55,0.18);
+  }
+  .name-pill-static { cursor: default; }
+  .name-pill-static:hover { background: var(--bg-card); border-color: var(--line); }
+  .party-status { font-size: 11px; color: var(--cream-mute); margin-left: 8px; }
+
   /* ====== Start panel ====== */
   .start-panel {
     text-align: center;
