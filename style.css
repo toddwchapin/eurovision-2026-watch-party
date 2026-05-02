@@ -345,9 +345,7 @@
     grid-template-columns: 1fr 1fr 1fr;
     align-items: center;
     gap: 12px;
-    margin-top: 22px;
-    padding-top: 18px;
-    border-top: 1px solid var(--line);
+    margin-top: 10px;
   }
   .button-row > :nth-child(1) { justify-self: start; }
   .button-row > :nth-child(2) { justify-self: center; }
@@ -637,8 +635,7 @@
     body.rating-active .scale-end { font-size: 9px; }
     body.rating-active .scale-title { font-size: 12px; }
     body.rating-active .button-row {
-      margin-top: 10px;
-      padding-top: 10px;
+      margin-top: 8px;
       gap: 8px;
     }
     body.rating-active .btn { padding: 8px 14px; }
