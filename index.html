@@ -124,8 +124,10 @@
         <div class="stat-value small" id="statTop">
           <div class="tp-line tp-line-1">
             <span class="stat-label">Top Pick</span>
-            <span class="tp-flag"></span>
-            <span class="tp-country"></span>
+            <span class="tp-mid">
+              <span class="tp-flag"></span>
+              <span class="tp-country"></span>
+            </span>
             <span class="tp-points">—</span>
           </div>
           <div class="tp-line tp-line-2"><span class="tp-performer"></span></div>
@@ -247,12 +249,13 @@
 <!-- Name modal -->
 <div class="modal-backdrop" id="nameModal">
   <div class="modal">
+    <button class="modal-close" id="nameClose" type="button" aria-label="Close" style="display:none">×</button>
     <h3>Welcome to the watch party!</h3>
     <p>What's your name? It'll show in the header so you remember which device is yours.</p>
     <input type="text" id="nameInput" maxlength="40" placeholder="Your name">
     <div class="modal-actions">
-      <button class="btn" id="nameCancel" style="display:none">Cancel</button>
-      <button class="btn primary" id="nameSave">Save</button>
+      <button class="btn danger" id="nameDelete" type="button" style="display:none">Delete user</button>
+      <button class="btn primary" id="nameSave" type="button">Save</button>
     </div>
   </div>
 </div>
@@ -571,7 +574,8 @@
     $('footerRename').addEventListener('click', e => { e.preventDefault(); openNameModal(false); });
     $('footerReset').addEventListener('click', e => { e.preventDefault(); resetVotes(); });
     $('nameSave').addEventListener('click', saveName);
-    $('nameCancel').addEventListener('click', () => nameModal.classList.remove('active'));
+    $('nameClose').addEventListener('click', () => nameModal.classList.remove('active'));
+    $('nameDelete').addEventListener('click', deleteUser);
     $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
 
     $('btnCreateParty').addEventListener('click', () => {
@@ -605,9 +609,23 @@
 
   function openNameModal(firstTime) {
     $('nameInput').value = guestName;
-    $('nameCancel').style.display = firstTime ? 'none' : 'inline-block';
+    const showSecondary = firstTime ? 'none' : 'inline-block';
+    $('nameClose').style.display = firstTime ? 'none' : 'flex';
+    $('nameDelete').style.display = showSecondary;
     nameModal.classList.add('active');
     setTimeout(() => $('nameInput').focus(), 50);
+  }
+
+  function deleteUser() {
+    if (!confirm('Delete your user from this party? Your name and votes will be removed for everyone. This cannot be undone.')) return;
+    if (db && partyCode && userId) {
+      db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId).remove().catch(() => {});
+    }
+    localStorage.removeItem(KEY_NAME);
+    localStorage.removeItem(KEY_VOTES);
+    localStorage.removeItem(KEY_USER_ID);
+    localStorage.removeItem(KEY_PARTY);
+    location.reload();
   }
 
   function saveName() {
