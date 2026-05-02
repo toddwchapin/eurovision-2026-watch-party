@@ -178,8 +178,25 @@
   .stat-value .tp-line-1 .tp-flag { font-size: 1.1em; line-height: 1; }
   .stat-value .tp-line-2 { color: var(--gold-pale); }
   .stat-value .tp-line-3 { color: var(--cream-mute); font-style: italic; }
+  #statTop .tp-line-1,
+  .party-winner-host .tp-line-1 {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: baseline;
+    gap: 6px;
+  }
+  #statTop .tp-line-1 .stat-label,
+  .party-winner-host .tp-line-1 .stat-label { grid-column: 1; justify-self: start; }
+  #statTop .tp-line-1 .tp-mid,
+  .party-winner-host .tp-line-1 .tp-mid {
+    grid-column: 2;
+    justify-self: center;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+  }
   #statTop .tp-line-1 .tp-points,
-  .party-winner-host .tp-line-1 .tp-points { margin-left: auto; }
+  .party-winner-host .tp-line-1 .tp-points { grid-column: 3; justify-self: end; }
   #statTop .tp-line-2,
   #statTop .tp-line-3,
   .party-winner-host .tp-line-2,
