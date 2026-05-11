@@ -389,6 +389,35 @@
     .scale-end { font-size: 10px; }
   }
 
+  .yes-no {
+    display: flex;
+    gap: 8px;
+  }
+  .yn-btn {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.2);
+    color: var(--cream-mute);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .yn-btn:hover { border-color: var(--gold-pale); color: var(--cream); }
+  .yn-btn:focus-visible {
+    outline: 2px solid var(--gold-pale);
+    outline-offset: 2px;
+  }
+  .yn-btn.selected {
+    background: linear-gradient(135deg, var(--gold), var(--gold-pale));
+    color: var(--bg-deep);
+    border-color: var(--gold);
+    box-shadow: 0 0 14px var(--gold-glow);
+  }
+  body.rating-active .yn-btn { padding: 8px 10px; }
+
   .button-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;

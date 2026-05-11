@@ -184,6 +184,14 @@
     </div>
 
     <div class="field">
+      <span class="q-label" id="replayLabel">Replay-worthy?</span>
+      <div class="yes-no" id="replayGroup" role="radiogroup" aria-labelledby="replayLabel">
+        <button type="button" class="yn-btn" data-val="1" aria-pressed="false">Yes</button>
+        <button type="button" class="yn-btn" data-val="0" aria-pressed="false">No</button>
+      </div>
+    </div>
+
+    <div class="field">
       <label class="q-label" for="fRemind">Notes</label>
       <input type="text" id="fRemind" placeholder="(optional) reminds you of someone, other thoughts…" maxlength="200">
     </div>
@@ -338,6 +346,7 @@
     localStorage.setItem(KEY_USER_ID, userId);
 
     buildScales();
+    bindReplay();
     bindEvents();
     rebuildQueue();
     renderName();
@@ -688,6 +697,13 @@
           r.checked = (parseInt(r.value, 10) === v[f]);
         });
       });
+      if (v.replay === 0 || v.replay === 1) {
+        document.querySelectorAll('#replayGroup .yn-btn').forEach(b => {
+          const on = parseInt(b.dataset.val, 10) === v.replay;
+          b.classList.toggle('selected', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+      }
     }
 
     $('editingNote').textContent = editingCode ? '✎ Editing saved vote'
@@ -701,6 +717,10 @@
     SCORE_FIELDS.forEach(f => {
       document.querySelectorAll('input[name="s_' + f + '"]').forEach(r => { r.checked = false; });
     });
+    document.querySelectorAll('#replayGroup .yn-btn').forEach(b => {
+      b.classList.remove('selected');
+      b.setAttribute('aria-pressed', 'false');
+    });
   }
 
   function readForm() {
@@ -713,6 +733,8 @@
       total += val;
     });
     obj.total = total;
+    const ynSel = document.querySelector('#replayGroup .yn-btn.selected');
+    obj.replay = ynSel ? parseInt(ynSel.dataset.val, 10) : null;
     return obj;
   }
 
@@ -1057,6 +1079,21 @@
       div.appendChild(title);
       div.appendChild(opts);
       div.appendChild(right);
+    });
+  }
+
+  function bindReplay() {
+    const group = $('replayGroup');
+    if (!group) return;
+    group.querySelectorAll('.yn-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        group.querySelectorAll('.yn-btn').forEach(b => {
+          b.classList.remove('selected');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('selected');
+        btn.setAttribute('aria-pressed', 'true');
+      });
     });
   }
 

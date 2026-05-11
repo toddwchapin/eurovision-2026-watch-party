@@ -200,6 +200,7 @@
     country:   { type: 'string', label: 'Country' },
     performer: { type: 'string', label: 'Performer' },
     song:      { type: 'string', label: 'Song' },
+    repeatPct: { type: 'num',    label: 'Repeat %' },
     avg:       { type: 'num',    label: 'Avg Total' },
   };
 
@@ -270,6 +271,16 @@
     return totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
   }
 
+  function actRepeatPct(code) {
+    const answers = userCols
+      .map(u => {
+        const v = u.votes[code];
+        return (v && (v.replay === 0 || v.replay === 1)) ? v.replay : null;
+      })
+      .filter(x => x !== null);
+    return answers.length ? (answers.reduce((a, b) => a + b, 0) / answers.length) * 100 : null;
+  }
+
   function buildTableHead() {
     const tr = $('tableHead');
     tr.replaceChildren();
@@ -285,6 +296,16 @@
       th.addEventListener('click', () => onSortClick(col.key));
       tr.appendChild(th);
     });
+
+    const thRpt = document.createElement('th');
+    thRpt.className = 'num';
+    thRpt.dataset.key = 'repeatPct';
+    thRpt.textContent = 'Repeat %';
+    const arrowRpt = document.createElement('span');
+    arrowRpt.className = 'arrow';
+    thRpt.appendChild(arrowRpt);
+    thRpt.addEventListener('click', () => onSortClick('repeatPct'));
+    tr.appendChild(thRpt);
 
     const thAvg = document.createElement('th');
     thAvg.className = 'num total';
@@ -341,6 +362,7 @@
       song: act.song,
       order: act.order,
       avg: actAvg(act.code),
+      repeatPct: actRepeatPct(act.code),
     };
   }
 
@@ -369,7 +391,7 @@
   }
 
   function renderTable() {
-    const totalCols = FIXED_COLS.length + 1;
+    const totalCols = FIXED_COLS.length + 2;
 
     const ratedActs = acts.filter(act => userCols.some(u => u.votes[act.code]));
     const rows = ratedActs.map(rowFor);
@@ -420,6 +442,12 @@
           }
           tr.appendChild(td);
         });
+
+        const tdRpt = document.createElement('td');
+        tdRpt.className = 'num';
+        tdRpt.dataset.key = 'repeatPct';
+        tdRpt.textContent = r.repeatPct !== null ? Math.round(r.repeatPct) + '%' : '—';
+        tr.appendChild(tdRpt);
 
         const tdAvg = document.createElement('td');
         tdAvg.className = 'num total';
