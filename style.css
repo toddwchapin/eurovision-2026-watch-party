@@ -226,7 +226,7 @@
   /* ====== Start panel ====== */
   .start-panel {
     text-align: center;
-    margin: 32px 0;
+    margin: 0 0 32px;
   }
   .btn-start {
     position: relative;
@@ -392,6 +392,7 @@
   .yes-no {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
   }
   .yn-btn {
@@ -616,7 +617,7 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-top: 10px;
+    margin: 24px 0;
     font-size: 13px;
   }
   .party-code {
@@ -715,14 +716,14 @@
     body.rating-active .stat-value.small { font-size: 10px; line-height: 1.15; }
     body.rating-active .stat-value .tp-line { gap: 4px; }
     body.rating-active .stat-value .tp-line-1 { row-gap: 0; }
-    body.rating-active .party-bar { margin-top: 4px; font-size: 11px; }
+    body.rating-active .party-bar { margin: 8px 0; font-size: 11px; }
     body.rating-active .party-code { padding: 3px 10px; gap: 6px; }
     body.rating-active .party-code strong { font-size: 12px; }
     body.rating-active .party-action { padding: 3px 10px; font-size: 11px; }
 
     body.rating-active .card.entry-panel {
       padding: 12px;
-      margin-top: 10px;
+      margin-top: 0;
       margin-bottom: 14px;
     }
     body.rating-active .act-header {
