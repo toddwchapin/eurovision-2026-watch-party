@@ -389,6 +389,14 @@
     .scale-end { font-size: 10px; }
   }
 
+  #replayLabel {
+    display: block;
+    margin-bottom: 8px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cream);
+  }
   .yes-no {
     display: flex;
     align-items: center;
@@ -749,6 +757,7 @@
     }
     body.rating-active .field { margin-bottom: 8px; }
     body.rating-active .field label.q-label { margin-bottom: 3px; font-size: 12px; }
+    body.rating-active #replayLabel { margin-bottom: 3px; font-size: 12px; }
     body.rating-active .field input[type="text"] { padding: 8px 10px; }
     body.rating-active .scale { column-gap: 6px; row-gap: 2px; }
     body.rating-active .scale-options { gap: 4px; }
