@@ -111,6 +111,14 @@
     text-shadow: 0 0 14px var(--gold-glow);
   }
 
+  .show-name {
+    color: var(--gold-pale);
+    font-weight: 600;
+  }
+  .show-name:empty {
+    display: none;
+  }
+
   .secession-divider {
     display: block;
     margin: 12px auto 14px;
