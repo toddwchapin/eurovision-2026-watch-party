@@ -302,10 +302,12 @@
   // ——— Bootstrap ———
 
   function init() {
-    const data = window.EUROVISION_DATA || { show: 'grand-final', performing: [], notPerforming: [] };
+    const data = window.EUROVISION_DATA || {};
     const showNames = window.EUROVISION_SHOW_NAMES || {};
     showName = showNames[data.show] || 'Grand Final';
-    acts = (data.performing || []).slice();
+    acts = (typeof window.eurovisionResolveActs === 'function')
+      ? window.eurovisionResolveActs()
+      : [];
     actOrder = {};
     acts.forEach((a, i) => { actOrder[a.code] = i + 1; });
 
