@@ -28,45 +28,7 @@
 }
 </script>
 
-<script type="application/json" id="acts-data">
-[
-  {"code":"AL","country":"Albania","flag":"🇦🇱","performer":"Alis","song":"Nân","order":""},
-  {"code":"AM","country":"Armenia","flag":"🇦🇲","performer":"SIMÓN","song":"Paloma Rumba","order":""},
-  {"code":"AU","country":"Australia","flag":"🇦🇺","performer":"Delta Goodrem","song":"Eclipse","order":""},
-  {"code":"AT","country":"Austria","flag":"🇦🇹","performer":"COSMÓ","song":"Tanzschein","order":""},
-  {"code":"AZ","country":"Azerbaijan","flag":"🇦🇿","performer":"JIVA","song":"Just Go","order":""},
-  {"code":"BE","country":"Belgium","flag":"🇧🇪","performer":"ESSYLA","song":"Dancing on the Ice","order":""},
-  {"code":"BG","country":"Bulgaria","flag":"🇧🇬","performer":"DARA","song":"Bangaranga","order":""},
-  {"code":"HR","country":"Croatia","flag":"🇭🇷","performer":"LELEK","song":"Andromeda","order":""},
-  {"code":"CY","country":"Cyprus","flag":"🇨🇾","performer":"Antigoni","song":"JALLA","order":""},
-  {"code":"CZ","country":"Czechia","flag":"🇨🇿","performer":"Daniel Zizka","song":"CROSSROADS","order":""},
-  {"code":"DK","country":"Denmark","flag":"🇩🇰","performer":"Søren Torpegaard Lund","song":"Før Vi Går Hjem","order":""},
-  {"code":"EE","country":"Estonia","flag":"🇪🇪","performer":"Vanilla Ninja","song":"Too Epic To Be True","order":""},
-  {"code":"FI","country":"Finland","flag":"🇫🇮","performer":"Linda Lampenius x Pete Parkkonen","song":"Liekinheitin","order":""},
-  {"code":"FR","country":"France","flag":"🇫🇷","performer":"Monroe","song":"Regarde !","order":""},
-  {"code":"GE","country":"Georgia","flag":"🇬🇪","performer":"Bzikebi","song":"On Replay","order":""},
-  {"code":"DE","country":"Germany","flag":"🇩🇪","performer":"Sarah Engels","song":"Fire","order":""},
-  {"code":"GR","country":"Greece","flag":"🇬🇷","performer":"Akylas","song":"Ferto","order":""},
-  {"code":"IL","country":"Israel","flag":"🇮🇱","performer":"Noam Bettan","song":"Michelle","order":""},
-  {"code":"IT","country":"Italy","flag":"🇮🇹","performer":"Sal Da Vinci","song":"Per Sempre Sì","order":""},
-  {"code":"LV","country":"Latvia","flag":"🇱🇻","performer":"Atvara","song":"Ēnā","order":""},
-  {"code":"LT","country":"Lithuania","flag":"🇱🇹","performer":"Lion Ceccah","song":"Sólo Quiero Más","order":""},
-  {"code":"LU","country":"Luxembourg","flag":"🇱🇺","performer":"Eva Marija","song":"Mother Nature","order":""},
-  {"code":"MT","country":"Malta","flag":"🇲🇹","performer":"AIDAN","song":"Bella","order":""},
-  {"code":"MD","country":"Moldova","flag":"🇲🇩","performer":"Satoshi","song":"Viva, Moldova!","order":""},
-  {"code":"ME","country":"Montenegro","flag":"🇲🇪","performer":"Tamara Živković","song":"Nova Zora","order":""},
-  {"code":"NO","country":"Norway","flag":"🇳🇴","performer":"JONAS LOVV","song":"YA YA YA","order":""},
-  {"code":"PL","country":"Poland","flag":"🇵🇱","performer":"ALICJA","song":"Pray","order":""},
-  {"code":"PT","country":"Portugal","flag":"🇵🇹","performer":"Bandidos do Cante","song":"Rosa","order":""},
-  {"code":"RO","country":"Romania","flag":"🇷🇴","performer":"Alexandra Căpitănescu","song":"Choke Me","order":""},
-  {"code":"SM","country":"San Marino","flag":"🇸🇲","performer":"SENHIT","song":"Superstar","order":""},
-  {"code":"RS","country":"Serbia","flag":"🇷🇸","performer":"LAVINA","song":"Kraj Mene","order":""},
-  {"code":"SE","country":"Sweden","flag":"🇸🇪","performer":"FELICIA","song":"My System","order":""},
-  {"code":"CH","country":"Switzerland","flag":"🇨🇭","performer":"Veronica Fusaro","song":"Alice","order":""},
-  {"code":"UA","country":"Ukraine","flag":"🇺🇦","performer":"LELÉKA","song":"Ridnym","order":""},
-  {"code":"GB","country":"United Kingdom","flag":"🇬🇧","performer":"LOOK MUM NO COMPUTER","song":"Eins, Zwei, Drei","order":""}
-]
-</script>
+<script src="acts-data.js"></script>
 
 <div class="wrap">
 
@@ -89,7 +51,7 @@
     </svg>
     <div class="title-block">
       <h1 class="title"><span class="flourish">E</span>urovision<span class="md-only"> Song Contest</span> 2026</h1>
-      <div class="subtitle"><span class="slogan-inline">United By Music</span><span>in Vienna<span class="md-only"> · Watch Party</span></span></div>
+      <div class="subtitle"><span class="slogan-inline">United By Music</span><span>in Vienna<span class="md-only"> · Watch Party</span></span><span class="show-name" id="showName"></span></div>
     </div>
 
     <svg class="secession-divider" viewBox="0 0 560 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -183,7 +145,14 @@
   const cfg = JSON.parse(document.getElementById('party-config').textContent);
   const PARTY_YEAR = cfg.year || '2026';
   const FIREBASE_CONFIG = cfg.firebaseConfig;
-  const acts = JSON.parse(document.getElementById('acts-data').textContent);
+  const DATA = window.EUROVISION_DATA || { show: 'grand-final', performing: [], notPerforming: [] };
+  const SHOW_NAMES = window.EUROVISION_SHOW_NAMES || {};
+  const showName = SHOW_NAMES[DATA.show] || 'Grand Final';
+  const acts = (DATA.performing || []).slice();
+  const actOrder = {};
+  acts.forEach((a, i) => { actOrder[a.code] = i + 1; });
+  const _showEl = document.getElementById('showName');
+  if (_showEl) _showEl.textContent = showName;
 
   const KEY_PARTY = 'ev_' + PARTY_YEAR + '_party';
 
@@ -360,7 +329,7 @@
       country: act.country,
       performer: act.performer,
       song: act.song,
-      order: act.order,
+      order: actOrder[act.code],
       avg: actAvg(act.code),
       repeatPct: actRepeatPct(act.code),
     };
@@ -438,7 +407,7 @@
             td.appendChild(country);
             td.appendChild(actLine);
           } else {
-            td.textContent = (r.order === '' || r.order == null) ? '—' : String(r.order);
+            td.textContent = Number.isFinite(r.order) ? String(r.order) : '—';
           }
           tr.appendChild(td);
         });

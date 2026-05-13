@@ -34,51 +34,10 @@
 </script>
 
 <!-- ============================================================
-     ACTS DATA — edit the "order" field after the running order
-     is announced. Values:
-       ""  = unknown (default; sorted alphabetically)
-       "X" = not in final (excluded from rating queue)
-       integer = performance slot
+     ACTS DATA — see acts-data.js for the roster, running order,
+     and show selection (Semi-Final 1 / Semi-Final 2 / Grand Final).
      ============================================================ -->
-<script type="application/json" id="acts-data">
-[
-  {"code":"AL","country":"Albania","flag":"🇦🇱","performer":"Alis","song":"Nân","order":""},
-  {"code":"AM","country":"Armenia","flag":"🇦🇲","performer":"SIMÓN","song":"Paloma Rumba","order":""},
-  {"code":"AU","country":"Australia","flag":"🇦🇺","performer":"Delta Goodrem","song":"Eclipse","order":""},
-  {"code":"AT","country":"Austria","flag":"🇦🇹","performer":"COSMÓ","song":"Tanzschein","order":""},
-  {"code":"AZ","country":"Azerbaijan","flag":"🇦🇿","performer":"JIVA","song":"Just Go","order":""},
-  {"code":"BE","country":"Belgium","flag":"🇧🇪","performer":"ESSYLA","song":"Dancing on the Ice","order":"6"},
-  {"code":"BG","country":"Bulgaria","flag":"🇧🇬","performer":"DARA","song":"Bangaranga","order":""},
-  {"code":"HR","country":"Croatia","flag":"🇭🇷","performer":"LELEK","song":"Andromeda","order":"2"},
-  {"code":"CY","country":"Cyprus","flag":"🇨🇾","performer":"Antigoni","song":"JALLA","order":""},
-  {"code":"CZ","country":"Czechia","flag":"🇨🇿","performer":"Daniel Zizka","song":"CROSSROADS","order":""},
-  {"code":"DK","country":"Denmark","flag":"🇩🇰","performer":"Søren Torpegaard Lund","song":"Før Vi Går Hjem","order":""},
-  {"code":"EE","country":"Estonia","flag":"🇪🇪","performer":"Vanilla Ninja","song":"Too Epic To Be True","order":""},
-  {"code":"FI","country":"Finland","flag":"🇫🇮","performer":"Linda Lampenius x Pete Parkkonen","song":"Liekinheitin","order":"7"},
-  {"code":"FR","country":"France","flag":"🇫🇷","performer":"Monroe","song":"Regarde !","order":""},
-  {"code":"GE","country":"Georgia","flag":"🇬🇪","performer":"Bzikebi","song":"On Replay","order":"3"},
-  {"code":"DE","country":"Germany","flag":"🇩🇪","performer":"Sarah Engels","song":"Fire","order":""},
-  {"code":"GR","country":"Greece","flag":"🇬🇷","performer":"Akylas","song":"Ferto","order":"4"},
-  {"code":"IL","country":"Israel","flag":"🇮🇱","performer":"Noam Bettan","song":"Michelle","order":"8"},
-  {"code":"IT","country":"Italy","flag":"🇮🇹","performer":"Sal Da Vinci","song":"Per Sempre Sì","order":""},
-  {"code":"LV","country":"Latvia","flag":"🇱🇻","performer":"Atvara","song":"Ēnā","order":""},
-  {"code":"LT","country":"Lithuania","flag":"🇱🇹","performer":"Lion Ceccah","song":"Sólo Quiero Más","order":"9"},
-  {"code":"LU","country":"Luxembourg","flag":"🇱🇺","performer":"Eva Marija","song":"Mother Nature","order":""},
-  {"code":"MT","country":"Malta","flag":"🇲🇹","performer":"AIDAN","song":"Bella","order":""},
-  {"code":"MD","country":"Moldova","flag":"🇲🇩","performer":"Satoshi","song":"Viva, Moldova!","order":"1"},
-  {"code":"ME","country":"Montenegro","flag":"🇲🇪","performer":"Tamara Živković","song":"Nova Zora","order":""},
-  {"code":"NO","country":"Norway","flag":"🇳🇴","performer":"JONAS LOVV","song":"YA YA YA","order":""},
-  {"code":"PL","country":"Poland","flag":"🇵🇱","performer":"ALICJA","song":"Pray","order":"10"},
-  {"code":"PT","country":"Portugal","flag":"🇵🇹","performer":"Bandidos do Cante","song":"Rosa","order":""},
-  {"code":"RO","country":"Romania","flag":"🇷🇴","performer":"Alexandra Căpitănescu","song":"Choke Me","order":""},
-  {"code":"SM","country":"San Marino","flag":"🇸🇲","performer":"SENHIT","song":"Superstar","order":""},
-  {"code":"RS","country":"Serbia","flag":"🇷🇸","performer":"LAVINA","song":"Kraj Mene","order":""},
-  {"code":"SE","country":"Sweden","flag":"🇸🇪","performer":"FELICIA","song":"My System","order":"5"},
-  {"code":"CH","country":"Switzerland","flag":"🇨🇭","performer":"Veronica Fusaro","song":"Alice","order":""},
-  {"code":"UA","country":"Ukraine","flag":"🇺🇦","performer":"LELÉKA","song":"Ridnym","order":""},
-  {"code":"GB","country":"United Kingdom","flag":"🇬🇧","performer":"LOOK MUM NO COMPUTER","song":"Eins, Zwei, Drei","order":""}
-]
-</script>
+<script src="acts-data.js"></script>
 
 <div class="wrap">
 
@@ -101,7 +60,7 @@
     </svg>
     <div class="title-block">
       <h1 class="title"><span class="flourish">E</span>urovision<span class="md-only"> Song Contest</span> 2026</h1>
-      <div class="subtitle"><span class="slogan-inline">United By Music</span><span>in Vienna<span class="md-only"> · Watch Party</span></span></div>
+      <div class="subtitle"><span class="slogan-inline">United By Music</span><span>in Vienna<span class="md-only"> · Watch Party</span></span><span class="show-name" id="showName"></span></div>
     </div>
 
     <svg class="secession-divider" viewBox="0 0 560 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -318,6 +277,8 @@
   };
 
   let acts = [];
+  let actOrder = {};         // { [code]: 1-based slot in performing[] }
+  let showName = 'Grand Final';
   let queue = [];
   let queueIdx = 0;
   let votes = {};
@@ -341,11 +302,20 @@
   // ——— Bootstrap ———
 
   function init() {
-    acts      = JSON.parse(document.getElementById('acts-data').textContent);
+    const data = window.EUROVISION_DATA || { show: 'grand-final', performing: [], notPerforming: [] };
+    const showNames = window.EUROVISION_SHOW_NAMES || {};
+    showName = showNames[data.show] || 'Grand Final';
+    acts = (data.performing || []).slice();
+    actOrder = {};
+    acts.forEach((a, i) => { actOrder[a.code] = i + 1; });
+
     votes     = loadVotes();
     guestName = localStorage.getItem(KEY_NAME) || '';
     userId    = localStorage.getItem(KEY_USER_ID) || genId(12);
     localStorage.setItem(KEY_USER_ID, userId);
+
+    const showEl = $('showName');
+    if (showEl) showEl.textContent = showName;
 
     buildScales();
     bindReplay();
@@ -480,20 +450,7 @@
   // ——— Queue ———
 
   function rebuildQueue() {
-    const eligible = acts.filter(a => a.order !== 'X');
-    const anyNumeric = eligible.some(a => Number.isFinite(parseInt(a.order, 10)));
-    if (anyNumeric) {
-      queue = eligible.slice().sort((a, b) => {
-        const an = parseInt(a.order, 10), bn = parseInt(b.order, 10);
-        const aHas = Number.isFinite(an), bHas = Number.isFinite(bn);
-        if (aHas && bHas) return an - bn;
-        if (aHas) return -1;
-        if (bHas) return 1;
-        return a.country.localeCompare(b.country);
-      });
-    } else {
-      queue = eligible.slice().sort((a, b) => a.country.localeCompare(b.country));
-    }
+    queue = acts.slice();
     queueIdx = 0;
     let allRated = true;
     for (let i = 0; i < queue.length; i++) {
@@ -517,21 +474,9 @@
     const rawName = (localStorage.getItem(KEY_NAME) || '').trim();
     const displayName = rawName || 'Guest';
 
-    const eligible = acts.filter(a => a.order !== 'X');
-    const anyNumeric = eligible.some(a => Number.isFinite(parseInt(a.order, 10)));
-    const ordered = eligible.slice().sort((a, b) => {
-      if (anyNumeric) {
-        const an = parseInt(a.order, 10), bn = parseInt(b.order, 10);
-        const aHas = Number.isFinite(an), bHas = Number.isFinite(bn);
-        if (aHas && bHas) return an - bn;
-        if (aHas) return -1;
-        if (bHas) return 1;
-      }
-      return a.country.localeCompare(b.country);
-    });
-
-    const lines = ['Eurovision 2026 Voting Results - ' + displayName, ''];
-    ordered.forEach(act => {
+    const headerPrefix = 'Eurovision 2026 ' + showName + ' Voting Results - ';
+    const lines = [headerPrefix + displayName, ''];
+    acts.forEach(act => {
       const v = votes[act.code] || {};
       lines.push(act.country + ' - ' + act.performer + ' - ' + act.song);
       EXPORT_FIELDS.forEach(f => {
@@ -549,7 +494,7 @@
 
     const text = lines.join('\n');
     const safeName = displayName.replace(/[\/\\<>:"|?*\x00-\x1f]/g, '').replace(/\s+/g, ' ').trim() || 'Guest';
-    const filename = 'Eurovision 2026 Voting Results - ' + safeName + '.txt';
+    const filename = 'Eurovision 2026 ' + showName + ' Voting Results - ' + safeName + '.txt';
 
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -941,7 +886,7 @@
       country: act.country,
       performer: act.performer,
       song: act.song,
-      order: act.order,
+      order: actOrder[act.code],
       remind: v ? (v.remind || '') : '',
       total: v && typeof v.total === 'number' ? v.total : null,
     };
@@ -1033,7 +978,7 @@
             td.appendChild(country);
             td.appendChild(actLine);
           } else {
-            td.textContent = (r.order === '' || r.order == null) ? '—' : String(r.order);
+            td.textContent = Number.isFinite(r.order) ? String(r.order) : '—';
           }
           tr.appendChild(td);
         });
@@ -1076,8 +1021,7 @@
     const sortDirBtn = $('sortDir');
     if (sortDirBtn) sortDirBtn.textContent = sort.dir === 'asc' ? '↑' : '↓';
 
-    const eligibleTotal = acts.filter(a => a.order !== 'X').length;
-    $('ratingsCount').textContent = rows.length + ' / ' + eligibleTotal;
+    $('ratingsCount').textContent = rows.length + ' / ' + acts.length;
   }
 
   // ——— Reset ———
