@@ -14,7 +14,7 @@
                     their previous ratings.
    ============================================================ */
 window.EUROVISION_DATA = {
-  show: 'grand-final',
+  show: 'semi-1',
 
   performing: [
     {code:'MD', country:'Moldova',            flag:'🇲🇩', performer:'Satoshi',                            song:'Viva, Moldova!'},
@@ -23,11 +23,16 @@ window.EUROVISION_DATA = {
     {code:'GR', country:'Greece',             flag:'🇬🇷', performer:'Akylas',                             song:'Ferto'},
     {code:'SE', country:'Sweden',             flag:'🇸🇪', performer:'FELICIA',                            song:'My System'},
     {code:'BE', country:'Belgium',            flag:'🇧🇪', performer:'ESSYLA',                             song:'Dancing on the Ice'},
-    {code:'FI', country:'Finland',            flag:'🇫🇮', performer:'Linda Lampenius x Pete Parkkonen',   song:'Liekinheitin'},
+    {code:'EE', country:'Estonia',            flag:'🇪🇪', performer:'Vanilla Ninja',                      song:'Too Epic To Be True'},
     {code:'IL', country:'Israel',             flag:'🇮🇱', performer:'Noam Bettan',                        song:'Michelle'},
     {code:'LT', country:'Lithuania',          flag:'🇱🇹', performer:'Lion Ceccah',                        song:'Sólo Quiero Más'},
-    {code:'PL', country:'Poland',             flag:'🇵🇱', performer:'ALICJA',                             song:'Pray'},
-    {code:'AL', country:'Albania',            flag:'🇦🇱', performer:'Alis',                               song:'Nân'},
+    {code:'PL', country:'Poland',             flag:'🇵🇱', performer:'ALICJA',                             song:'Pray'}
+    
+  ],
+
+  notPerforming: [
+{code:'FI', country:'Finland',            flag:'🇫🇮', performer:'Linda Lampenius x Pete Parkkonen',   song:'Liekinheitin'},
+     {code:'AL', country:'Albania',            flag:'🇦🇱', performer:'Alis',                               song:'Nân'},
     {code:'AM', country:'Armenia',            flag:'🇦🇲', performer:'SIMÓN',                              song:'Paloma Rumba'},
     {code:'AU', country:'Australia',          flag:'🇦🇺', performer:'Delta Goodrem',                      song:'Eclipse'},
     {code:'AT', country:'Austria',            flag:'🇦🇹', performer:'COSMÓ',                              song:'Tanzschein'},
@@ -36,7 +41,6 @@ window.EUROVISION_DATA = {
     {code:'CY', country:'Cyprus',             flag:'🇨🇾', performer:'Antigoni',                           song:'JALLA'},
     {code:'CZ', country:'Czechia',            flag:'🇨🇿', performer:'Daniel Zizka',                       song:'CROSSROADS'},
     {code:'DK', country:'Denmark',            flag:'🇩🇰', performer:'Søren Torpegaard Lund',              song:'Før Vi Går Hjem'},
-    {code:'EE', country:'Estonia',            flag:'🇪🇪', performer:'Vanilla Ninja',                      song:'Too Epic To Be True'},
     {code:'FR', country:'France',             flag:'🇫🇷', performer:'Monroe',                             song:'Regarde !'},
     {code:'DE', country:'Germany',            flag:'🇩🇪', performer:'Sarah Engels',                       song:'Fire'},
     {code:'IT', country:'Italy',              flag:'🇮🇹', performer:'Sal Da Vinci',                       song:'Per Sempre Sì'},
@@ -52,9 +56,7 @@ window.EUROVISION_DATA = {
     {code:'CH', country:'Switzerland',        flag:'🇨🇭', performer:'Veronica Fusaro',                    song:'Alice'},
     {code:'UA', country:'Ukraine',            flag:'🇺🇦', performer:'LELÉKA',                             song:'Ridnym'},
     {code:'GB', country:'United Kingdom',     flag:'🇬🇧', performer:'LOOK MUM NO COMPUTER',               song:'Eins, Zwei, Drei'}
-  ],
-
-  notPerforming: []
+  ]
 };
 
 window.EUROVISION_SHOW_NAMES = {
