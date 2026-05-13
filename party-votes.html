@@ -145,10 +145,12 @@
   const cfg = JSON.parse(document.getElementById('party-config').textContent);
   const PARTY_YEAR = cfg.year || '2026';
   const FIREBASE_CONFIG = cfg.firebaseConfig;
-  const DATA = window.EUROVISION_DATA || { show: 'grand-final', performing: [], notPerforming: [] };
+  const DATA = window.EUROVISION_DATA || {};
   const SHOW_NAMES = window.EUROVISION_SHOW_NAMES || {};
   const showName = SHOW_NAMES[DATA.show] || 'Grand Final';
-  const acts = (DATA.performing || []).slice();
+  const acts = (typeof window.eurovisionResolveActs === 'function')
+    ? window.eurovisionResolveActs()
+    : [];
   const actOrder = {};
   acts.forEach((a, i) => { actOrder[a.code] = i + 1; });
   const _showEl = document.getElementById('showName');
