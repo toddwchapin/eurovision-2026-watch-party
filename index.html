@@ -236,6 +236,8 @@
     <span>·</span>
     <a class="nav-link" id="footerPartyVotes" href="party-votes.html">View party votes</a>
     <span>·</span>
+    <a class="nav-link" id="footerDownload">Download my results</a>
+    <span>·</span>
     <a class="nav-link danger" id="footerReset" style="color:var(--danger)">Reset all my votes</a>
   </footer>
 
@@ -500,6 +502,66 @@
     if (allRated) queueIdx = queue.length;
   }
 
+  // ——— Download results ———
+
+  function downloadResults() {
+    const EXPORT_FIELDS = [
+      { key: 'vocals',      label: 'Vocal quality' },
+      { key: 'performance', label: 'Performance flair' },
+      { key: 'song',        label: 'Song quality' },
+      { key: 'original',    label: 'Originality' },
+      { key: 'stage',       label: 'Stagecraft' },
+    ];
+    const NOT_RATED = 'Not rated';
+
+    const rawName = (localStorage.getItem(KEY_NAME) || '').trim();
+    const displayName = rawName || 'Guest';
+
+    const eligible = acts.filter(a => a.order !== 'X');
+    const anyNumeric = eligible.some(a => Number.isFinite(parseInt(a.order, 10)));
+    const ordered = eligible.slice().sort((a, b) => {
+      if (anyNumeric) {
+        const an = parseInt(a.order, 10), bn = parseInt(b.order, 10);
+        const aHas = Number.isFinite(an), bHas = Number.isFinite(bn);
+        if (aHas && bHas) return an - bn;
+        if (aHas) return -1;
+        if (bHas) return 1;
+      }
+      return a.country.localeCompare(b.country);
+    });
+
+    const lines = ['Eurovision 2026 Voting Results - ' + displayName, ''];
+    ordered.forEach(act => {
+      const v = votes[act.code] || {};
+      lines.push(act.country + ' - ' + act.performer + ' - ' + act.song);
+      EXPORT_FIELDS.forEach(f => {
+        const val = v[f.key];
+        lines.push(f.label + ': ' + (Number.isFinite(val) ? String(val) : NOT_RATED));
+      });
+      let replayStr = NOT_RATED;
+      if (v.replay === 1) replayStr = 'Yes';
+      else if (v.replay === 0) replayStr = 'No';
+      lines.push('Replay-worthy?: ' + replayStr);
+      const note = (v.remind || '').trim();
+      lines.push('Notes: ' + (note || NOT_RATED));
+      lines.push('');
+    });
+
+    const text = lines.join('\n');
+    const safeName = displayName.replace(/[\/\\<>:"|?*\x00-\x1f]/g, '').replace(/\s+/g, ' ').trim() || 'Guest';
+    const filename = 'Eurovision 2026 Voting Results - ' + safeName + '.txt';
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
   // ——— Table head ———
 
   function buildTableHead() {
@@ -581,6 +643,7 @@
     });
     $('namePill').addEventListener('click', () => openNameModal(false));
     $('footerRename').addEventListener('click', e => { e.preventDefault(); openNameModal(false); });
+    $('footerDownload').addEventListener('click', e => { e.preventDefault(); downloadResults(); });
     $('footerReset').addEventListener('click', e => { e.preventDefault(); resetVotes(); });
     $('nameSave').addEventListener('click', saveName);
     $('nameClose').addEventListener('click', () => nameModal.classList.remove('active'));
