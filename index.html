@@ -38,6 +38,7 @@
      and show selection (Semi-Final 1 / Semi-Final 2 / Grand Final).
      ============================================================ -->
 <script src="acts-data.js"></script>
+<script src="humor-scorer.js"></script>
 
 <div class="wrap">
 
@@ -538,6 +539,46 @@
     syncLocalVotes();
   }
 
+  // Persist funniest comment to Firebase on vote save. Transaction-guarded so
+  // concurrent writers from multiple party members converge on the same pick.
+  // Tiebreak: higher score > longer comment > alphabetical voter name (lower
+  // localeCompare wins).
+  function syncFunniest(actCode) {
+    if (!db || !partyCode || !userId) return;
+    const Humor = window.EurovisionHumor;
+    if (!Humor || typeof Humor.scoreComment !== 'function') return;
+    const v = votes[actCode];
+    const remind = v && typeof v.remind === 'string' ? v.remind.trim() : '';
+    if (!remind) return;
+    const score = Humor.scoreComment(remind);
+    if (score < (Humor.DISPLAY_THRESHOLD || 4)) return;
+    const myName = (guestName || 'Guest').trim();
+    const newLen = remind.length;
+    const ref = db.ref(PARTY_YEAR + '/parties/' + partyCode + '/funniest/' + STAGE);
+    ref.transaction(current => {
+      if (current && typeof current.score === 'number') {
+        if (score < current.score) return;
+        if (score === current.score) {
+          const currLen = typeof current.comment === 'string' ? current.comment.trim().length : 0;
+          if (newLen < currLen) return;
+          if (newLen === currLen) {
+            const currUser = current.userId && partyVotes[current.userId];
+            const currName = ((currUser && currUser.name) || 'Guest').trim();
+            if (currName && myName.localeCompare(currName) >= 0) return;
+          }
+        }
+      }
+      return {
+        userId,
+        actCode,
+        comment: remind,
+        score,
+        scoredAt: firebase.database.ServerValue.TIMESTAMP,
+        scorerVersion: Humor.SCORER_VERSION || 'heuristic-v1',
+      };
+    }).catch(err => console.warn('Funniest write failed:', err));
+  }
+
   // ——— Queue ———
 
   function rebuildQueue() {
@@ -884,6 +925,7 @@
     if (!act) return;
     votes[act.code] = readForm();
     saveVotes();
+    syncFunniest(act.code);
     renderStats();
     renderTable();
     advance();
