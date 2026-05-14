@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eurovision 2026 — Party Trivia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<script type="application/json" id="party-config">
+{
+  "year": "2026",
+  "firebaseConfig": {
+    "apiKey": "AIzaSyBQ1OT4gV8j0uOeltypIAq4IWZ1vkvIx2Y",
+    "authDomain": "eurovision-watch-party.firebaseapp.com",
+    "databaseURL": "https://eurovision-watch-party-default-rtdb.firebaseio.com",
+    "projectId": "eurovision-watch-party",
+    "storageBucket": "eurovision-watch-party.firebasestorage.app",
+    "messagingSenderId": "267617361444",
+    "appId": "1:267617361444:web:cdcb248eacd071dde842b1"
+  }
+}
+</script>
+
+<script src="acts-data.js"></script>
+<script src="humor-scorer.js"></script>
+
+<div class="wrap">
+
+  <header class="app-header">
+    <svg class="heart-logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#E8C56A"/>
+          <stop offset="100%" stop-color="#A88424"/>
+        </linearGradient>
+      </defs>
+      <g fill="none" stroke="url(#goldGrad)" stroke-width="1.1" stroke-linejoin="round">
+        <path d="M32 56 C8 40 6 22 16 14 C24 8 30 14 32 20 C34 14 40 8 48 14 C58 22 56 40 32 56 Z" stroke-width="1.6"/>
+        <path d="M32 52 C12 38 11 23 19 17 C25 13 30 17 32 22 C34 17 39 13 45 17 C53 23 52 38 32 52 Z"/>
+        <path d="M32 48 C15 36 15 24 22 20 C27 17 31 21 32 24 C33 21 37 17 42 20 C49 24 49 36 32 48 Z"/>
+        <path d="M32 44 C18 34 19 26 24 22 C28 19 31 23 32 26 C33 23 36 19 40 22 C45 26 46 34 32 44 Z"/>
+        <path d="M32 40 C21 32 22 27 26 24 C29 22 31 25 32 27 C33 25 35 22 38 24 C42 27 43 32 32 40 Z"/>
+        <path d="M32 36 C24 30 25 28 28 26 C30 25 31 27 32 28 C33 27 34 25 36 26 C39 28 40 30 32 36 Z"/>
+      </g>
+    </svg>
+    <div class="title-block">
+      <h1 class="title"><span class="flourish">E</span>urovision<span class="md-only"> Song Contest</span> 2026</h1>
+      <div class="subtitle"><span class="slogan-inline">United By Music</span><span>in Vienna</span><span class="show-name" id="showName"></span></div>
+    </div>
+
+    <svg class="secession-divider" viewBox="0 0 560 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g fill="none" stroke="#D4AF37" stroke-width="0.8" opacity="0.7">
+        <path d="M0 9 L220 9"/>
+        <path d="M340 9 L560 9"/>
+        <path d="M220 9 C240 9 245 1 260 1 C275 1 280 9 280 9 C280 9 285 17 300 17 C315 17 320 9 340 9"/>
+        <circle cx="280" cy="9" r="2.5" fill="#D4AF37"/>
+        <circle cx="232" cy="9" r="1.2" fill="#D4AF37"/>
+        <circle cx="328" cy="9" r="1.2" fill="#D4AF37"/>
+      </g>
+    </svg>
+
+    <div class="name-pill name-pill-static">
+      <span class="name-value">Party Trivia</span>
+    </div>
+
+    <div class="party-bar" id="partyBar">
+      <div class="party-code">
+        <span>Party</span>
+        <strong id="partyCodeValue">—</strong>
+      </div>
+      <div class="party-status" id="partySubtitle">Loading party…</div>
+    </div>
+  </header>
+
+  <section class="card stage-empty" id="stageEmpty" style="display:none">
+    <p>Voting has not been opened for this contest yet. Switch contests in your settings.</p>
+    <a class="btn primary" href="index.html">Back to my watch party</a>
+  </section>
+
+  <section class="card trivia-card-host" id="triviaHost">
+    <div class="trivia-grid" id="triviaGrid"></div>
+    <p class="trivia-empty" id="triviaEmpty" style="display:none">No votes yet in this party — come back once people start rating.</p>
+  </section>
+
+  <footer class="app-footer">
+    <a class="nav-link" href="index.html">← Back to my watch party</a>
+    <a class="nav-link" href="party-votes.html">Party Votes →</a>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const cfg = JSON.parse(document.getElementById('party-config').textContent);
+  const PARTY_YEAR = cfg.year || '2026';
+  const FIREBASE_CONFIG = cfg.firebaseConfig;
+  const DATA = window.EUROVISION_DATA || {};
+  const SHOW_NAMES = window.EUROVISION_SHOW_NAMES || {};
+  const DEFAULT_STAGE = DATA.show || 'grand-final';
+  const KEY_STAGE = 'ev_' + PARTY_YEAR + '_stage';
+  let STAGE = localStorage.getItem(KEY_STAGE);
+  if (!STAGE || !SHOW_NAMES[STAGE]) STAGE = DEFAULT_STAGE;
+  const showList = (DATA.shows && DATA.shows[STAGE]) || [];
+  const stageConfigured = Array.isArray(showList) && showList.length > 0;
+  const showName = SHOW_NAMES[STAGE] || 'Grand Final';
+  const _origDataShow = DATA.show;
+  DATA.show = STAGE;
+  const acts = stageConfigured && typeof window.eurovisionResolveActs === 'function'
+    ? window.eurovisionResolveActs()
+    : [];
+  DATA.show = _origDataShow;
+  const actsByCode = {};
+  acts.forEach(a => { actsByCode[a.code] = a; });
+  const _showEl = document.getElementById('showName');
+  if (_showEl) _showEl.textContent = showName;
+
+  const KEY_PARTY = 'ev_' + PARTY_YEAR + '_party';
+  const Humor = window.EurovisionHumor || { scoreComment: () => 0, DISPLAY_THRESHOLD: 4 };
+  const SCORE_FIELDS = ['vocals', 'performance', 'song', 'original', 'stage'];
+  const MIN_VOTES_FOR_AVG = 3;
+
+  const $ = id => document.getElementById(id);
+
+  const partyCode = (
+    new URLSearchParams(window.location.search).get('party') ||
+    localStorage.getItem(KEY_PARTY) ||
+    ''
+  ).toUpperCase().slice(0, 8);
+
+  const subtitle = $('partySubtitle');
+  const partyCodeValue = $('partyCodeValue');
+
+  if (!partyCode) {
+    subtitle.textContent = 'No party selected — open this page from the party bar on the main page.';
+    $('triviaHost').style.display = 'none';
+    return;
+  }
+
+  partyCodeValue.textContent = partyCode;
+  subtitle.textContent = '';
+
+  if (!stageConfigured) {
+    $('triviaHost').style.display = 'none';
+    const stageEmpty = $('stageEmpty');
+    if (stageEmpty) stageEmpty.style.display = '';
+    return;
+  }
+
+  let partyUsers = {};
+
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  const db = firebase.database();
+  db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users').on('value', snap => {
+    partyUsers = snap.val() || {};
+    renderTrivia();
+  }, err => {
+    console.warn('Firebase read failed:', err);
+    subtitle.textContent = 'read failed (' + err.code + ')';
+  });
+
+  function extractStageVotes(votesNode) {
+    if (!votesNode || typeof votesNode !== 'object') return {};
+    if (votesNode[STAGE] && typeof votesNode[STAGE] === 'object') return votesNode[STAGE];
+    if (STAGE === 'semi-1') {
+      const flat = {};
+      Object.entries(votesNode).forEach(([k, v]) => {
+        if (v && typeof v === 'object' && typeof v.vocals === 'number') flat[k] = v;
+      });
+      return flat;
+    }
+    return {};
+  }
+
+  function buildUserAggregates() {
+    return Object.entries(partyUsers).map(([uid, data]) => {
+      const name = (((data && data.name) || 'Guest') + '').trim() || 'Guest';
+      const votes = extractStageVotes(data && data.votes);
+      const voteList = Object.entries(votes).filter(([, v]) => v && typeof v.total === 'number');
+      const totals = voteList.map(([, v]) => v.total);
+      const avg = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
+      const comments = voteList
+        .map(([code, v]) => ({ code, text: (v && typeof v.remind === 'string' ? v.remind.trim() : '') }))
+        .filter(c => c.text.length > 0);
+      const totalCommentChars = comments.reduce((sum, c) => sum + c.text.length, 0);
+      return { uid, name, votes, voteList, totals, avg, comments, totalCommentChars };
+    }).sort((a, b) => a.name.localeCompare(b.name) || a.uid.localeCompare(b.uid));
+  }
+
+  function pickExtreme(users, metricFn, direction, eligibleFn) {
+    let best = null;
+    users.forEach(u => {
+      if (eligibleFn && !eligibleFn(u)) return;
+      const value = metricFn(u);
+      if (value === null || value === undefined) return;
+      if (
+        !best ||
+        (direction === 'max' && value > best.value) ||
+        (direction === 'min' && value < best.value)
+      ) {
+        best = { user: u, value };
+      }
+    });
+    return best;
+  }
+
+  function biggestHater(users) {
+    return pickExtreme(users, u => u.avg, 'min', u => u.totals.length >= MIN_VOTES_FOR_AVG);
+  }
+
+  function biggestLover(users) {
+    return pickExtreme(users, u => u.avg, 'max', u => u.totals.length >= MIN_VOTES_FOR_AVG);
+  }
+
+  function mostVerboseComment(users) {
+    let best = null;
+    users.forEach(u => {
+      u.comments.forEach(c => {
+        if (
+          !best ||
+          c.text.length > best.value ||
+          (c.text.length === best.value && u.name.localeCompare(best.user.name) < 0)
+        ) {
+          best = { user: u, value: c.text.length, detail: c };
+        }
+      });
+    });
+    return best;
+  }
+
+  function mostVerboseOverall(users) {
+    return pickExtreme(users, u => u.totalCommentChars, 'max', u => u.totalCommentChars > 0);
+  }
+
+  function wittiest(users) {
+    let best = null;
+    users.forEach(u => {
+      u.comments.forEach(c => {
+        const score = Humor.scoreComment(c.text);
+        if (score < (Humor.DISPLAY_THRESHOLD || 4)) return;
+        if (
+          !best ||
+          score > best.value ||
+          (score === best.value && c.text.length > best.detail.text.length) ||
+          (score === best.value && c.text.length === best.detail.text.length && u.name.localeCompare(best.user.name) < 0)
+        ) {
+          best = { user: u, value: score, detail: c };
+        }
+      });
+    });
+    return best;
+  }
+
+  function mostIncomplete(users) {
+    const total = acts.length;
+    if (total === 0) return null;
+    return pickExtreme(
+      users,
+      u => total - u.totals.length,
+      'max',
+      u => u.totals.length >= 1 && (total - u.totals.length) > 0
+    );
+  }
+
+  function actLabel(code) {
+    const act = actsByCode[code];
+    if (!act) return '';
+    return act.flag + ' ' + act.country + ' · ' + act.performer + ' · “' + act.song + '”';
+  }
+
+  function buildCard(title, result, valueFormatter, detailRenderer) {
+    if (!result) return null;
+    const card = document.createElement('div');
+    card.className = 'trivia-card stat';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'tc-title stat-label';
+    titleEl.textContent = title;
+    card.appendChild(titleEl);
+
+    const voterEl = document.createElement('div');
+    voterEl.className = 'tc-voter';
+    voterEl.textContent = result.user.name;
+    card.appendChild(voterEl);
+
+    const valueEl = document.createElement('div');
+    valueEl.className = 'tc-value';
+    valueEl.textContent = valueFormatter(result);
+    card.appendChild(valueEl);
+
+    if (detailRenderer) {
+      const detail = detailRenderer(result);
+      if (detail) {
+        detail.classList.add('tc-detail');
+        card.appendChild(detail);
+      }
+    }
+
+    return card;
+  }
+
+  function renderTrivia() {
+    const users = buildUserAggregates();
+    const grid = $('triviaGrid');
+    const emptyMsg = $('triviaEmpty');
+    grid.replaceChildren();
+
+    const anyVotes = users.some(u => u.totals.length > 0);
+    if (!anyVotes) {
+      emptyMsg.style.display = '';
+      return;
+    }
+    emptyMsg.style.display = 'none';
+
+    const cards = [
+      buildCard('Biggest Hater', biggestHater(users),
+        r => r.value.toFixed(1) + ' avg',
+        r => {
+          const d = document.createElement('div');
+          d.textContent = r.user.totals.length + ' rated';
+          return d;
+        }),
+      buildCard('Biggest Lover', biggestLover(users),
+        r => r.value.toFixed(1) + ' avg',
+        r => {
+          const d = document.createElement('div');
+          d.textContent = r.user.totals.length + ' rated';
+          return d;
+        }),
+      buildCard('Most Verbose Comment', mostVerboseComment(users),
+        r => r.value + ' chars',
+        r => {
+          const wrap = document.createElement('div');
+          const q = document.createElement('div');
+          q.className = 'tc-quote';
+          q.textContent = '“' + r.detail.text + '”';
+          wrap.appendChild(q);
+          const lbl = actLabel(r.detail.code);
+          if (lbl) {
+            const a = document.createElement('div');
+            a.className = 'tc-act';
+            a.textContent = lbl;
+            wrap.appendChild(a);
+          }
+          return wrap;
+        }),
+      buildCard('Most Verbose Overall', mostVerboseOverall(users),
+        r => r.value + ' chars',
+        r => {
+          const d = document.createElement('div');
+          d.textContent = 'across ' + r.user.comments.length + ' comment' + (r.user.comments.length === 1 ? '' : 's');
+          return d;
+        }),
+      buildCard('Wittiest', wittiest(users),
+        r => 'humor score ' + r.value,
+        r => {
+          const wrap = document.createElement('div');
+          const q = document.createElement('div');
+          q.className = 'tc-quote';
+          q.textContent = '“' + r.detail.text + '”';
+          wrap.appendChild(q);
+          const lbl = actLabel(r.detail.code);
+          if (lbl) {
+            const a = document.createElement('div');
+            a.className = 'tc-act';
+            a.textContent = lbl;
+            wrap.appendChild(a);
+          }
+          return wrap;
+        }),
+      buildCard('Most Incomplete', mostIncomplete(users),
+        r => r.value + ' missing',
+        r => {
+          const d = document.createElement('div');
+          d.textContent = r.user.totals.length + ' of ' + acts.length + ' rated';
+          return d;
+        }),
+    ].filter(Boolean);
+
+    cards.forEach(c => grid.appendChild(c));
+
+    if (cards.length === 0) {
+      emptyMsg.textContent = 'Not enough votes yet to award superlatives.';
+      emptyMsg.style.display = '';
+    }
+  }
+})();
+</script>
+
+</body>
+</html>
