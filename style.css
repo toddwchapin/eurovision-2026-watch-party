@@ -934,8 +934,8 @@
     margin-bottom: 18px;
   }
   .modal select:focus { outline: none; border-color: var(--gold-pale); }
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-  .modal-actions .btn.danger { margin-right: auto; }
+  .modal-actions { display: flex; gap: 10px; justify-content: stretch; }
+  .modal-actions .btn { flex: 1 1 0; min-width: 0; }
   .modal-actions-secondary { margin-top: 10px; }
 
   /* Empty-stage banner shown when a contest has no configured running order. */
