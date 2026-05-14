@@ -232,6 +232,44 @@
     padding-top: 6px;
     border-top: 1px solid rgba(212,175,55,0.18);
   }
+
+  /* Funniest Comment: matches Party Winner container width */
+  .funniest-comment-host { margin-top: 10px; }
+  .funniest-comment-host .stats {
+    display: flex;
+    justify-content: center;
+    margin-top: 0;
+  }
+  .funniest-comment-host .stat-top {
+    grid-column: auto;
+    width: var(--top-pick-width, auto);
+    max-width: 100%;
+  }
+  .fc-entry { text-align: center; }
+  .fc-line { line-height: 1.35; }
+  .fc-line-label { margin-bottom: 4px; }
+  .fc-label { color: var(--gold-pale); }
+  .fc-quote {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--cream);
+    margin: 2px 0 4px;
+  }
+  .fc-act-line {
+    font-size: 11px;
+    color: var(--cream-mute);
+    letter-spacing: 0.02em;
+  }
+  .fc-act-line .fc-flag { font-size: 1.1em; }
+  .fc-act-line .fc-country { color: var(--gold-pale); }
+  .fc-act-line .fc-song { font-style: italic; }
+  .fc-voter {
+    font-size: 11px;
+    color: var(--cream-mute);
+    margin-top: 2px;
+  }
+
   .name-pill-static { cursor: default; }
   .name-pill-static:hover { background: var(--bg-card); border-color: var(--line); }
   .party-status { font-size: 11px; color: var(--cream-mute); margin-left: 8px; }
