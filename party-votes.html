@@ -132,7 +132,6 @@
   </section>
 
   <section class="card table-card" id="breakdownCard" style="display:none">
-    <button class="btn-copy bd-close" id="breakdownClose" type="button" aria-label="Close">Close</button>
     <div class="table-title">
       <div class="tt-label bd-title" id="breakdownTitle"></div>
     </div>
@@ -253,8 +252,6 @@
   }, err => {
     console.warn('Funniest read failed:', err);
   });
-
-  $('breakdownClose').addEventListener('click', hideBreakdown);
 
   computePartyWinnerWidth();
   let _resizeT;
@@ -784,14 +781,6 @@
     const card = $('breakdownCard');
     card.style.display = '';
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function hideBreakdown() {
-    activeBreakdownCode = null;
-    $('breakdownCard').style.display = 'none';
-    $('tableBody').querySelectorAll('tr.body-row.editing').forEach(tr => {
-      tr.classList.remove('editing');
-    });
   }
 })();
 </script>

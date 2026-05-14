@@ -675,17 +675,7 @@
 
   /* ====== Voter breakdown ====== */
   #breakdownCard { position: relative; }
-  #breakdownCard .bd-close {
-    position: absolute;
-    top: 14px;
-    right: 16px;
-    z-index: 1;
-    padding: 4px 10px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-  }
-  #breakdownCard .bd-close:hover { border-color: var(--gold-pale); }
-  .bd-title { display: block; padding-right: 64px; }
+  .bd-title { display: block; }
   .bd-title-main { display: block; line-height: 1.2; }
   .bd-title-song {
     display: block;
@@ -694,6 +684,7 @@
     font-style: italic;
     color: var(--cream-mute);
     line-height: 1.2;
+    text-align: center;
   }
   table.rated tr.bd-has-comment td { border-bottom: none; }
   table.rated tr.bd-comment-row { cursor: default; }
