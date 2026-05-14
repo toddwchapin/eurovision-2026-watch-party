@@ -504,85 +504,58 @@
     return entry;
   }
 
-  function makeWinnerLine(cls, fields) {
-    const line = document.createElement('div');
-    line.className = 'tp-line ' + cls;
-    line.style.whiteSpace = 'nowrap';
-    fields.forEach(f => {
-      const span = document.createElement('span');
-      span.className = f.cls;
-      if (f.text) span.textContent = f.text;
-      line.appendChild(span);
-    });
-    return line;
-  }
-
+  // Sets --top-pick-width to the widest line-1 (label + flag + country + points)
+  // across all acts so the Party Winner container matches the Top Pick
+  // container on index.html exactly.
   function computePartyWinnerWidth() {
     if (!acts.length) return;
-    const liveTop = $('partyWinner');
-    if (!liveTop) return;
-
     const wrap = document.createElement('div');
     wrap.className = 'party-winner-host';
     wrap.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;';
     const statsBox = document.createElement('div');
     statsBox.className = 'stats';
     const stat = document.createElement('div');
-    stat.className = 'stat stat-top party-winner-stat';
+    stat.className = 'stat stat-top';
+    stat.style.width = 'auto';
     const inner = document.createElement('div');
     inner.className = 'stat-value small';
     inner.style.width = 'auto';
-
     const entry = document.createElement('div');
     entry.className = 'pw-entry';
-    const labelSpan = document.createElement('span');
-    labelSpan.className = 'stat-label';
-    labelSpan.textContent = 'Party Winner';
     const line1 = document.createElement('div');
     line1.className = 'tp-line tp-line-1';
     line1.style.whiteSpace = 'nowrap';
-    line1.appendChild(labelSpan);
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'stat-label';
+    labelSpan.textContent = 'Party Winner';
     const mid = document.createElement('span');
     mid.className = 'tp-mid';
-    const flagS = document.createElement('span');
-    flagS.className = 'tp-flag';
-    mid.appendChild(flagS);
-    const countryS = document.createElement('span');
-    countryS.className = 'tp-country';
-    mid.appendChild(countryS);
+    const flag = document.createElement('span');
+    flag.className = 'tp-flag';
+    const country = document.createElement('span');
+    country.className = 'tp-country';
+    mid.appendChild(flag);
+    mid.appendChild(country);
+    const points = document.createElement('span');
+    points.className = 'tp-points';
+    points.textContent = '25.0 pts';
+    line1.appendChild(labelSpan);
     line1.appendChild(mid);
-    const pointsS = document.createElement('span');
-    pointsS.className = 'tp-points';
-    line1.appendChild(pointsS);
-    const line2 = makeWinnerLine('tp-line-2', [{ cls: 'tp-performer' }]);
-    const line3 = makeWinnerLine('tp-line-3', [{ cls: 'tp-song' }]);
+    line1.appendChild(points);
     entry.appendChild(line1);
-    entry.appendChild(line2);
-    entry.appendChild(line3);
     inner.appendChild(entry);
-
     stat.appendChild(inner);
     statsBox.appendChild(stat);
     wrap.appendChild(statsBox);
     document.body.appendChild(wrap);
 
-    const pointsEl = inner.querySelector('.tp-points');
-    const flagEl = inner.querySelector('.tp-flag');
-    const countryEl = inner.querySelector('.tp-country');
-    const performerEl = inner.querySelector('.tp-performer');
-    const songEl = inner.querySelector('.tp-song');
-
     let max = 0;
     acts.forEach(act => {
-      pointsEl.textContent = '25.0 pts';
-      flagEl.textContent = act.flag;
-      countryEl.textContent = act.country;
-      performerEl.textContent = act.performer;
-      songEl.textContent = '“' + act.song + '”';
+      flag.textContent = act.flag;
+      country.textContent = act.country;
       const w = stat.offsetWidth;
       if (w > max) max = w;
     });
-
     document.body.removeChild(wrap);
 
     if (max > 0) document.documentElement.style.setProperty('--top-pick-width', max + 'px');

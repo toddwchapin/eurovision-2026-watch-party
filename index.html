@@ -850,51 +850,58 @@
 
   // ——— Stats ———
 
+  // Sets --top-pick-width to the widest line-1 (label + flag + country + points)
+  // across all acts. Uses the "Party Winner" label so the Top Pick container
+  // here matches the party-votes page's winner container width exactly.
   function computeTopPickWidth() {
     if (!acts.length) return;
-    if (window.innerWidth > 720) {
-      document.documentElement.style.removeProperty('--top-pick-width');
-      return;
-    }
-    const liveTop = $('statTop');
-    if (!liveTop) return;
-
     const wrap = document.createElement('div');
+    wrap.className = 'party-winner-host';
     wrap.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;';
     const statsBox = document.createElement('div');
     statsBox.className = 'stats';
     const stat = document.createElement('div');
     stat.className = 'stat stat-top';
-    const inner = liveTop.cloneNode(true);
-    inner.removeAttribute('id');
+    stat.style.width = 'auto';
+    const inner = document.createElement('div');
+    inner.className = 'stat-value small';
     inner.style.width = 'auto';
-    inner.querySelectorAll('.tp-line').forEach(l => { l.style.whiteSpace = 'nowrap'; });
+    const entry = document.createElement('div');
+    entry.className = 'pw-entry';
+    const line1 = document.createElement('div');
+    line1.className = 'tp-line tp-line-1';
+    line1.style.whiteSpace = 'nowrap';
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'stat-label';
+    labelSpan.textContent = 'Party Winner';
+    const mid = document.createElement('span');
+    mid.className = 'tp-mid';
+    const flag = document.createElement('span');
+    flag.className = 'tp-flag';
+    const country = document.createElement('span');
+    country.className = 'tp-country';
+    mid.appendChild(flag);
+    mid.appendChild(country);
+    const points = document.createElement('span');
+    points.className = 'tp-points';
+    points.textContent = '25.0 pts';
+    line1.appendChild(labelSpan);
+    line1.appendChild(mid);
+    line1.appendChild(points);
+    entry.appendChild(line1);
+    inner.appendChild(entry);
     stat.appendChild(inner);
     statsBox.appendChild(stat);
     wrap.appendChild(statsBox);
     document.body.appendChild(wrap);
 
-    const hadActive = document.body.classList.contains('rating-active');
-    if (!hadActive) document.body.classList.add('rating-active');
-
-    const pointsEl = inner.querySelector('.tp-points');
-    const flagEl = inner.querySelector('.tp-flag');
-    const countryEl = inner.querySelector('.tp-country');
-    const performerEl = inner.querySelector('.tp-performer');
-    const songEl = inner.querySelector('.tp-song');
-
     let max = 0;
     acts.forEach(act => {
-      pointsEl.textContent = '25 pts';
-      flagEl.textContent = act.flag;
-      countryEl.textContent = act.country;
-      performerEl.textContent = act.performer;
-      songEl.textContent = '“' + act.song + '”';
+      flag.textContent = act.flag;
+      country.textContent = act.country;
       const w = stat.offsetWidth;
       if (w > max) max = w;
     });
-
-    if (!hadActive) document.body.classList.remove('rating-active');
     document.body.removeChild(wrap);
 
     if (max > 0) document.documentElement.style.setProperty('--top-pick-width', max + 'px');
