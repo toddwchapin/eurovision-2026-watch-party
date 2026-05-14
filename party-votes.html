@@ -97,6 +97,11 @@
     </div>
   </header>
 
+  <section class="card stage-empty" id="stageEmpty" style="display:none">
+    <p>Voting has not been opened for this contest yet. Switch contests in your settings.</p>
+    <a class="btn primary" href="index.html">Back to my watch party</a>
+  </section>
+
   <section class="card table-card">
     <div class="table-title">
       <span class="tt-label" id="ratingsCount">0 ratings</span>
@@ -147,11 +152,21 @@
   const FIREBASE_CONFIG = cfg.firebaseConfig;
   const DATA = window.EUROVISION_DATA || {};
   const SHOW_NAMES = window.EUROVISION_SHOW_NAMES || {};
-  const STAGE = DATA.show || 'grand-final';
-  const showName = SHOW_NAMES[DATA.show] || 'Grand Final';
-  const acts = (typeof window.eurovisionResolveActs === 'function')
+  const DEFAULT_STAGE = DATA.show || 'grand-final';
+  const KEY_STAGE = 'ev_' + PARTY_YEAR + '_stage';
+  let STAGE = localStorage.getItem(KEY_STAGE);
+  if (!STAGE || !SHOW_NAMES[STAGE]) STAGE = DEFAULT_STAGE;
+  const showList = (DATA.shows && DATA.shows[STAGE]) || [];
+  const stageConfigured = Array.isArray(showList) && showList.length > 0;
+  const showName = SHOW_NAMES[STAGE] || 'Grand Final';
+  // Temporarily point the resolver at the selected stage so it returns this
+  // contest's acts (instead of the file-level default).
+  const _origDataShow = DATA.show;
+  DATA.show = STAGE;
+  const acts = stageConfigured && typeof window.eurovisionResolveActs === 'function'
     ? window.eurovisionResolveActs()
     : [];
+  DATA.show = _origDataShow;
   const actOrder = {};
   acts.forEach((a, i) => { actOrder[a.code] = i + 1; });
   const _showEl = document.getElementById('showName');
@@ -196,6 +211,15 @@
 
   partyCodeValue.textContent = partyCode;
   subtitle.textContent = '';
+
+  if (!stageConfigured) {
+    document.querySelectorAll('.table-card').forEach(el => { el.style.display = 'none'; });
+    const pwHost = document.querySelector('.party-winner-host');
+    if (pwHost) pwHost.style.display = 'none';
+    const stageEmpty = $('stageEmpty');
+    if (stageEmpty) stageEmpty.style.display = '';
+    return;
+  }
 
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
   const db = firebase.database();

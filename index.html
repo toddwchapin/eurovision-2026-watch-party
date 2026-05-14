@@ -164,6 +164,11 @@
     </div>
   </section>
 
+  <section class="card stage-empty" id="stageEmpty" style="display:none">
+    <p>Voting has not been opened for this contest yet. Switch contests in your settings.</p>
+    <button class="btn primary" id="stageEmptyOpen" type="button">Open settings</button>
+  </section>
+
   <section class="card done-banner" id="donePanel" style="display:none">
     <h2>All acts rated 🏆</h2>
     <p>Sort the table below or click any row to revise a vote.</p>
@@ -222,6 +227,8 @@
     <h3>Welcome to the watch party!</h3>
     <p>What's your name? It'll show in the header so you remember which device is yours.</p>
     <input type="text" id="nameInput" maxlength="40" placeholder="Your name">
+    <label class="modal-field-label" for="stageSelect">Contest</label>
+    <select id="stageSelect"></select>
     <div class="modal-actions">
       <button class="btn danger" id="nameDelete" type="button" style="display:none">Delete user</button>
       <button class="btn primary" id="nameSave" type="button">Save</button>
@@ -242,8 +249,13 @@
     FIREBASE_CONFIG = cfg.firebaseConfig || null;
   } catch (e) {}
 
-  // Eurovision stage (one of: 'semi-1', 'semi-2', 'grand-final') from acts-data.js
-  const STAGE = (window.EUROVISION_DATA && window.EUROVISION_DATA.show) || 'grand-final';
+  // Eurovision stage selection — user-picked (settings modal), persisted in localStorage.
+  // Falls back to the default contest configured in acts-data.js, then to grand-final.
+  const SHOW_NAMES = window.EUROVISION_SHOW_NAMES || {};
+  const DEFAULT_STAGE = (window.EUROVISION_DATA && window.EUROVISION_DATA.show) || 'grand-final';
+  const KEY_STAGE   = 'ev_' + PARTY_YEAR + '_stage';
+  let STAGE = localStorage.getItem(KEY_STAGE);
+  if (!STAGE || !SHOW_NAMES[STAGE]) STAGE = DEFAULT_STAGE;
 
   // Year-scoped localStorage keys
   const KEY_NAME    = 'ev_' + PARTY_YEAR + '_guest_name';
@@ -307,15 +319,23 @@
 
   function init() {
     const data = window.EUROVISION_DATA || {};
-    const showNames = window.EUROVISION_SHOW_NAMES || {};
-    showName = showNames[data.show] || 'Grand Final';
-    acts = (typeof window.eurovisionResolveActs === 'function')
-      ? window.eurovisionResolveActs()
-      : [];
+    showName = SHOW_NAMES[STAGE] || 'Grand Final';
+
+    const showList = (data.shows && data.shows[STAGE]) || [];
+    const stageConfigured = Array.isArray(showList) && showList.length > 0;
+
+    if (stageConfigured && typeof window.eurovisionResolveActs === 'function') {
+      // Point the resolver at the user-selected stage rather than the file default.
+      const origShow = data.show;
+      data.show = STAGE;
+      acts = window.eurovisionResolveActs();
+      data.show = origShow;
+    } else {
+      acts = [];
+    }
     actOrder = {};
     acts.forEach((a, i) => { actOrder[a.code] = i + 1; });
 
-    votes     = loadVotes();
     guestName = localStorage.getItem(KEY_NAME) || '';
     userId    = localStorage.getItem(KEY_USER_ID) || genId(12);
     localStorage.setItem(KEY_USER_ID, userId);
@@ -323,11 +343,22 @@
     const showEl = $('showName');
     if (showEl) showEl.textContent = showName;
 
+    bindEvents();
+    renderName();
+
+    if (!stageConfigured) {
+      showStageEmpty();
+      // Still let the user open the settings modal to switch contests; if they
+      // have no name yet, prompt for one so the rest of the app makes sense
+      // once they pick a configured contest.
+      if (!guestName) openNameModal(true);
+      return;
+    }
+
+    votes = loadVotes();
     buildScales();
     bindReplay();
-    bindEvents();
     rebuildQueue();
-    renderName();
     computeTopPickWidth();
     let _resizeT;
     window.addEventListener('resize', () => {
@@ -351,6 +382,18 @@
     }
 
     if (!guestName) openNameModal(true);
+  }
+
+  function showStageEmpty() {
+    ['startPanel', 'entryPanel', 'donePanel'].forEach(id => {
+      const el = $(id); if (el) el.style.display = 'none';
+    });
+    const tableCard = document.querySelector('.table-card');
+    if (tableCard) tableCard.style.display = 'none';
+    const stats = document.querySelector('.stats');
+    if (stats) stats.style.display = 'none';
+    const stageEmpty = $('stageEmpty');
+    if (stageEmpty) stageEmpty.style.display = '';
   }
 
   function startSync() {
@@ -636,6 +679,8 @@
       if (partyCode) window.location.href = 'party-votes.html';
     });
     $('namePill').addEventListener('click', () => openNameModal(false));
+    const seo = $('stageEmptyOpen');
+    if (seo) seo.addEventListener('click', () => openNameModal(false));
     $('footerRename').addEventListener('click', e => { e.preventDefault(); openNameModal(false); });
     $('footerDownload').addEventListener('click', e => { e.preventDefault(); downloadResults(); });
     $('footerReset').addEventListener('click', e => { e.preventDefault(); resetVotes(); });
@@ -675,11 +720,25 @@
 
   function openNameModal(firstTime) {
     $('nameInput').value = guestName;
+    populateStageOptions();
     const showSecondary = firstTime ? 'none' : 'inline-block';
     $('nameClose').style.display = firstTime ? 'none' : 'flex';
     $('nameDelete').style.display = showSecondary;
     nameModal.classList.add('active');
     setTimeout(() => $('nameInput').focus(), 50);
+  }
+
+  function populateStageOptions() {
+    const sel = $('stageSelect');
+    if (!sel) return;
+    sel.replaceChildren();
+    Object.keys(SHOW_NAMES).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = SHOW_NAMES[key];
+      sel.appendChild(opt);
+    });
+    sel.value = SHOW_NAMES[STAGE] ? STAGE : DEFAULT_STAGE;
   }
 
   function deleteUser() {
@@ -700,6 +759,17 @@
     guestName = v;
     localStorage.setItem(KEY_NAME, guestName);
     renderName();
+
+    const sel = $('stageSelect');
+    const chosenStage = sel && SHOW_NAMES[sel.value] ? sel.value : STAGE;
+    if (chosenStage !== STAGE) {
+      localStorage.setItem(KEY_STAGE, chosenStage);
+      // Stage change requires rebuilding acts, queue, votes, party listener.
+      // A reload is the simplest correct refresh.
+      location.reload();
+      return;
+    }
+
     nameModal.classList.remove('active');
     syncLocalVotes();  // update name in Firebase
   }

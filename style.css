@@ -877,5 +877,38 @@
     margin-bottom: 18px;
   }
   .modal input:focus { outline: none; border-color: var(--gold-pale); }
+  .modal input { margin-bottom: 4px; }
+  .modal-field-label {
+    display: block;
+    margin: 12px 0 6px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cream-mute);
+  }
+  .modal select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.3);
+    color: var(--cream);
+    font: inherit;
+    margin-bottom: 18px;
+  }
+  .modal select:focus { outline: none; border-color: var(--gold-pale); }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
   .modal-actions .btn.danger { margin-right: auto; }
+
+  /* Empty-stage banner shown when a contest has no configured running order. */
+  .stage-empty {
+    text-align: center;
+    padding: 36px 24px;
+  }
+  .stage-empty p {
+    margin: 0 0 16px;
+    color: var(--cream-mute);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .stage-empty a.btn { display: inline-block; text-decoration: none; }
