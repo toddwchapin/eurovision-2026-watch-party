@@ -96,12 +96,12 @@
       </div>
     </div>
     <div class="party-bar" id="partyBar" style="display:none">
-      <div class="party-code">
+      <a class="party-action" id="navPartyVotes" href="party-votes.html">Party Votes</a>
+      <div class="party-code" id="partyCodeChip" title="Copy invite link">
         <span>Party</span>
         <strong id="partyCodeValue"></strong>
-        <button class="btn-copy" id="btnCopyParty" title="Copy invite link">Copy link</button>
       </div>
-      <button class="party-action" id="btnSeeVotes" title="See party votes">See Votes</button>
+      <a class="party-action" id="navPartyTrivia" href="party-trivia.html">Party Trivia</a>
     </div>
   </header>
 
@@ -197,17 +197,6 @@
     </div>
   </section>
 
-  <footer class="app-footer">
-    <a class="nav-link" id="footerRename">Rename voter</a>
-    <span>·</span>
-    <a class="nav-link" id="footerPartyVotes" href="party-votes.html">View party votes</a>
-    <span>·</span>
-    <a class="nav-link" id="footerPartyTrivia" href="party-trivia.html">Party trivia</a>
-    <span>·</span>
-    <a class="nav-link" id="footerDownload">Download my results</a>
-    <span>·</span>
-    <a class="nav-link danger" id="footerReset" style="color:var(--danger)">Reset all my votes</a>
-  </footer>
 
 </div>
 
@@ -236,6 +225,10 @@
     <div class="modal-actions">
       <button class="btn danger" id="nameDelete" type="button" style="display:none">Delete user</button>
       <button class="btn primary" id="nameSave" type="button">Save</button>
+    </div>
+    <div class="modal-actions modal-actions-secondary" id="nameActionsSecondary" style="display:none">
+      <button class="btn danger" id="nameReset" type="button">Reset all my votes</button>
+      <button class="btn" id="nameDownload" type="button">Download my results</button>
     </div>
   </div>
 </div>
@@ -507,10 +500,13 @@
     const url = new URL(window.location.href);
     url.searchParams.set('party', partyCode);
     navigator.clipboard.writeText(url.toString()).then(() => {
-      const btn = $('btnCopyParty');
-      const prev = btn.textContent;
-      btn.textContent = 'Copied!';
-      setTimeout(() => { btn.textContent = prev; }, 1500);
+      const chip = $('partyCodeChip');
+      if (!chip) return;
+      const children = Array.from(chip.childNodes);
+      chip.textContent = 'Copied!';
+      setTimeout(() => {
+        chip.replaceChildren(...children);
+      }, 1500);
     }).catch(() => {});
   }
 
@@ -731,12 +727,18 @@
     $('namePill').addEventListener('click', () => openNameModal(false));
     const seo = $('stageEmptyOpen');
     if (seo) seo.addEventListener('click', () => openNameModal(false));
-    $('footerRename').addEventListener('click', e => { e.preventDefault(); openNameModal(false); });
-    $('footerDownload').addEventListener('click', e => { e.preventDefault(); downloadResults(); });
-    $('footerReset').addEventListener('click', e => { e.preventDefault(); resetVotes(); });
     $('nameSave').addEventListener('click', saveName);
     $('nameClose').addEventListener('click', () => nameModal.classList.remove('active'));
     $('nameDelete').addEventListener('click', deleteUser);
+    $('nameReset').addEventListener('click', () => {
+      const had = Object.keys(votes).length > 0;
+      resetVotes();
+      if (had && Object.keys(votes).length === 0) nameModal.classList.remove('active');
+    });
+    $('nameDownload').addEventListener('click', () => {
+      downloadResults();
+      nameModal.classList.remove('active');
+    });
     $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
 
     $('btnCreateParty').addEventListener('click', () => {
@@ -756,13 +758,8 @@
       startSync();
     });
     $('joinCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnJoinParty').click(); });
-    $('btnCopyParty').addEventListener('click', copyPartyLink);
-    $('btnSeeVotes').addEventListener('click', e => {
-      e.stopPropagation();
-      window.location.href = 'party-votes.html';
-    });
     $('partyBar').addEventListener('click', e => {
-      if (e.target !== $('btnCopyParty') && e.target !== $('btnSeeVotes')) copyPartyLink();
+      if (!e.target.closest('.party-action')) copyPartyLink();
     });
   }
 
@@ -774,6 +771,7 @@
     const showSecondary = firstTime ? 'none' : 'inline-block';
     $('nameClose').style.display = firstTime ? 'none' : 'flex';
     $('nameDelete').style.display = showSecondary;
+    $('nameActionsSecondary').style.display = firstTime ? 'none' : 'flex';
     nameModal.classList.add('active');
     setTimeout(() => $('nameInput').focus(), 50);
   }

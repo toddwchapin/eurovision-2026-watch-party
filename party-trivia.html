@@ -66,22 +66,16 @@
       </g>
     </svg>
 
-    <div class="name-pill name-pill-static">
-      <span class="name-value">Party Trivia</span>
-    </div>
-
     <div class="party-bar" id="partyBar">
-      <div class="party-code">
-        <span>Party</span>
-        <strong id="partyCodeValue">—</strong>
-      </div>
-      <div class="party-status" id="partySubtitle">Loading party…</div>
+      <a class="party-action" href="index.html">← Back to voting</a>
+      <h2 class="party-title">Party Trivia</h2>
+      <a class="party-action" href="party-votes.html">Party Votes →</a>
     </div>
   </header>
 
   <section class="card stage-empty" id="stageEmpty" style="display:none">
     <p>Voting has not been opened for this contest yet. Switch contests in your settings.</p>
-    <a class="btn primary" href="index.html">Back to my watch party</a>
+    <a class="btn primary" href="index.html">Back to voting</a>
   </section>
 
   <section class="card trivia-card-host" id="triviaHost">
@@ -89,10 +83,6 @@
     <p class="trivia-empty" id="triviaEmpty" style="display:none">No votes yet in this party — come back once people start rating.</p>
   </section>
 
-  <footer class="app-footer">
-    <a class="nav-link" href="index.html">← Back to my watch party</a>
-    <a class="nav-link" href="party-votes.html">Party Votes →</a>
-  </footer>
 
 </div>
 
@@ -136,17 +126,11 @@
     ''
   ).toUpperCase().slice(0, 8);
 
-  const subtitle = $('partySubtitle');
-  const partyCodeValue = $('partyCodeValue');
-
   if (!partyCode) {
-    subtitle.textContent = 'No party selected — open this page from the party bar on the main page.';
+    console.warn('No party selected.');
     $('triviaHost').style.display = 'none';
     return;
   }
-
-  partyCodeValue.textContent = partyCode;
-  subtitle.textContent = '';
 
   if (!stageConfigured) {
     $('triviaHost').style.display = 'none';
@@ -164,7 +148,6 @@
     renderTrivia();
   }, err => {
     console.warn('Firebase read failed:', err);
-    subtitle.textContent = 'read failed (' + err.code + ')';
   });
 
   function extractStageVotes(votesNode) {
