@@ -158,7 +158,12 @@
     gap: 12px;
     margin-top: 14px;
   }
-  .stat-top { grid-column: 1 / -1; }
+  .stat-top {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: var(--top-pick-width, auto);
+    max-width: 100%;
+  }
   .stat {
     background: var(--bg-card);
     border: 1px solid var(--line);
