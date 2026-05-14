@@ -79,6 +79,8 @@
       <span class="name-value" id="nameValue">—</span>
     </div>
 
+    <a class="help-btn" id="helpBtn" href="help.html" aria-label="Help" title="Help">?</a>
+
     <div class="stats">
       <div class="stat stat-top">
         <div class="stat-value small" id="statTop">
@@ -481,6 +483,13 @@
     bar.style.display = '';
     $('partyCodeValue').textContent = partyCode;
     updateDoneButton();
+    updateHelpLink();
+  }
+
+  function updateHelpLink() {
+    const help = $('helpBtn');
+    if (!help) return;
+    help.href = partyCode ? 'help.html?party=' + encodeURIComponent(partyCode) : 'help.html';
   }
 
   function updateDoneButton() {

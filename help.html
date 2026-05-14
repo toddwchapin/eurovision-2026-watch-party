@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Help — Eurovision 2026 Watch Party</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="help-page">
+
+<div class="wrap">
+
+  <header class="app-header help-header">
+    <a class="back-btn" id="backBtn" href="index.html">← Back to voting</a>
+    <h1 class="help-title">Help</h1>
+  </header>
+
+  <section class="card help-content">
+    <p class="help-intro">
+      A live scoring app for Eurovision watch parties. Rate each act as it performs, share scores with the room in real time, and see who's loving (or hating) the show.
+    </p>
+
+    <h2>Getting started</h2>
+    <ol>
+      <li><strong>Enter your name.</strong> A modal appears on first load. Maximum 40 characters. Click the name pill in the top-right of the voter page to change it later.</li>
+      <li><strong>Create or join a party.</strong> A party is a shared session — everyone in it sees each other's votes live.
+        <ul>
+          <li><em>Create new</em> — generates a 6-character code (letters and digits, no <code>I</code>, <code>O</code>, <code>1</code>, or <code>L</code> to avoid confusion).</li>
+          <li><em>Join</em> — type in the code someone shared with you. Case doesn't matter.</li>
+          <li><em>Invite link</em> — anyone opening a URL like <code>…/?party=ABC123</code> joins automatically. Use the "Copy link" button in the header to grab the link.</li>
+        </ul>
+      </li>
+      <li><strong>Hit Start Rating</strong> when the show begins.</li>
+    </ol>
+
+    <h2>The voting page</h2>
+
+    <h3>Rating an act</h3>
+    <p>Each act has its own card showing flag, country, performer, and song. Rate it on five 0–5 scales:</p>
+    <ul>
+      <li><strong>Vocal quality</strong> — how strong and controlled the vocals are.</li>
+      <li><strong>Performance flair</strong> — energy, charisma, stage presence.</li>
+      <li><strong>Song quality</strong> — how good the song itself is.</li>
+      <li><strong>Originality</strong> — how fresh or distinctive the entry feels.</li>
+      <li><strong>Stagecraft</strong> — costumes, visuals, choreography, production.</li>
+    </ul>
+    <p>0 means Terrible, 5 means Amazing. The total (0–25) is calculated automatically. There's also a <strong>Replay-worthy?</strong> Yes/No toggle and an optional <strong>Notes</strong> field (max 200 characters) — drop quick observations or a "reminds me of…" line.</p>
+
+    <h3>Save, Skip, Clear</h3>
+    <ul>
+      <li><strong>Save</strong> — records your scores and moves to the next act. Votes sync to the rest of your party immediately.</li>
+      <li><strong>Skip</strong> — moves on without recording a vote. The act stays in the queue; you can come back.</li>
+      <li><strong>Clear</strong> — wipes the form but stays on the current act.</li>
+    </ul>
+    <p>Acts are presented in performance order. If the running order isn't out yet, they're alphabetical. Acts not in the final are skipped entirely.</p>
+
+    <h3>Editing a vote</h3>
+    <p>Click any row in the Results Table to reopen that act's form pre-filled with your saved scores. Click Save to commit changes.</p>
+
+    <h3>Results Table</h3>
+    <p>Shows every act at least one party member has rated. Columns:</p>
+    <ul>
+      <li><strong>#</strong> — running order slot ("—" if unknown).</li>
+      <li><strong>Act</strong> — flag, country, performer, song, and any note you left.</li>
+      <li><strong>One column per member</strong> — their total (0–25), "—" if unrated. Your own column is bold gold with a ★.</li>
+      <li><strong>Avg</strong> — average across everyone who's rated the act.</li>
+    </ul>
+    <p>Click a column header to sort by it. Click again to flip direction. Default sort is Avg descending — highest-scoring acts on top.</p>
+
+    <h3>Stats bar</h3>
+    <ul>
+      <li><strong>Progress</strong> — how many acts you've rated out of the total.</li>
+      <li><strong>Your Average</strong> — your mean total across all your rated acts.</li>
+      <li><strong>Top Pick</strong> — the act with the highest party-wide average.</li>
+    </ul>
+
+    <h3>Settings &amp; reset</h3>
+    <p>The footer has links to rename yourself and to "Reset all my votes" — that erases your votes everywhere (device + party), with a confirmation step. Other members' votes are untouched.</p>
+
+    <h2>Party Votes page</h2>
+    <p>An overview of the whole party's scores for the current show.</p>
+    <ul>
+      <li><strong>Party Winner</strong> stat — the act with the highest average across everyone. Ties show every winner.</li>
+      <li><strong>Funniest Comment</strong> stat (when present) — surfaces the wittiest note left on any vote.</li>
+      <li><strong>Table</strong> — one row per act anyone rated, sorted by average score descending. Click a row to expand it inline and see each member's total and any comment they left for that act.</li>
+    </ul>
+
+    <h2>Party Trivia page</h2>
+    <p>Superlatives based on everyone's votes and comments. A member needs to have rated at least 3 acts before they show up in score-based categories.</p>
+    <ul>
+      <li><strong>Biggest Hater</strong> — lowest average score across their rated acts.</li>
+      <li><strong>Biggest Lover</strong> — highest average score.</li>
+      <li><strong>Most Verbose Comment</strong> — longest single note left on any vote.</li>
+      <li><strong>Most Verbose Overall</strong> — most characters of comments combined.</li>
+      <li><strong>Wittiest</strong> — funniest comment as judged by the built-in humor scorer.</li>
+      <li><strong>Most Incomplete</strong> — has rated something but skipped the most acts.</li>
+    </ul>
+
+    <h2>Privacy &amp; data</h2>
+    <ul>
+      <li>Your name, party code, and votes are stored locally on this device.</li>
+      <li>If you're in a party, your name and saved votes are also written to Firebase so other members see them in real time. Only saved votes sync — in-progress selections aren't shared.</li>
+      <li>Reset removes your votes from both this device and the party.</li>
+    </ul>
+
+    <h2>Known issues</h2>
+    <p>On iOS Safari and some other mobile WebKit browsers, the 0–5 score buttons may not register taps reliably — votes can save as all zeros. Desktop Chrome, Firefox, and Edge are not affected. A fix is in progress.</p>
+  </section>
+
+</div>
+
+<script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var party = (params.get('party') || '').toUpperCase().slice(0, 8);
+    if (party) {
+      document.getElementById('backBtn').href = 'index.html?party=' + encodeURIComponent(party);
+    }
+  })();
+</script>
+
+</body>
+</html>
