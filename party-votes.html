@@ -11,7 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="party-page">
 
 <script type="application/json" id="party-config">
 {
@@ -65,6 +65,8 @@
         <circle cx="328" cy="9" r="1.2" fill="#D4AF37"/>
       </g>
     </svg>
+
+    <a class="help-btn" id="helpBtn" href="help.html" aria-label="Help" title="Help">?</a>
 
     <div class="party-bar" id="partyBar">
       <a class="party-action" href="index.html">← Back to voting</a>
@@ -171,6 +173,9 @@
     localStorage.getItem(KEY_PARTY) ||
     ''
   ).toUpperCase().slice(0, 8);
+
+  const _helpBtn = document.getElementById('helpBtn');
+  if (_helpBtn && partyCode) _helpBtn.href = 'help.html?party=' + encodeURIComponent(partyCode);
 
   if (!partyCode) {
     console.warn('No party selected.');

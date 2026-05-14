@@ -1008,3 +1008,112 @@
   @media (max-width: 720px) {
     .trivia-grid { grid-template-columns: 1fr; }
   }
+
+  /* ====== Help button & page ====== */
+  .help-btn {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(212,175,55,0.06);
+    color: var(--gold-pale);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 30px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    z-index: 5;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .help-btn:hover {
+    background: rgba(212,175,55,0.12);
+    border-color: var(--gold-pale);
+  }
+  /* Voter page: below the name pill (which is top:14px, ~32px tall) */
+  body:not(.party-page):not(.help-page) .help-btn {
+    top: 56px;
+    right: 22px;
+  }
+  /* Party pages: top-right corner */
+  body.party-page .help-btn {
+    top: 14px;
+    right: 18px;
+  }
+
+  .help-page .help-header {
+    position: relative;
+    padding-bottom: 8px;
+  }
+  .help-page .help-title {
+    text-align: center;
+    margin: 12px auto 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    color: var(--gold-pale);
+    letter-spacing: 0.04em;
+  }
+  .help-page .back-btn {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    color: var(--gold-pale);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(212,175,55,0.06);
+    transition: background 0.15s, border-color 0.15s;
+    z-index: 5;
+  }
+  .help-page .back-btn:hover {
+    background: rgba(212,175,55,0.12);
+    border-color: var(--gold-pale);
+  }
+  .help-content {
+    line-height: 1.55;
+  }
+  .help-content .help-intro {
+    color: var(--cream);
+    font-size: 15px;
+    margin: 0 0 12px;
+  }
+  .help-content h2 {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--gold-pale);
+    font-size: 22px;
+    margin: 24px 0 8px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 4px;
+  }
+  .help-content h3 {
+    color: var(--gold-pale);
+    font-size: 15px;
+    margin: 16px 0 6px;
+  }
+  .help-content p,
+  .help-content li {
+    color: var(--cream);
+    font-size: 14px;
+  }
+  .help-content ul,
+  .help-content ol {
+    margin: 8px 0 12px;
+    padding-left: 22px;
+  }
+  .help-content li { margin-bottom: 4px; }
+  .help-content code {
+    background: rgba(212,175,55,0.08);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 12px;
+    color: var(--gold-pale);
+  }
+  @media (max-width: 720px) {
+    .help-page .help-title { font-size: 26px; }
+    .help-page .back-btn { font-size: 12px; padding: 5px 10px; }
+  }
