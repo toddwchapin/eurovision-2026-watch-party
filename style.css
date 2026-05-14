@@ -630,6 +630,41 @@
   }
   .empty-row { text-align: center; padding: 24px; color: var(--cream-mute); font-style: italic; }
 
+  /* ====== Voter breakdown ====== */
+  #breakdownCard { position: relative; }
+  #breakdownCard .bd-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    z-index: 1;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+  }
+  #breakdownCard .bd-close:hover { border-color: var(--gold-pale); }
+  .bd-title { display: block; padding-right: 64px; }
+  .bd-title-main { display: block; line-height: 1.2; }
+  .bd-title-song {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.75em;
+    font-style: italic;
+    color: var(--cream-mute);
+    line-height: 1.2;
+  }
+  table.rated tr.bd-has-comment td { border-bottom: none; }
+  table.rated tr.bd-comment-row { cursor: default; }
+  table.rated tr.bd-comment-row:hover { background: transparent; }
+  table.rated td.bd-comment {
+    padding-top: 2px;
+    padding-left: 24px;
+    text-align: left;
+    color: var(--cream-mute);
+    font-style: italic;
+    font-size: 12px;
+    word-break: break-word;
+  }
+
   /* ====== Party section ====== */
   .party-bar {
     display: flex;

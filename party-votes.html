@@ -118,9 +118,9 @@
   </section>
 
   <section class="card table-card" id="breakdownCard" style="display:none">
+    <button class="btn-copy bd-close" id="breakdownClose" type="button" aria-label="Close">Close</button>
     <div class="table-title">
-      <span class="tt-label" id="breakdownTitle">—</span>
-      <button class="btn-copy" id="breakdownClose" type="button">Close</button>
+      <div class="tt-label bd-title" id="breakdownTitle"></div>
     </div>
     <div class="table-scroll">
       <table class="rated" id="breakdownTable">
@@ -160,8 +160,6 @@
   const KEY_PARTY = 'ev_' + PARTY_YEAR + '_party';
 
   const SCORE_FIELDS = ['vocals', 'performance', 'song', 'original', 'stage'];
-  const BREAKDOWN_LABELS = ['Name', 'V', 'P', 'S', 'O', 'S', 'T'];
-  const BREAKDOWN_KEYS = ['vocals', 'performance', 'song', 'original', 'stage', 'total'];
 
   const FIXED_COLS = [
     { key: 'order',   label: '#',   cls: 'num' },
@@ -172,7 +170,6 @@
     country:   { type: 'string', label: 'Country' },
     performer: { type: 'string', label: 'Performer' },
     song:      { type: 'string', label: 'Song' },
-    repeatPct: { type: 'num',    label: 'Repeat %' },
     avg:       { type: 'num',    label: 'Avg Total' },
   };
 
@@ -258,16 +255,6 @@
     return totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
   }
 
-  function actRepeatPct(code) {
-    const answers = userCols
-      .map(u => {
-        const v = u.votes[code];
-        return (v && (v.replay === 0 || v.replay === 1)) ? v.replay : null;
-      })
-      .filter(x => x !== null);
-    return answers.length ? (answers.reduce((a, b) => a + b, 0) / answers.length) * 100 : null;
-  }
-
   function buildTableHead() {
     const tr = $('tableHead');
     tr.replaceChildren();
@@ -283,16 +270,6 @@
       th.addEventListener('click', () => onSortClick(col.key));
       tr.appendChild(th);
     });
-
-    const thRpt = document.createElement('th');
-    thRpt.className = 'num';
-    thRpt.dataset.key = 'repeatPct';
-    thRpt.textContent = 'Repeat %';
-    const arrowRpt = document.createElement('span');
-    arrowRpt.className = 'arrow';
-    thRpt.appendChild(arrowRpt);
-    thRpt.addEventListener('click', () => onSortClick('repeatPct'));
-    tr.appendChild(thRpt);
 
     const thAvg = document.createElement('th');
     thAvg.className = 'num total';
@@ -349,7 +326,6 @@
       song: act.song,
       order: actOrder[act.code],
       avg: actAvg(act.code),
-      repeatPct: actRepeatPct(act.code),
     };
   }
 
@@ -378,7 +354,7 @@
   }
 
   function renderTable() {
-    const totalCols = FIXED_COLS.length + 2;
+    const totalCols = FIXED_COLS.length + 1;
 
     const ratedActs = acts.filter(act => userCols.some(u => u.votes[act.code]));
     const rows = ratedActs.map(rowFor);
@@ -429,12 +405,6 @@
           }
           tr.appendChild(td);
         });
-
-        const tdRpt = document.createElement('td');
-        tdRpt.className = 'num';
-        tdRpt.dataset.key = 'repeatPct';
-        tdRpt.textContent = r.repeatPct !== null ? Math.round(r.repeatPct) + '%' : '—';
-        tr.appendChild(tdRpt);
 
         const tdAvg = document.createElement('td');
         tdAvg.className = 'num total';
@@ -623,17 +593,27 @@
     if (!act) return;
     activeBreakdownCode = code;
 
-    $('breakdownTitle').textContent =
-      act.flag + ' ' + act.country + ' — ' + act.performer + ' · “' + act.song + '”';
+    const title = $('breakdownTitle');
+    title.replaceChildren();
+    const line1 = document.createElement('div');
+    line1.className = 'bd-title-main';
+    line1.textContent = act.flag + ' ' + act.country + ' — ' + act.performer;
+    const line2 = document.createElement('div');
+    line2.className = 'bd-title-song';
+    line2.textContent = '“' + act.song + '”';
+    title.appendChild(line1);
+    title.appendChild(line2);
 
     const head = $('breakdownHead');
     head.replaceChildren();
-    BREAKDOWN_LABELS.forEach((label, i) => {
-      const th = document.createElement('th');
-      th.textContent = label;
-      th.className = i === 0 ? 'act-cell' : (i === BREAKDOWN_LABELS.length - 1 ? 'num total' : 'num');
-      head.appendChild(th);
-    });
+    const thName = document.createElement('th');
+    thName.className = 'act-cell';
+    thName.textContent = 'Voter';
+    head.appendChild(thName);
+    const thTotal = document.createElement('th');
+    thTotal.className = 'num total';
+    thTotal.textContent = 'Total';
+    head.appendChild(thTotal);
 
     const body = $('breakdownBody');
     body.replaceChildren();
@@ -641,27 +621,38 @@
     if (userCols.length === 0) {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
-      td.colSpan = BREAKDOWN_LABELS.length;
+      td.colSpan = 2;
       td.className = 'empty-row';
       td.textContent = 'No party members yet.';
       tr.appendChild(td);
       body.appendChild(tr);
     } else {
       userCols.forEach(uc => {
+        const v = uc.votes[code];
         const tr = document.createElement('tr');
+        tr.className = 'bd-user-row';
         const nameTd = document.createElement('td');
         nameTd.className = 'act-cell';
         nameTd.textContent = uc.name;
         tr.appendChild(nameTd);
-        const v = uc.votes[code];
-        BREAKDOWN_KEYS.forEach((k, idx) => {
-          const td = document.createElement('td');
-          td.className = idx === BREAKDOWN_KEYS.length - 1 ? 'num total' : 'num';
-          const val = v ? v[k] : null;
-          td.textContent = val != null ? String(val) : '—';
-          tr.appendChild(td);
-        });
+        const totalTd = document.createElement('td');
+        totalTd.className = 'num total';
+        totalTd.textContent = (v && typeof v.total === 'number') ? String(v.total) : '—';
+        tr.appendChild(totalTd);
         body.appendChild(tr);
+
+        const comment = v && typeof v.remind === 'string' ? v.remind.trim() : '';
+        if (comment) {
+          tr.classList.add('bd-has-comment');
+          const ctr = document.createElement('tr');
+          ctr.className = 'bd-comment-row';
+          const ctd = document.createElement('td');
+          ctd.colSpan = 2;
+          ctd.className = 'bd-comment';
+          ctd.textContent = comment;
+          ctr.appendChild(ctd);
+          body.appendChild(ctr);
+        }
       });
     }
 
