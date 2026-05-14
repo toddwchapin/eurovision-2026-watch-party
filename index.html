@@ -174,6 +174,7 @@
     <h2>All acts rated 🏆</h2>
     <p>Sort the table below or click any row to revise a vote.</p>
     <button class="btn primary" id="btnReturnStart" style="margin-top:14px;display:none"></button>
+    <button class="btn" id="btnSeeTrivia" style="margin-top:8px;display:none">See party trivia</button>
   </section>
 
   <section class="card table-card">
@@ -200,6 +201,8 @@
     <a class="nav-link" id="footerRename">Rename voter</a>
     <span>·</span>
     <a class="nav-link" id="footerPartyVotes" href="party-votes.html">View party votes</a>
+    <span>·</span>
+    <a class="nav-link" id="footerPartyTrivia" href="party-trivia.html">Party trivia</a>
     <span>·</span>
     <a class="nav-link" id="footerDownload">Download my results</a>
     <span>·</span>
@@ -489,11 +492,14 @@
 
   function updateDoneButton() {
     const btn = $('btnReturnStart');
+    const triviaBtn = $('btnSeeTrivia');
     if (partyCode) {
       btn.textContent = 'See party votes';
       btn.style.display = '';
+      if (triviaBtn) triviaBtn.style.display = '';
     } else {
       btn.style.display = 'none';
+      if (triviaBtn) triviaBtn.style.display = 'none';
     }
   }
 
@@ -718,6 +724,9 @@
     $('fRemind').addEventListener('input', updateSaveButtonState);
     $('btnReturnStart').addEventListener('click', () => {
       if (partyCode) window.location.href = 'party-votes.html';
+    });
+    $('btnSeeTrivia').addEventListener('click', () => {
+      if (partyCode) window.location.href = 'party-trivia.html';
     });
     $('namePill').addEventListener('click', () => openNameModal(false));
     const seo = $('stageEmptyOpen');

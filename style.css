@@ -941,3 +941,61 @@
     line-height: 1.5;
   }
   .stage-empty a.btn { display: inline-block; text-decoration: none; }
+
+  /* ====== Party Trivia page ====== */
+  .trivia-card-host { padding: 18px; }
+  .trivia-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .trivia-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+  }
+  .trivia-card .tc-title {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cream-mute);
+  }
+  .trivia-card .tc-voter {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold-pale);
+    line-height: 1.15;
+  }
+  .trivia-card .tc-value {
+    font-size: 13px;
+    color: var(--cream);
+    font-weight: 500;
+  }
+  .trivia-card .tc-detail {
+    font-size: 11px;
+    color: var(--cream-mute);
+    line-height: 1.4;
+    margin-top: 2px;
+  }
+  .trivia-card .tc-quote {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--cream);
+    margin-bottom: 2px;
+  }
+  .trivia-card .tc-act {
+    font-size: 11px;
+    color: var(--cream-mute);
+  }
+  .trivia-empty {
+    margin: 0;
+    color: var(--cream-mute);
+    text-align: center;
+    font-size: 14px;
+  }
+  @media (max-width: 720px) {
+    .trivia-grid { grid-template-columns: 1fr; }
+  }
