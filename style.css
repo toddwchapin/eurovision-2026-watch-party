@@ -673,19 +673,27 @@
   }
   .empty-row { text-align: center; padding: 24px; color: var(--cream-mute); font-style: italic; }
 
-  /* ====== Voter breakdown ====== */
-  #breakdownCard { position: relative; }
-  .bd-title { display: block; }
-  .bd-title-main { display: block; line-height: 1.2; }
-  .bd-title-song {
-    display: block;
-    margin-top: 2px;
-    font-size: 0.75em;
-    font-style: italic;
-    color: var(--cream-mute);
-    line-height: 1.2;
-    text-align: center;
+  table.rated.no-sort th { cursor: default; }
+  table.rated.no-sort th:hover { color: var(--cream-mute); }
+
+  /* ====== Voter breakdown (inline expand) ====== */
+  table.rated tr.bd-expanded { cursor: default; }
+  table.rated tr.bd-expanded:hover { background: transparent; }
+  table.rated tr.bd-expanded > td {
+    padding: 0;
+    background: rgba(212,175,55,0.04);
+    border-bottom: 1px solid rgba(212,175,55,0.15);
   }
+  .bd-expand-inner {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 220ms ease;
+  }
+  tr.bd-expanded.open .bd-expand-inner { grid-template-rows: 1fr; }
+  .bd-expand-body { overflow: hidden; min-height: 0; }
+  table.bd-inner-table { width: 100%; border-collapse: collapse; }
+  table.bd-inner-table td { border-bottom: 1px solid rgba(212,175,55,0.08); }
+  table.bd-inner-table tr:last-child td { border-bottom: none; }
   table.rated tr.bd-has-comment td { border-bottom: none; }
   table.rated tr.bd-comment-row { cursor: default; }
   table.rated tr.bd-comment-row:hover { background: transparent; }

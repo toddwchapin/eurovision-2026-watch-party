@@ -114,33 +114,13 @@
   <section class="card table-card">
     <div class="table-title">
       <span class="tt-label" id="ratingsCount">0 ratings</span>
-      <div class="table-controls">
-        <label class="sort-label">Sort:
-          <select id="sortKey"></select>
-        </label>
-        <button class="btn-dir" id="sortDir" type="button" aria-label="Toggle sort direction">↓</button>
-      </div>
     </div>
     <div class="table-scroll">
-      <table class="rated" id="ratedTable">
+      <table class="rated no-sort" id="ratedTable">
         <thead>
           <tr id="tableHead"></tr>
         </thead>
         <tbody id="tableBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="card table-card" id="breakdownCard" style="display:none">
-    <div class="table-title">
-      <div class="tt-label bd-title" id="breakdownTitle"></div>
-    </div>
-    <div class="table-scroll">
-      <table class="rated" id="breakdownTable">
-        <thead>
-          <tr id="breakdownHead"></tr>
-        </thead>
-        <tbody id="breakdownBody"></tbody>
       </table>
     </div>
   </section>
@@ -190,18 +170,9 @@
     { key: 'order',   label: '#',   cls: 'num' },
     { key: 'country', label: 'Act', cls: 'act-cell' },
   ];
-  const BASE_SORT_KEYS = {
-    order:     { type: 'order',  label: 'Performance #' },
-    country:   { type: 'string', label: 'Country' },
-    performer: { type: 'string', label: 'Performer' },
-    song:      { type: 'string', label: 'Song' },
-    avg:       { type: 'num',    label: 'Avg Total' },
-  };
-
   let partyUsers = {};
   let userCols = [];
-  let sort = { key: 'avg', dir: 'desc' };
-  let activeBreakdownCode = null;
+  let activeExpandedCode = null;
   let persistedFunniest = null;
 
   const $ = id => document.getElementById(id);
@@ -237,12 +208,10 @@
   db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users').on('value', snap => {
     partyUsers = snap.val() || {};
     rebuildUserCols();
-    buildSortControls();
     buildTableHead();
     renderTable();
     renderPartyWinner();
     renderFunniest();
-    if (activeBreakdownCode) showBreakdown(activeBreakdownCode);
   }, err => {
     console.warn('Firebase read failed:', err);
     subtitle.textContent = 'read failed (' + err.code + ')';
@@ -305,10 +274,6 @@
       th.className = col.cls;
       th.dataset.key = col.key;
       th.textContent = col.label;
-      const arrow = document.createElement('span');
-      arrow.className = 'arrow';
-      th.appendChild(arrow);
-      th.addEventListener('click', () => onSortClick(col.key));
       tr.appendChild(th);
     });
 
@@ -316,46 +281,7 @@
     thAvg.className = 'num total';
     thAvg.dataset.key = 'avg';
     thAvg.textContent = 'Avg';
-    const arrowAvg = document.createElement('span');
-    arrowAvg.className = 'arrow';
-    thAvg.appendChild(arrowAvg);
-    thAvg.addEventListener('click', () => onSortClick('avg'));
     tr.appendChild(thAvg);
-  }
-
-  function buildSortControls() {
-    const oldSel = $('sortKey');
-    const sel = oldSel.cloneNode(false);
-    oldSel.parentNode.replaceChild(sel, oldSel);
-    sel.id = 'sortKey';
-
-    Object.keys(BASE_SORT_KEYS).forEach(key => {
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = BASE_SORT_KEYS[key].label;
-      sel.appendChild(opt);
-    });
-
-    if (!BASE_SORT_KEYS[sort.key]) sort.key = 'avg';
-    sel.value = sort.key;
-
-    sel.onchange = () => { sort.key = sel.value; renderTable(); };
-    $('sortDir').onclick = () => {
-      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
-      $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
-      renderTable();
-    };
-    $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
-  }
-
-  function onSortClick(key) {
-    if (sort.key === key) {
-      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
-    } else {
-      sort.key = key;
-      sort.dir = (key === 'country' || key === 'performer' || key === 'song' || key === 'order') ? 'asc' : 'desc';
-    }
-    renderTable();
   }
 
   function rowFor(act) {
@@ -370,36 +296,19 @@
     };
   }
 
-  function compareCells(a, b, key, dir) {
-    let av = a[key], bv = b[key];
-
-    if (key === 'order') {
-      const an = parseInt(av, 10), bn = parseInt(bv, 10);
-      const aHas = Number.isFinite(an), bHas = Number.isFinite(bn);
-      if (aHas && bHas) return dir === 'asc' ? an - bn : bn - an;
-      if (aHas) return -1;
-      if (bHas) return 1;
-      return 0;
-    }
-    if (key === 'country' || key === 'performer' || key === 'song') {
-      av = (av || '').toLowerCase();
-      bv = (bv || '').toLowerCase();
-      return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-    }
-    const aMissing = typeof av !== 'number';
-    const bMissing = typeof bv !== 'number';
-    if (aMissing && bMissing) return 0;
-    if (aMissing) return 1;
-    if (bMissing) return -1;
-    return dir === 'asc' ? av - bv : bv - av;
-  }
-
   function renderTable() {
     const totalCols = FIXED_COLS.length + 1;
 
     const ratedActs = acts.filter(act => userCols.some(u => u.votes[act.code]));
     const rows = ratedActs.map(rowFor);
-    rows.sort((a, b) => compareCells(a, b, sort.key, sort.dir));
+    rows.sort((a, b) => {
+      const av = typeof a.avg === 'number' ? a.avg : -Infinity;
+      const bv = typeof b.avg === 'number' ? b.avg : -Infinity;
+      if (av !== bv) return bv - av;
+      const ao = Number.isFinite(a.order) ? a.order : Infinity;
+      const bo = Number.isFinite(b.order) ? b.order : Infinity;
+      return ao - bo;
+    });
 
     const tbody = $('tableBody');
     tbody.replaceChildren();
@@ -412,13 +321,14 @@
       td.textContent = 'No votes yet in this party.';
       tr.appendChild(td);
       tbody.appendChild(tr);
+      activeExpandedCode = null;
     } else {
+      let activeStillPresent = false;
       rows.forEach(r => {
         const tr = document.createElement('tr');
         tr.className = 'body-row';
         tr.dataset.code = r.code;
-        if (activeBreakdownCode === r.code) tr.classList.add('editing');
-        tr.addEventListener('click', () => showBreakdown(r.code));
+        tr.addEventListener('click', () => toggleExpand(r.code, tr));
 
         FIXED_COLS.forEach(col => {
           const td = document.createElement('td');
@@ -454,23 +364,17 @@
         tr.appendChild(tdAvg);
 
         tbody.appendChild(tr);
+
+        if (activeExpandedCode === r.code) {
+          activeStillPresent = true;
+          tr.classList.add('editing');
+          const expanded = buildExpandedRow(r.code, totalCols);
+          expanded.classList.add('open');
+          tbody.appendChild(expanded);
+        }
       });
+      if (!activeStillPresent) activeExpandedCode = null;
     }
-
-    $('tableHead').querySelectorAll('th').forEach(th => {
-      const arrow = th.querySelector('.arrow');
-      if (th.dataset.key === sort.key) {
-        th.classList.add('sorted');
-        if (arrow) arrow.textContent = sort.dir === 'asc' ? '▲' : '▼';
-      } else {
-        th.classList.remove('sorted');
-        if (arrow) arrow.textContent = '';
-      }
-    });
-
-    const sortKeySel = $('sortKey');
-    if (sortKeySel) sortKeySel.value = sort.key;
-    $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
 
     $('ratingsCount').textContent = rows.length + (rows.length === 1 ? ' rating' : ' ratings');
   }
@@ -708,62 +612,46 @@
     if (max > 0) document.documentElement.style.setProperty('--top-pick-width', max + 'px');
   }
 
-  function showBreakdown(code) {
-    const act = acts.find(a => a.code === code);
-    if (!act) return;
-    activeBreakdownCode = code;
-
-    const title = $('breakdownTitle');
-    title.replaceChildren();
-    const line1 = document.createElement('div');
-    line1.className = 'bd-title-main';
-    line1.textContent = act.flag + ' ' + act.country + ' — ' + act.performer;
-    const line2 = document.createElement('div');
-    line2.className = 'bd-title-song';
-    line2.textContent = '“' + act.song + '”';
-    title.appendChild(line1);
-    title.appendChild(line2);
-
-    const head = $('breakdownHead');
-    head.replaceChildren();
-    const thName = document.createElement('th');
-    thName.className = 'act-cell';
-    thName.textContent = 'Voter';
-    head.appendChild(thName);
-    const thTotal = document.createElement('th');
-    thTotal.className = 'num total';
-    thTotal.textContent = 'Total';
-    head.appendChild(thTotal);
-
-    const body = $('breakdownBody');
-    body.replaceChildren();
+  function buildExpandedRow(code, totalCols) {
+    const tr = document.createElement('tr');
+    tr.className = 'bd-expanded';
+    tr.dataset.code = code;
+    const td = document.createElement('td');
+    td.colSpan = totalCols;
+    const inner = document.createElement('div');
+    inner.className = 'bd-expand-inner';
+    const body = document.createElement('div');
+    body.className = 'bd-expand-body';
+    const subTable = document.createElement('table');
+    subTable.className = 'rated bd-inner-table';
+    const tbody = document.createElement('tbody');
 
     if (userCols.length === 0) {
-      const tr = document.createElement('tr');
-      const td = document.createElement('td');
-      td.colSpan = 2;
-      td.className = 'empty-row';
-      td.textContent = 'No party members yet.';
-      tr.appendChild(td);
-      body.appendChild(tr);
+      const r = document.createElement('tr');
+      const c = document.createElement('td');
+      c.colSpan = 2;
+      c.className = 'empty-row';
+      c.textContent = 'No party members yet.';
+      r.appendChild(c);
+      tbody.appendChild(r);
     } else {
       userCols.forEach(uc => {
         const v = uc.votes[code];
-        const tr = document.createElement('tr');
-        tr.className = 'bd-user-row';
+        const r = document.createElement('tr');
+        r.className = 'bd-user-row';
         const nameTd = document.createElement('td');
         nameTd.className = 'act-cell';
         nameTd.textContent = uc.name;
-        tr.appendChild(nameTd);
+        r.appendChild(nameTd);
         const totalTd = document.createElement('td');
         totalTd.className = 'num total';
         totalTd.textContent = (v && typeof v.total === 'number') ? String(v.total) : '—';
-        tr.appendChild(totalTd);
-        body.appendChild(tr);
+        r.appendChild(totalTd);
+        tbody.appendChild(r);
 
         const comment = v && typeof v.remind === 'string' ? v.remind.trim() : '';
         if (comment) {
-          tr.classList.add('bd-has-comment');
+          r.classList.add('bd-has-comment');
           const ctr = document.createElement('tr');
           ctr.className = 'bd-comment-row';
           const ctd = document.createElement('td');
@@ -771,18 +659,52 @@
           ctd.className = 'bd-comment';
           ctd.textContent = comment;
           ctr.appendChild(ctd);
-          body.appendChild(ctr);
+          tbody.appendChild(ctr);
         }
       });
     }
 
-    $('tableBody').querySelectorAll('tr.body-row').forEach(tr => {
-      tr.classList.toggle('editing', tr.dataset.code === code);
-    });
+    subTable.appendChild(tbody);
+    body.appendChild(subTable);
+    inner.appendChild(body);
+    td.appendChild(inner);
+    tr.appendChild(td);
+    return tr;
+  }
 
-    const card = $('breakdownCard');
-    card.style.display = '';
-    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function removeExpandedRow(tr, immediate) {
+    if (!tr) return;
+    if (immediate) { tr.remove(); return; }
+    const cleanup = () => tr.remove();
+    tr.addEventListener('transitionend', cleanup, { once: true });
+    tr.classList.remove('open');
+    setTimeout(cleanup, 260);
+  }
+
+  function toggleExpand(code, bodyTr) {
+    const tbody = $('tableBody');
+    const existing = tbody.querySelector('tr.bd-expanded');
+
+    if (activeExpandedCode === code) {
+      activeExpandedCode = null;
+      bodyTr.classList.remove('editing');
+      removeExpandedRow(existing);
+      return;
+    }
+
+    if (existing) {
+      const prevCode = existing.dataset.code;
+      const prevBody = tbody.querySelector('tr.body-row[data-code="' + prevCode + '"]');
+      if (prevBody) prevBody.classList.remove('editing');
+      removeExpandedRow(existing, true);
+    }
+
+    const totalCols = FIXED_COLS.length + 1;
+    const expanded = buildExpandedRow(code, totalCols);
+    bodyTr.parentNode.insertBefore(expanded, bodyTr.nextSibling);
+    bodyTr.classList.add('editing');
+    activeExpandedCode = code;
+    requestAnimationFrame(() => expanded.classList.add('open'));
   }
 })();
 </script>
