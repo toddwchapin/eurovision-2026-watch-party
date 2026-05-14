@@ -160,14 +160,14 @@
     <div class="button-row">
       <button class="btn" id="btnClear">Clear</button>
       <button class="btn ghost" id="btnSkip">Skip</button>
-      <button class="btn primary" id="btnSave">Save</button>
+      <button class="btn" id="btnSave">Save</button>
     </div>
   </section>
 
   <section class="card done-banner" id="donePanel" style="display:none">
     <h2>All acts rated 🏆</h2>
     <p>Sort the table below or click any row to revise a vote.</p>
-    <button class="btn" id="btnReturnStart" style="margin-top:14px">Back to start</button>
+    <button class="btn primary" id="btnReturnStart" style="margin-top:14px;display:none"></button>
   </section>
 
   <section class="card table-card">
@@ -242,9 +242,13 @@
     FIREBASE_CONFIG = cfg.firebaseConfig || null;
   } catch (e) {}
 
+  // Eurovision stage (one of: 'semi-1', 'semi-2', 'grand-final') from acts-data.js
+  const STAGE = (window.EUROVISION_DATA && window.EUROVISION_DATA.show) || 'grand-final';
+
   // Year-scoped localStorage keys
   const KEY_NAME    = 'ev_' + PARTY_YEAR + '_guest_name';
-  const KEY_VOTES   = 'ev_' + PARTY_YEAR + '_votes_v1';
+  const KEY_VOTES   = 'ev_' + PARTY_YEAR + '_votes_' + STAGE + '_v1';
+  const KEY_VOTES_LEGACY = 'ev_' + PARTY_YEAR + '_votes_v1';
   const KEY_PARTY   = 'ev_' + PARTY_YEAR + '_party';
   const KEY_USER_ID = 'ev_' + PARTY_YEAR + '_user_id';
 
@@ -371,14 +375,36 @@
     }
   }
 
+  let _migratedRemoteFlat = false;
+
   function listenForParty() {
     if (!db || !partyCode) return;
     const ref = db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users');
     ref.on('value', snapshot => {
       partyVotes = snapshot.val() || {};
+      maybeMigrateRemoteFlatVotes();
       renderStats();
     });
     syncLocalVotes();
+  }
+
+  // One-time migration: legacy users had votes written flat at users/{uid}/votes/{actCode}.
+  // Move the current user's flat votes under votes/semi-1/ so they survive the new stage-scoped schema.
+  function maybeMigrateRemoteFlatVotes() {
+    if (_migratedRemoteFlat || !db || !partyCode || !userId) return;
+    const userNode = partyVotes[userId];
+    const votesNode = userNode && userNode.votes;
+    if (!votesNode || typeof votesNode !== 'object') { _migratedRemoteFlat = true; return; }
+    const flat = {};
+    Object.entries(votesNode).forEach(([k, v]) => {
+      if (v && typeof v === 'object' && typeof v.vocals === 'number') flat[k] = v;
+    });
+    if (!Object.keys(flat).length) { _migratedRemoteFlat = true; return; }
+    _migratedRemoteFlat = true;
+    const base = PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId + '/votes';
+    const updates = { '/semi-1': flat };
+    Object.keys(flat).forEach(code => { updates['/' + code] = null; });
+    db.ref(base).update(updates).catch(e => console.warn('Flat-vote migration failed:', e));
   }
 
   function syncLocalVotes() {
@@ -389,10 +415,10 @@
         f => typeof v[f] === 'number'
       )) syncable[code] = v;
     });
-    db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId).set({
-      name: guestName || 'Guest',
-      votes: Object.keys(syncable).length ? syncable : null
-    }).catch(e => console.warn('Firebase sync failed:', e));
+    const userBase = PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId;
+    db.ref(userBase + '/name').set(guestName || 'Guest').catch(e => console.warn('Firebase name sync failed:', e));
+    db.ref(userBase + '/votes/' + STAGE).set(Object.keys(syncable).length ? syncable : null)
+      .catch(e => console.warn('Firebase votes sync failed:', e));
   }
 
   // ——— Party UI ———
@@ -414,6 +440,17 @@
     if (!partyCode) { bar.style.display = 'none'; return; }
     bar.style.display = '';
     $('partyCodeValue').textContent = partyCode;
+    updateDoneButton();
+  }
+
+  function updateDoneButton() {
+    const btn = $('btnReturnStart');
+    if (partyCode) {
+      btn.textContent = 'See party votes';
+      btn.style.display = '';
+    } else {
+      btn.style.display = 'none';
+    }
   }
 
   function copyPartyLink() {
@@ -437,7 +474,16 @@
 
   function loadVotes() {
     try {
-      const raw = localStorage.getItem(KEY_VOTES);
+      let raw = localStorage.getItem(KEY_VOTES);
+      if (!raw && STAGE === 'semi-1') {
+        // One-time migration: pre-stage flat votes get attributed to semi-1.
+        const legacy = localStorage.getItem(KEY_VOTES_LEGACY);
+        if (legacy) {
+          localStorage.setItem(KEY_VOTES, legacy);
+          localStorage.removeItem(KEY_VOTES_LEGACY);
+          raw = legacy;
+        }
+      }
       return raw ? JSON.parse(raw) : {};
     } catch (e) {
       return {};
@@ -584,9 +630,10 @@
     $('btnSave').addEventListener('click', onSave);
     $('btnClear').addEventListener('click', clearForm);
     $('btnSkip').addEventListener('click', onSkip);
+    $('entryPanel').addEventListener('click', updateSaveButtonState);
+    $('fRemind').addEventListener('input', updateSaveButtonState);
     $('btnReturnStart').addEventListener('click', () => {
-      donePanel.style.display = 'none';
-      startPanel.style.display = 'block';
+      if (partyCode) window.location.href = 'party-votes.html';
     });
     $('namePill').addEventListener('click', () => openNameModal(false));
     $('footerRename').addEventListener('click', e => { e.preventDefault(); openNameModal(false); });
@@ -688,6 +735,7 @@
       entryPanel.classList.remove('active');
       setRatingActive(false);
       donePanel.style.display = 'block';
+      updateDoneButton();
       return;
     }
 
@@ -719,6 +767,7 @@
     $('editingNote').textContent = editingCode ? '✎ Editing saved vote'
       : votes[act.code] ? '↻ Updating prior vote' : '';
 
+    updateSaveButtonState();
     window.scrollTo({ top: entryPanel.offsetTop - 20, behavior: 'smooth' });
   }
 
@@ -731,6 +780,7 @@
       b.classList.remove('selected');
       b.setAttribute('aria-pressed', 'false');
     });
+    updateSaveButtonState();
   }
 
   function readForm() {
@@ -746,6 +796,17 @@
     const ynSel = document.querySelector('#replayGroup .yn-btn.selected');
     obj.replay = ynSel ? parseInt(ynSel.dataset.val, 10) : null;
     return obj;
+  }
+
+  function hasAnyInput() {
+    if (document.querySelector('#entryPanel input[name^="s_"]:checked')) return true;
+    if (document.querySelector('#replayGroup .yn-btn.selected')) return true;
+    if ($('fRemind').value.trim() !== '') return true;
+    return false;
+  }
+
+  function updateSaveButtonState() {
+    $('btnSave').classList.toggle('primary', hasAnyInput());
   }
 
   function onSave() {
@@ -772,6 +833,7 @@
       setRatingActive(false);
       donePanel.style.display = 'block';
       startPanel.style.display = 'none';
+      updateDoneButton();
       window.scrollTo({ top: donePanel.offsetTop - 20, behavior: 'smooth' });
     } else {
       showCurrent();
@@ -974,7 +1036,7 @@
             if (r.remind) {
               const notes = document.createElement('span');
               notes.className = 'c-notes';
-              notes.textContent = ' - ' + r.remind;
+              notes.textContent = r.remind;
               actLine.appendChild(notes);
             }
             td.appendChild(country);
