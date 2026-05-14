@@ -25,6 +25,20 @@
                 }
               }
             }
+          },
+          "funniest": {
+            ".read": true,
+            "$stage": {
+              ".write": true,
+              ".validate": "newData.hasChildren(['userId','actCode','comment','score','scorerVersion'])",
+              "userId":        { ".validate": "newData.isString() && newData.val().length <= 32" },
+              "actCode":       { ".validate": "newData.isString() && newData.val().length <= 8" },
+              "comment":       { ".validate": "newData.isString() && newData.val().length <= 200" },
+              "score":         { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 25" },
+              "scoredAt":      { ".validate": "newData.isNumber()" },
+              "scorerVersion": { ".validate": "newData.isString() && newData.val().length <= 40" },
+              "$other":        { ".validate": false }
+            }
           }
         }
       }
