@@ -147,6 +147,7 @@
   const FIREBASE_CONFIG = cfg.firebaseConfig;
   const DATA = window.EUROVISION_DATA || {};
   const SHOW_NAMES = window.EUROVISION_SHOW_NAMES || {};
+  const STAGE = DATA.show || 'grand-final';
   const showName = SHOW_NAMES[DATA.show] || 'Grand Final';
   const acts = (typeof window.eurovisionResolveActs === 'function')
     ? window.eurovisionResolveActs()
@@ -229,10 +230,25 @@
       return {
         uid,
         name,
-        votes: (data && data.votes) || {},
+        votes: extractStageVotes(data && data.votes),
       };
     });
     userCols.sort((a, b) => a.name.localeCompare(b.name) || a.uid.localeCompare(b.uid));
+  }
+
+  // Read votes for the active stage. Falls back to flat (pre-stage) votes
+  // as semi-1 for back-compat with users whose data hasn't migrated yet.
+  function extractStageVotes(votesNode) {
+    if (!votesNode || typeof votesNode !== 'object') return {};
+    if (votesNode[STAGE] && typeof votesNode[STAGE] === 'object') return votesNode[STAGE];
+    if (STAGE === 'semi-1') {
+      const flat = {};
+      Object.entries(votesNode).forEach(([k, v]) => {
+        if (v && typeof v === 'object' && typeof v.vocals === 'number') flat[k] = v;
+      });
+      return flat;
+    }
+    return {};
   }
 
   function actAvg(code) {
