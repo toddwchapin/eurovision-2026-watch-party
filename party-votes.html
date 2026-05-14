@@ -66,16 +66,10 @@
       </g>
     </svg>
 
-    <div class="name-pill name-pill-static">
-      <span class="name-value">Party Votes</span>
-    </div>
-
     <div class="party-bar" id="partyBar">
-      <div class="party-code">
-        <span>Party</span>
-        <strong id="partyCodeValue">—</strong>
-      </div>
-      <div class="party-status" id="partySubtitle">Loading party…</div>
+      <a class="party-action" href="index.html">← Back to voting</a>
+      <h2 class="party-title">Party Votes</h2>
+      <a class="party-action" href="party-trivia.html">Party Trivia →</a>
     </div>
 
     <div class="party-winner-host">
@@ -108,7 +102,7 @@
 
   <section class="card stage-empty" id="stageEmpty" style="display:none">
     <p>Voting has not been opened for this contest yet. Switch contests in your settings.</p>
-    <a class="btn primary" href="index.html">Back to my watch party</a>
+    <a class="btn primary" href="index.html">Back to voting</a>
   </section>
 
   <section class="card table-card">
@@ -125,11 +119,6 @@
     </div>
   </section>
 
-  <footer class="app-footer">
-    <a class="nav-link" href="index.html">← Back to my watch party</a>
-    <span>·</span>
-    <a class="nav-link" href="party-trivia.html">Party Trivia →</a>
-  </footer>
 
 </div>
 
@@ -183,16 +172,10 @@
     ''
   ).toUpperCase().slice(0, 8);
 
-  const subtitle = $('partySubtitle');
-  const partyCodeValue = $('partyCodeValue');
-
   if (!partyCode) {
-    subtitle.textContent = 'No party selected — open this page from the party bar on the main page.';
+    console.warn('No party selected.');
     return;
   }
-
-  partyCodeValue.textContent = partyCode;
-  subtitle.textContent = '';
 
   if (!stageConfigured) {
     document.querySelectorAll('.table-card').forEach(el => { el.style.display = 'none'; });
@@ -214,7 +197,6 @@
     renderFunniest();
   }, err => {
     console.warn('Firebase read failed:', err);
-    subtitle.textContent = 'read failed (' + err.code + ')';
   });
 
   db.ref(PARTY_YEAR + '/parties/' + partyCode + '/funniest/' + STAGE).on('value', snap => {

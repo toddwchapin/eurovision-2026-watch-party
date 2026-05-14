@@ -282,9 +282,9 @@
   .btn-start {
     position: relative;
     display: inline-block;
-    padding: 18px 48px;
+    padding: 12px 32px;
     font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
+    font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -712,6 +712,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 10px;
     margin: 24px 0;
     font-size: 13px;
@@ -738,17 +739,15 @@
     letter-spacing: 0.18em;
     font-size: 14px;
   }
-  .btn-copy {
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    color: var(--cream-mute);
-    font: inherit;
-    font-size: 12px;
-    transition: color 0.15s;
+  .party-title {
+    margin: 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--gold-pale);
+    text-align: center;
   }
-  .btn-copy:hover { color: var(--gold-pale); }
   .party-action {
     display: inline-flex;
     align-items: center;
@@ -761,6 +760,7 @@
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
+    text-decoration: none;
     transition: color 0.15s, border-color 0.15s, background 0.15s;
   }
   .party-action:hover {
@@ -936,6 +936,7 @@
   .modal select:focus { outline: none; border-color: var(--gold-pale); }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
   .modal-actions .btn.danger { margin-right: auto; }
+  .modal-actions-secondary { margin-top: 10px; }
 
   /* Empty-stage banner shown when a contest has no configured running order. */
   .stage-empty {
