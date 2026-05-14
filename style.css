@@ -742,7 +742,7 @@
   .party-title {
     margin: 0;
     font-family: 'Cormorant Garamond', serif;
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--gold-pale);

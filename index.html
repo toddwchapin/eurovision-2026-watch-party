@@ -182,15 +182,9 @@
   <section class="card table-card">
     <div class="table-title">
       <span class="tt-label" id="ratingsCount">0 / 0</span>
-      <div class="table-controls">
-        <label class="sort-label">Sort:
-          <select id="sortKey"></select>
-        </label>
-        <button class="btn-dir" id="sortDir" type="button" aria-label="Toggle sort direction">↓</button>
-      </div>
     </div>
     <div class="table-scroll">
-      <table class="rated" id="ratedTable">
+      <table class="rated no-sort" id="ratedTable">
         <thead>
           <tr id="tableHead"></tr>
         </thead>
@@ -278,19 +272,6 @@
     { key: 'score_stage',       label: 'S', field: 'stage' },
   ];
 
-  const BASE_SORT_KEYS = {
-    order:             { type: 'order',  label: 'Performance #' },
-    country:           { type: 'string', label: 'Country' },
-    performer:         { type: 'string', label: 'Performer' },
-    song:              { type: 'string', label: 'Song' },
-    score_vocals:      { type: 'num',    label: 'Vocal' },
-    score_performance: { type: 'num',    label: 'Performance' },
-    score_song:        { type: 'num',    label: 'Song quality' },
-    score_original:    { type: 'num',    label: 'Originality' },
-    score_stage:       { type: 'num',    label: 'Stagecraft' },
-    total:             { type: 'num',    label: 'Total' },
-  };
-
   let acts = [];
   let actOrder = {};         // { [code]: 1-based slot in performing[] }
   let showName = 'Grand Final';
@@ -299,7 +280,6 @@
   let votes = {};
   let guestName = '';
   let editingCode = null;
-  let sort = { key: 'total', dir: 'desc' };
 
   // Party / sync state
   let partyCode = '';
@@ -398,7 +378,6 @@
   function startSync() {
     initFirebase();
     buildTableHead();
-    buildSortControls();
     renderStats();
     renderTable();
     renderPartyBar();
@@ -661,10 +640,6 @@
       th.className = col.cls;
       th.dataset.key = col.key;
       th.textContent = col.label;
-      const arrow = document.createElement('span');
-      arrow.className = 'arrow';
-      th.appendChild(arrow);
-      th.addEventListener('click', () => onSortClick(col.key));
       tr.appendChild(th);
     });
 
@@ -673,10 +648,6 @@
       th.className = 'num';
       th.dataset.key = col.key;
       th.textContent = col.label;
-      const arrow = document.createElement('span');
-      arrow.className = 'arrow';
-      th.appendChild(arrow);
-      th.addEventListener('click', () => onSortClick(col.key));
       tr.appendChild(th);
     });
 
@@ -684,38 +655,7 @@
     thTotal.className = 'num total';
     thTotal.dataset.key = 'total';
     thTotal.textContent = 'T';
-    const arrowTotal = document.createElement('span');
-    arrowTotal.className = 'arrow';
-    thTotal.appendChild(arrowTotal);
-    thTotal.addEventListener('click', () => onSortClick('total'));
     tr.appendChild(thTotal);
-  }
-
-  // ——— Sort controls ———
-
-  function buildSortControls() {
-    const oldSel = $('sortKey');
-    const sel = oldSel.cloneNode(false); // fresh element, no old listeners
-    oldSel.parentNode.replaceChild(sel, oldSel);
-    sel.id = 'sortKey';
-
-    Object.keys(BASE_SORT_KEYS).forEach(key => {
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = BASE_SORT_KEYS[key].label;
-      sel.appendChild(opt);
-    });
-
-    if (!BASE_SORT_KEYS[sort.key]) sort.key = 'total';
-    sel.value = sort.key;
-
-    sel.onchange = () => { sort.key = sel.value; renderTable(); };
-    $('sortDir').onclick = () => {
-      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
-      $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
-      renderTable();
-    };
-    $('sortDir').textContent = sort.dir === 'asc' ? '↑' : '↓';
   }
 
   // ——— Events ———
@@ -1067,16 +1007,6 @@
 
   // ——— Table ———
 
-  function onSortClick(key) {
-    if (sort.key === key) {
-      sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
-    } else {
-      sort.key = key;
-      sort.dir = (key === 'country' || key === 'performer' || key === 'song' || key === 'order') ? 'asc' : 'desc';
-    }
-    renderTable();
-  }
-
   function rowFor(act) {
     const v = votes[act.code];
     const row = {
@@ -1095,36 +1025,19 @@
     return row;
   }
 
-  function compareCells(a, b, key, dir) {
-    let av = a[key], bv = b[key];
-
-    if (key === 'order') {
-      const an = parseInt(av, 10), bn = parseInt(bv, 10);
-      const aHas = Number.isFinite(an), bHas = Number.isFinite(bn);
-      if (aHas && bHas) return dir === 'asc' ? an - bn : bn - an;
-      if (aHas) return -1;
-      if (bHas) return 1;
-      return 0;
-    }
-    if (key === 'country' || key === 'performer' || key === 'song') {
-      av = (av || '').toLowerCase();
-      bv = (bv || '').toLowerCase();
-      return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-    }
-    const aMissing = typeof av !== 'number';
-    const bMissing = typeof bv !== 'number';
-    if (aMissing && bMissing) return 0;
-    if (aMissing) return 1;
-    if (bMissing) return -1;
-    return dir === 'asc' ? av - bv : bv - av;
-  }
-
   function renderTable() {
     const totalCols = FIXED_COLS.length + SCORE_COLS.length + 1;
 
     const ratedActs = acts.filter(act => votes[act.code]);
     const rows = ratedActs.map(rowFor);
-    rows.sort((a, b) => compareCells(a, b, sort.key, sort.dir));
+    rows.sort((a, b) => {
+      const at = typeof a.total === 'number' ? a.total : -Infinity;
+      const bt = typeof b.total === 'number' ? b.total : -Infinity;
+      if (at !== bt) return bt - at;
+      const ao = Number.isFinite(a.order) ? a.order : Infinity;
+      const bo = Number.isFinite(b.order) ? b.order : Infinity;
+      return ao - bo;
+    });
 
     const tbody = $('tableBody');
     tbody.replaceChildren();
@@ -1203,22 +1116,6 @@
         tbody.appendChild(tr);
       });
     }
-
-    $('tableHead').querySelectorAll('th').forEach(th => {
-      const arrow = th.querySelector('.arrow');
-      if (th.dataset.key === sort.key) {
-        th.classList.add('sorted');
-        if (arrow) arrow.textContent = sort.dir === 'asc' ? '▲' : '▼';
-      } else {
-        th.classList.remove('sorted');
-        if (arrow) arrow.textContent = '';
-      }
-    });
-
-    const sortKeySel = $('sortKey');
-    if (sortKeySel) sortKeySel.value = sort.key;
-    const sortDirBtn = $('sortDir');
-    if (sortDirBtn) sortDirBtn.textContent = sort.dir === 'asc' ? '↑' : '↓';
 
     $('ratingsCount').textContent = rows.length + ' / ' + acts.length;
   }

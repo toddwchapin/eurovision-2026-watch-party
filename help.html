@@ -23,18 +23,24 @@
       A live scoring app for Eurovision watch parties. Rate each act as it performs, share scores with the room in real time, and see who's loving (or hating) the show.
     </p>
 
-    <h2>Getting started</h2>
-    <ol>
-      <li><strong>Enter your name.</strong> A modal appears on first load. Maximum 40 characters. Click the name pill in the top-right of the voter page to change it later.</li>
-      <li><strong>Create or join a party.</strong> A party is a shared session — everyone in it sees each other's votes live.
-        <ul>
-          <li><em>Create new</em> — generates a 6-character code (letters and digits, no <code>I</code>, <code>O</code>, <code>1</code>, or <code>L</code> to avoid confusion).</li>
-          <li><em>Join</em> — type in the code someone shared with you. Case doesn't matter.</li>
-          <li><em>Invite link</em> — anyone opening a URL like <code>…/?party=ABC123</code> joins automatically. Use the "Copy link" button in the header to grab the link.</li>
-        </ul>
-      </li>
-      <li><strong>Hit Start Rating</strong> when the show begins.</li>
-    </ol>
+    <h2>Your name &amp; settings</h2>
+    <p>Tap the gold pill in the top-right of the voter page (the one showing your name) to open the settings modal. The footer that used to hold these actions is gone — everything lives as buttons inside this modal now. From there you can:</p>
+    <ul>
+      <li><strong>Change your name</strong> — type into the name field (max 40 characters) and tap Save. Your column header in the Results Table updates everywhere instantly.</li>
+      <li><strong>Switch contest</strong> — use the Contest dropdown to flip between Semi-Final 1, Semi-Final 2, and the Grand Final. Each contest tracks its own votes.</li>
+      <li><strong>Reset votes</strong> — wipes all your saved votes for the current contest. A confirmation appears first. Other members' votes are untouched.</li>
+      <li><strong>Download my results</strong> — saves a copy of your ratings for the current contest.</li>
+      <li><strong>Delete user</strong> — clears this device's record entirely (name, votes, party).</li>
+    </ul>
+
+    <h2>Your party</h2>
+    <p>The header shows your party code and gives you two cross-links:</p>
+    <ul>
+      <li><strong>Copy invite link</strong> — tap the party code chip to copy a shareable URL (<code>…/?party=ABC123</code>). Anyone opening that link lands directly in your party.</li>
+      <li><strong>Party Votes</strong> — see the whole party's scoreboard for the current contest.</li>
+      <li><strong>Party Trivia</strong> — see superlatives like Biggest Hater and Wittiest.</li>
+    </ul>
+    <p>Votes you save sync to every other member in real time. Other members appear as their own columns in the Results Table.</p>
 
     <h2>The voting page</h2>
 
@@ -68,7 +74,7 @@
       <li><strong>One column per member</strong> — their total (0–25), "—" if unrated. Your own column is bold gold with a ★.</li>
       <li><strong>Avg</strong> — average across everyone who's rated the act.</li>
     </ul>
-    <p>Click a column header to sort by it. Click again to flip direction. Default sort is Avg descending — highest-scoring acts on top.</p>
+    <p>Rows are sorted automatically with your highest-scoring acts on top.</p>
 
     <h3>Stats bar</h3>
     <ul>
@@ -76,9 +82,6 @@
       <li><strong>Your Average</strong> — your mean total across all your rated acts.</li>
       <li><strong>Top Pick</strong> — the act with the highest party-wide average.</li>
     </ul>
-
-    <h3>Settings &amp; reset</h3>
-    <p>The footer has links to rename yourself and to "Reset all my votes" — that erases your votes everywhere (device + party), with a confirmation step. Other members' votes are untouched.</p>
 
     <h2>Party Votes page</h2>
     <p>An overview of the whole party's scores for the current show.</p>
