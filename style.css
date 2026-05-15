@@ -160,8 +160,8 @@
   }
   .stat-top {
     grid-column: 1 / -1;
-    justify-self: center;
-    width: var(--top-pick-width, auto);
+    justify-self: stretch;
+    width: 100%;
     max-width: 100%;
   }
   .stat {
