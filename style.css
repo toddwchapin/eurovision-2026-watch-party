@@ -567,6 +567,22 @@
   }
   .table-meta { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--cream-mute); }
   .tt-label { flex: 0 0 auto; }
+  .btn-expand-all {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--gold-pale);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-expand-all:hover {
+    background: rgba(212,175,55,0.1);
+    border-color: var(--gold-pale);
+  }
   .table-controls {
     display: flex;
     align-items: center;
