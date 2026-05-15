@@ -27,7 +27,7 @@ window.EUROVISION_DATA = {
 
   shows: {
     'semi-1':      ['MD','SE','HR','GR','PT','GE','IT','FI','ME','EE','IL','DE','BE','LT','SM','PL','RS'],
-    'semi-2':      ['BG','AZ','RO','LU','CZ','FR','AM','CH','CY','AT','LV','DK','AU','UA','GB','MT','NP'],
+    'semi-2':      ['BG','AZ','RO','LU','CZ','FR','AM','CH','CY','AT','LV','DK','AU','UA','GB','AL','MT','NP'],
     'grand-final': []
   },
 
