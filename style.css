@@ -156,7 +156,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    margin-top: 14px;
+    margin-bottom: 14px;
   }
   .stat-top {
     grid-column: 1 / -1;
@@ -733,7 +733,7 @@
   .party-bar {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     flex-wrap: wrap;
     gap: 10px;
     margin: 24px 0;
@@ -817,17 +817,7 @@
       padding: 3px 9px;
       font-size: 11px;
     }
-    body.rating-active .stats {
-      display: flex;
-      justify-content: center;
-      gap: 5px;
-      margin-top: 6px;
-    }
-    body.rating-active .stats .stat-top {
-      grid-column: auto;
-      width: var(--top-pick-width, auto);
-      max-width: 100%;
-    }
+    body.rating-active .stats { display: none; }
     body.rating-active .stat { padding: 4px 6px; border-radius: 8px; }
     body.rating-active .stat-label { font-size: 8px; letter-spacing: 0.08em; }
     body.rating-active .stat-value { font-size: 12px; }
