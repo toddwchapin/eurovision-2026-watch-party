@@ -258,6 +258,75 @@
     );
   }
 
+  function mostContrarian(users) {
+    if (users.length < 2) return null;
+    const actTotals = {};
+    users.forEach(u => {
+      Object.entries(u.votes).forEach(([code, v]) => {
+        if (typeof v.total !== 'number') return;
+        if (!actTotals[code]) actTotals[code] = [];
+        actTotals[code].push(v.total);
+      });
+    });
+    const partyAvg = {};
+    Object.entries(actTotals).forEach(([code, arr]) => {
+      partyAvg[code] = arr.reduce((a, b) => a + b, 0) / arr.length;
+    });
+    return pickExtreme(
+      users,
+      u => {
+        const diffs = Object.entries(u.votes)
+          .filter(([code, v]) => typeof v.total === 'number' && typeof partyAvg[code] === 'number' && actTotals[code].length >= 2)
+          .map(([code, v]) => Math.abs(v.total - partyAvg[code]));
+        return diffs.length >= MIN_VOTES_FOR_AVG ? diffs.reduce((a, b) => a + b, 0) / diffs.length : null;
+      },
+      'max',
+      u => u.totals.length >= MIN_VOTES_FOR_AVG
+    );
+  }
+
+  function underdogChampion(users) {
+    if (users.length < 2) return null;
+    const actTotals = {};
+    users.forEach(u => {
+      Object.entries(u.votes).forEach(([code, v]) => {
+        if (typeof v.total !== 'number') return;
+        if (!actTotals[code]) actTotals[code] = [];
+        actTotals[code].push(v.total);
+      });
+    });
+    let lowestCode = null, lowestAvg = Infinity;
+    Object.entries(actTotals).forEach(([code, arr]) => {
+      if (arr.length < 2) return;
+      const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+      if (avg < lowestAvg) { lowestAvg = avg; lowestCode = code; }
+    });
+    if (!lowestCode) return null;
+    let best = null;
+    users.forEach(u => {
+      const v = u.votes[lowestCode];
+      if (!v || typeof v.total !== 'number') return;
+      if (!best || v.total > best.value || (v.total === best.value && u.name.localeCompare(best.user.name) < 0)) {
+        best = { user: u, value: v.total, detail: { code: lowestCode, partyAvg: lowestAvg } };
+      }
+    });
+    return best;
+  }
+
+  function mostConsistentVoter(users) {
+    return pickExtreme(
+      users,
+      u => {
+        if (u.totals.length < MIN_VOTES_FOR_AVG) return null;
+        const mean = u.totals.reduce((a, b) => a + b, 0) / u.totals.length;
+        const variance = u.totals.reduce((s, t) => s + Math.pow(t - mean, 2), 0) / u.totals.length;
+        return Math.sqrt(variance);
+      },
+      'min',
+      u => u.totals.length >= MIN_VOTES_FOR_AVG
+    );
+  }
+
   function actLabel(code) {
     const act = actsByCode[code];
     if (!act) return '';
@@ -369,6 +438,36 @@
         r => {
           const d = document.createElement('div');
           d.textContent = r.user.totals.length + ' of ' + acts.length + ' rated';
+          return d;
+        }),
+      buildCard('Most Contrarian', mostContrarian(users),
+        r => r.value.toFixed(1) + ' avg deviation',
+        r => {
+          const d = document.createElement('div');
+          d.textContent = r.user.totals.length + ' rated';
+          return d;
+        }),
+      buildCard('Underdog Champion', underdogChampion(users),
+        r => r.value + ' / 25',
+        r => {
+          const wrap = document.createElement('div');
+          const lbl = actLabel(r.detail.code);
+          if (lbl) {
+            const a = document.createElement('div');
+            a.className = 'tc-act';
+            a.textContent = lbl;
+            wrap.appendChild(a);
+          }
+          const avg = document.createElement('div');
+          avg.textContent = 'party avg ' + r.detail.partyAvg.toFixed(1);
+          wrap.appendChild(avg);
+          return wrap;
+        }),
+      buildCard('Most Consistent', mostConsistentVoter(users),
+        r => r.value.toFixed(1) + ' SD',
+        r => {
+          const d = document.createElement('div');
+          d.textContent = r.user.totals.length + ' rated';
           return d;
         }),
     ].filter(Boolean);
