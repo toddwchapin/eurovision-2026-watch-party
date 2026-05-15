@@ -61,7 +61,7 @@
     </svg>
     <div class="title-block">
       <h1 class="title"><span class="flourish">E</span>urovision<span class="md-only"> Song Contest</span> 2026</h1>
-      <div class="subtitle"><span class="slogan-inline">United By Music</span><span>in Vienna</span><span class="show-name" id="showName"></span></div>
+      <div class="subtitle"><span class="slogan-inline">United By Music</span><span class="show-name" id="showName"></span></div>
     </div>
 
     <svg class="secession-divider" viewBox="0 0 560 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -81,22 +81,6 @@
 
     <a class="help-btn" id="helpBtn" href="help.html" aria-label="Help" title="Help">?</a>
 
-    <div class="stats">
-      <div class="stat stat-top">
-        <div class="stat-value small" id="statTop">
-          <div class="tp-line tp-line-1">
-            <span class="stat-label">Top Pick</span>
-            <span class="tp-mid">
-              <span class="tp-flag"></span>
-              <span class="tp-country"></span>
-            </span>
-            <span class="tp-points">—</span>
-          </div>
-          <div class="tp-line tp-line-2"><span class="tp-performer"></span></div>
-          <div class="tp-line tp-line-3"><span class="tp-song"></span></div>
-        </div>
-      </div>
-    </div>
     <div class="party-bar" id="partyBar" style="display:none">
       <a class="party-action" id="navPartyVotes" href="party-votes.html">Party Votes</a>
       <div class="party-code" id="partyCodeChip" title="Copy invite link">
@@ -169,6 +153,23 @@
     <button class="btn primary" id="btnReturnStart" style="margin-top:14px;display:none"></button>
     <button class="btn" id="btnSeeTrivia" style="margin-top:8px;display:none">See party trivia</button>
   </section>
+
+  <div class="stats">
+    <div class="stat stat-top">
+      <div class="stat-value small" id="statTop">
+        <div class="tp-line tp-line-1">
+          <span class="stat-label">Top Pick</span>
+          <span class="tp-mid">
+            <span class="tp-flag"></span>
+            <span class="tp-country"></span>
+          </span>
+          <span class="tp-points">—</span>
+        </div>
+        <div class="tp-line tp-line-2"><span class="tp-performer"></span></div>
+        <div class="tp-line tp-line-3"><span class="tp-song"></span></div>
+      </div>
+    </div>
+  </div>
 
   <section class="card table-card">
     <div class="table-title">
@@ -371,6 +372,11 @@
     renderStats();
     renderTable();
     renderPartyBar();
+    if (queueIdx >= queue.length && acts.length > 0) {
+      startPanel.style.display = 'none';
+      donePanel.style.display = 'block';
+      updateDoneButton();
+    }
   }
 
   // ——— Firebase ———
