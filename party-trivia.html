@@ -88,6 +88,13 @@
 
 </div>
 
+<div class="trivia-explain-backdrop" id="triviaExplainBackdrop" style="display:none" aria-hidden="true">
+  <div class="trivia-explain-box" id="triviaExplainBox" role="dialog" aria-modal="true">
+    <div class="trivia-explain-title" id="triviaExplainTitle"></div>
+    <div class="trivia-explain-body" id="triviaExplainBody"></div>
+  </div>
+</div>
+
 <script>
 (function () {
   'use strict';
@@ -333,26 +340,40 @@
     return act.flag + ' ' + act.country + ' · ' + act.performer + ' · “' + act.song + '”';
   }
 
-  function buildCard(title, result, valueFormatter, detailRenderer) {
+  function buildCard(title, result, valueFormatter, detailRenderer, sideDetailFormatter, explain) {
     if (!result) return null;
     const card = document.createElement('div');
     card.className = 'trivia-card stat';
 
+    // Header row: title left, voter name right
+    const header = document.createElement('div');
+    header.className = 'tc-header';
     const titleEl = document.createElement('div');
     titleEl.className = 'tc-title stat-label';
     titleEl.textContent = title;
-    card.appendChild(titleEl);
-
     const voterEl = document.createElement('div');
     voterEl.className = 'tc-voter';
     voterEl.textContent = result.user.name;
-    card.appendChild(voterEl);
+    header.appendChild(titleEl);
+    header.appendChild(voterEl);
+    card.appendChild(header);
 
+    // Body row: value left, optional side detail right
+    const body = document.createElement('div');
+    body.className = 'tc-body';
     const valueEl = document.createElement('div');
     valueEl.className = 'tc-value';
     valueEl.textContent = valueFormatter(result);
-    card.appendChild(valueEl);
+    body.appendChild(valueEl);
+    if (sideDetailFormatter) {
+      const sideEl = document.createElement('div');
+      sideEl.className = 'tc-side';
+      sideEl.textContent = sideDetailFormatter(result);
+      body.appendChild(sideEl);
+    }
+    card.appendChild(body);
 
+    // Block detail below (quotes, act labels, etc.)
     if (detailRenderer) {
       const detail = detailRenderer(result);
       if (detail) {
@@ -361,8 +382,34 @@
       }
     }
 
+    // Explanation on tap
+    if (explain) {
+      card.dataset.explain = explain;
+      card.dataset.explainTitle = title;
+      card.addEventListener('click', showExplain);
+    }
+
     return card;
   }
+
+  function showExplain(e) {
+    const card = e.currentTarget;
+    const backdrop = $('triviaExplainBackdrop');
+    $('triviaExplainTitle').textContent = card.dataset.explainTitle || '';
+    $('triviaExplainBody').textContent = card.dataset.explain || '';
+    backdrop.style.display = '';
+    backdrop.removeAttribute('aria-hidden');
+  }
+
+  function hideExplain() {
+    const backdrop = $('triviaExplainBackdrop');
+    backdrop.style.display = 'none';
+    backdrop.setAttribute('aria-hidden', 'true');
+  }
+
+  $('triviaExplainBackdrop').addEventListener('click', function (e) {
+    if (e.target === this) hideExplain();
+  });
 
   function renderTrivia() {
     const users = buildUserAggregates();
@@ -380,25 +427,21 @@
     const cards = [
       buildCard('Biggest Hater', biggestHater(users),
         r => r.value.toFixed(1) + ' avg',
-        r => {
-          const d = document.createElement('div');
-          d.textContent = r.user.totals.length + ' rated';
-          return d;
-        }),
+        null,
+        r => r.user.totals.length + ' rated',
+        'Gave the lowest average score across all their rated acts. Nobody else was quite so unimpressed.'),
       buildCard('Biggest Lover', biggestLover(users),
         r => r.value.toFixed(1) + ' avg',
-        r => {
-          const d = document.createElement('div');
-          d.textContent = r.user.totals.length + ' rated';
-          return d;
-        }),
+        null,
+        r => r.user.totals.length + ' rated',
+        'Gave the highest average score across all their rated acts. The eternal optimist of the party.'),
       buildCard('Most Verbose Comment', mostVerboseComment(users),
         r => r.value + ' chars',
         r => {
           const wrap = document.createElement('div');
           const q = document.createElement('div');
           q.className = 'tc-quote';
-          q.textContent = '“' + r.detail.text + '”';
+          q.textContent = '”' + r.detail.text + '”';
           wrap.appendChild(q);
           const lbl = actLabel(r.detail.code);
           if (lbl) {
@@ -408,21 +451,21 @@
             wrap.appendChild(a);
           }
           return wrap;
-        }),
+        },
+        null,
+        'Left the single longest note on any one act. Clearly had a lot to say.'),
       buildCard('Most Verbose Overall', mostVerboseOverall(users),
         r => r.value + ' chars',
-        r => {
-          const d = document.createElement('div');
-          d.textContent = 'across ' + r.user.comments.length + ' comment' + (r.user.comments.length === 1 ? '' : 's');
-          return d;
-        }),
+        null,
+        r => 'across ' + r.user.comments.length + ' comment' + (r.user.comments.length === 1 ? '' : 's'),
+        'Wrote the most total characters of notes across all their votes combined.'),
       buildCard('Wittiest', wittiest(users),
         r => 'humor score ' + r.value,
         r => {
           const wrap = document.createElement('div');
           const q = document.createElement('div');
           q.className = 'tc-quote';
-          q.textContent = '“' + r.detail.text + '”';
+          q.textContent = '”' + r.detail.text + '”';
           wrap.appendChild(q);
           const lbl = actLabel(r.detail.code);
           if (lbl) {
@@ -432,44 +475,36 @@
             wrap.appendChild(a);
           }
           return wrap;
-        }),
+        },
+        null,
+        'Had the funniest comment on any act, as scored by the built-in humor scorer. Emoji, sarcasm, and Eurovision jargon all count.'),
       buildCard('Most Incomplete', mostIncomplete(users),
         r => r.value + ' missing',
-        r => {
-          const d = document.createElement('div');
-          d.textContent = r.user.totals.length + ' of ' + acts.length + ' rated';
-          return d;
-        }),
+        null,
+        r => r.user.totals.length + ' of ' + acts.length + ' rated',
+        'Started voting but skipped the most acts. Still on the fence about those ones.'),
       buildCard('Most Contrarian', mostContrarian(users),
         r => r.value.toFixed(1) + ' avg deviation',
-        r => {
-          const d = document.createElement('div');
-          d.textContent = r.user.totals.length + ' rated';
-          return d;
-        }),
+        null,
+        r => r.user.totals.length + ' rated',
+        'Whose scores deviated most from the rest of the party on average. A lone voice in the room.'),
       buildCard('Underdog Champion', underdogChampion(users),
         r => r.value + ' / 25',
         r => {
-          const wrap = document.createElement('div');
           const lbl = actLabel(r.detail.code);
-          if (lbl) {
-            const a = document.createElement('div');
-            a.className = 'tc-act';
-            a.textContent = lbl;
-            wrap.appendChild(a);
-          }
-          const avg = document.createElement('div');
-          avg.textContent = 'party avg ' + r.detail.partyAvg.toFixed(1);
-          wrap.appendChild(avg);
-          return wrap;
-        }),
+          if (!lbl) return null;
+          const a = document.createElement('div');
+          a.className = 'tc-act';
+          a.textContent = lbl;
+          return a;
+        },
+        r => 'party avg ' + r.detail.partyAvg.toFixed(1),
+        'Gave the highest score to the act the rest of the party liked least. Champion of lost causes.'),
       buildCard('Most Consistent', mostConsistentVoter(users),
-        r => r.value.toFixed(1) + ' SD',
-        r => {
-          const d = document.createElement('div');
-          d.textContent = r.user.totals.length + ' rated';
-          return d;
-        }),
+        r => r.value.toFixed(1) + ' standard deviation',
+        null,
+        r => r.user.totals.length + ' rated',
+        'Had the lowest spread in their scores — rated everything similarly with no big peaks or troughs.'),
     ].filter(Boolean);
 
     cards.forEach(c => grid.appendChild(c));

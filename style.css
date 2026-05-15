@@ -970,24 +970,46 @@
     gap: 4px;
     padding: 14px 16px;
   }
+  .trivia-card .tc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
   .trivia-card .tc-title {
     font-size: 10px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--cream-mute);
+    flex-shrink: 0;
   }
   .trivia-card .tc-voter {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--gold-pale);
     line-height: 1.15;
+    text-align: right;
+  }
+  .trivia-card .tc-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
   }
   .trivia-card .tc-value {
     font-size: 13px;
     color: var(--cream);
     font-weight: 500;
   }
+  .trivia-card .tc-side {
+    font-size: 12px;
+    color: var(--cream-mute);
+    text-align: right;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .trivia-card[data-explain] { cursor: pointer; }
   .trivia-card .tc-detail {
     font-size: 11px;
     color: var(--cream-mute);
@@ -1013,6 +1035,40 @@
   }
   @media (max-width: 720px) {
     .trivia-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ====== Trivia explanation overlay ====== */
+  .trivia-explain-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .trivia-explain-box {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 24px;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+  }
+  .trivia-explain-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gold-pale);
+    margin-bottom: 10px;
+  }
+  .trivia-explain-body {
+    font-size: 14px;
+    color: var(--cream);
+    line-height: 1.55;
   }
 
   /* ====== Help button & page ====== */

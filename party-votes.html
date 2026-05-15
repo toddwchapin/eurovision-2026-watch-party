@@ -613,16 +613,17 @@
     subTable.className = 'rated bd-inner-table';
     const tbody = document.createElement('tbody');
 
-    if (userCols.length === 0) {
+    const votersForAct = userCols.filter(uc => uc.votes[code] && typeof uc.votes[code].total === 'number');
+    if (votersForAct.length === 0) {
       const r = document.createElement('tr');
       const c = document.createElement('td');
       c.colSpan = 2;
       c.className = 'empty-row';
-      c.textContent = 'No party members yet.';
+      c.textContent = 'No votes yet for this act.';
       r.appendChild(c);
       tbody.appendChild(r);
     } else {
-      userCols.forEach(uc => {
+      votersForAct.forEach(uc => {
         const v = uc.votes[code];
         const r = document.createElement('tr');
         r.className = 'bd-user-row';
