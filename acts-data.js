@@ -23,12 +23,12 @@
               default order used when a `shows` entry is empty.
    ============================================================ */
 window.EUROVISION_DATA = {
-  show: 'semi-1',
+  show: 'semi-2',
 
   shows: {
     'semi-1':      ['MD','SE','HR','GR','PT','GE','IT','FI','ME','EE','IL','DE','BE','LT','SM','PL','RS'],
     'semi-2':      ['BG','AZ','RO','LU','CZ','FR','AM','CH','CY','AT','LV','DK','AU','UA','GB','AL','MT','NO'],
-    'grand-final': []
+    'grand-final': ['DK','DE','IL','BE','AL','GR','UA','AU','RS','MT','CZ','BG','HR','GB','FR','MD','FI','PL','LT','SE','CY','IT','NO','RO','AT']
   },
 
   acts: {
