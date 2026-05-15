@@ -359,7 +359,8 @@
     font-weight: 500;
     color: var(--cream);
   }
-  .field input[type="text"] {
+  .field input[type="text"],
+  .field textarea {
     width: 100%;
     padding: 12px 14px;
     border: 1px solid var(--line);
@@ -369,7 +370,12 @@
     font: inherit;
     transition: border-color 0.15s, background 0.15s;
   }
-  .field input[type="text"]:focus {
+  .field textarea {
+    resize: vertical;
+    line-height: 1.4;
+  }
+  .field input[type="text"]:focus,
+  .field textarea:focus {
     outline: none;
     border-color: var(--gold-pale);
     background: rgba(0,0,0,0.45);
@@ -840,8 +846,8 @@
     }
     body.rating-active .field { margin-bottom: 8px; }
     body.rating-active .field label.q-label { margin-bottom: 3px; font-size: 12px; }
-    body.rating-active #replayLabel { margin-bottom: 3px; font-size: 12px; }
-    body.rating-active .field input[type="text"] { padding: 8px 10px; }
+    body.rating-active .field input[type="text"],
+    body.rating-active .field textarea { padding: 8px 10px; }
     body.rating-active .scale { column-gap: 6px; row-gap: 2px; }
     body.rating-active .scale-options { gap: 4px; }
     body.rating-active .scale-options label { width: 32px; height: 32px; border-radius: 8px; }
