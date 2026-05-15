@@ -110,6 +110,7 @@
   <section class="card table-card">
     <div class="table-title">
       <span class="tt-label" id="ratingsCount">0 ratings</span>
+      <button class="btn-expand-all" id="expandAllBtn" type="button" style="display:none">Expand All</button>
     </div>
     <div class="table-scroll">
       <table class="rated no-sort" id="ratedTable">
@@ -163,7 +164,7 @@
   ];
   let partyUsers = {};
   let userCols = [];
-  let activeExpandedCode = null;
+  const expandedCodes = new Set();
   let persistedFunniest = null;
 
   const $ = id => document.getElementById(id);
@@ -189,6 +190,15 @@
     const stageEmpty = $('stageEmpty');
     if (stageEmpty) stageEmpty.style.display = '';
     return;
+  }
+
+  const _expandAllBtn = $('expandAllBtn');
+  if (_expandAllBtn) {
+    _expandAllBtn.addEventListener('click', () => {
+      const bodyRows = document.querySelectorAll('#tableBody .body-row');
+      if (expandedCodes.size === bodyRows.length) collapseAll();
+      else expandAll();
+    });
   }
 
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -308,9 +318,12 @@
       td.textContent = 'No votes yet in this party.';
       tr.appendChild(td);
       tbody.appendChild(tr);
-      activeExpandedCode = null;
+      expandedCodes.clear();
     } else {
-      let activeStillPresent = false;
+      const validCodes = new Set(rows.map(r => r.code));
+      for (const code of Array.from(expandedCodes)) {
+        if (!validCodes.has(code)) expandedCodes.delete(code);
+      }
       rows.forEach(r => {
         const tr = document.createElement('tr');
         tr.className = 'body-row';
@@ -332,7 +345,7 @@
             performer.textContent = r.performer;
             const songSpan = document.createElement('span');
             songSpan.className = 'c-song';
-            songSpan.textContent = '“' + r.song + '”';
+            songSpan.textContent = '”' + r.song + '”';
             actLine.appendChild(performer);
             actLine.appendChild(document.createTextNode(' · '));
             actLine.appendChild(songSpan);
@@ -352,18 +365,17 @@
 
         tbody.appendChild(tr);
 
-        if (activeExpandedCode === r.code) {
-          activeStillPresent = true;
+        if (expandedCodes.has(r.code)) {
           tr.classList.add('editing');
           const expanded = buildExpandedRow(r.code, totalCols);
           expanded.classList.add('open');
           tbody.appendChild(expanded);
         }
       });
-      if (!activeStillPresent) activeExpandedCode = null;
     }
 
     $('ratingsCount').textContent = rows.length + (rows.length === 1 ? ' rating' : ' ratings');
+    updateExpandAllBtn();
   }
 
   function renderPartyWinner() {
@@ -670,29 +682,57 @@
   }
 
   function toggleExpand(code, bodyTr) {
-    const tbody = $('tableBody');
-    const existing = tbody.querySelector('tr.bd-expanded');
-
-    if (activeExpandedCode === code) {
-      activeExpandedCode = null;
+    if (expandedCodes.has(code)) {
+      expandedCodes.delete(code);
       bodyTr.classList.remove('editing');
-      removeExpandedRow(existing);
-      return;
+      const expandedTr = bodyTr.nextElementSibling;
+      if (expandedTr && expandedTr.classList.contains('bd-expanded')) {
+        removeExpandedRow(expandedTr);
+      }
+    } else {
+      expandedCodes.add(code);
+      const expanded = buildExpandedRow(code, FIXED_COLS.length + 1);
+      bodyTr.parentNode.insertBefore(expanded, bodyTr.nextSibling);
+      bodyTr.classList.add('editing');
+      requestAnimationFrame(() => expanded.classList.add('open'));
     }
+    updateExpandAllBtn();
+  }
 
-    if (existing) {
-      const prevCode = existing.dataset.code;
-      const prevBody = tbody.querySelector('tr.body-row[data-code="' + prevCode + '"]');
-      if (prevBody) prevBody.classList.remove('editing');
-      removeExpandedRow(existing, true);
-    }
+  function expandAll() {
+    document.querySelectorAll('#tableBody .body-row').forEach(bodyTr => {
+      const code = bodyTr.dataset.code;
+      if (!code || expandedCodes.has(code)) return;
+      expandedCodes.add(code);
+      const expanded = buildExpandedRow(code, FIXED_COLS.length + 1);
+      bodyTr.parentNode.insertBefore(expanded, bodyTr.nextSibling);
+      bodyTr.classList.add('editing');
+      requestAnimationFrame(() => expanded.classList.add('open'));
+    });
+    updateExpandAllBtn();
+  }
 
-    const totalCols = FIXED_COLS.length + 1;
-    const expanded = buildExpandedRow(code, totalCols);
-    bodyTr.parentNode.insertBefore(expanded, bodyTr.nextSibling);
-    bodyTr.classList.add('editing');
-    activeExpandedCode = code;
-    requestAnimationFrame(() => expanded.classList.add('open'));
+  function collapseAll() {
+    document.querySelectorAll('#tableBody .body-row').forEach(bodyTr => {
+      const code = bodyTr.dataset.code;
+      if (!code || !expandedCodes.has(code)) return;
+      expandedCodes.delete(code);
+      bodyTr.classList.remove('editing');
+      const expandedTr = bodyTr.nextElementSibling;
+      if (expandedTr && expandedTr.classList.contains('bd-expanded')) {
+        removeExpandedRow(expandedTr, true);
+      }
+    });
+    updateExpandAllBtn();
+  }
+
+  function updateExpandAllBtn() {
+    const btn = $('expandAllBtn');
+    if (!btn) return;
+    const bodyRows = document.querySelectorAll('#tableBody .body-row');
+    if (bodyRows.length === 0) { btn.style.display = 'none'; return; }
+    btn.style.display = '';
+    btn.textContent = expandedCodes.size === bodyRows.length ? 'Collapse' : 'Expand All';
   }
 })();
 </script>
