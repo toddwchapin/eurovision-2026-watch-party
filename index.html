@@ -75,8 +75,8 @@
       </g>
     </svg>
 
-    <div class="name-pill" id="namePill" title="Click to rename">
-      <span class="name-value" id="nameValue">—</span>
+    <div class="name-pill" id="namePill" title="Settings">
+      <span class="name-value" id="nameValue">⚙</span>
     </div>
 
     <a class="help-btn" id="helpBtn" href="help.html" aria-label="Help" title="Help">?</a>
@@ -84,8 +84,9 @@
     <div class="party-bar" id="partyBar" style="display:none">
       <div class="party-code" id="partyCodeChip" title="Copy invite link">
         <strong id="partyCodeValue"></strong>
+        <span class="copy-icon" aria-hidden="true">⧉</span>
       </div>
-      <a class="party-action" id="navPartyVotes" href="party-votes.html">Party Votes</a>
+      <a class="party-action" id="navPartyVotes" href="party-votes.html">Party Votes <span class="party-action-arrow" aria-hidden="true">→</span></a>
     </div>
   </header>
 
@@ -207,10 +208,16 @@
     <h3>Welcome to the watch party!</h3>
     <p>What's your name? It'll show in the header so you remember which device is yours.</p>
     <input type="text" id="nameInput" maxlength="40" placeholder="Your name">
-    <label class="modal-field-label" for="stageSelect">Contest</label>
-    <select id="stageSelect"></select>
+    <div id="partyCodeSection" style="display:none">
+      <input type="text" id="nameModalPartyCode" maxlength="8" placeholder="Party code (optional)" style="text-transform:uppercase">
+      <p class="modal-help-text">If you're at a watch party, ask the host for the party code</p>
+    </div>
+    <div id="stageSection">
+      <label class="modal-field-label" for="stageSelect">Contest</label>
+      <select id="stageSelect"></select>
+    </div>
     <div class="modal-actions">
-      <button class="btn danger" id="nameDelete" type="button" style="display:none">Delete user</button>
+      <button class="btn danger" id="nameDelete" type="button" style="display:none">Leave party</button>
       <button class="btn primary" id="nameSave" type="button">Save</button>
     </div>
     <div class="modal-actions modal-actions-secondary" id="nameActionsSecondary" style="display:none">
@@ -344,13 +351,13 @@
       partyCode = localStorage.getItem(KEY_PARTY) || '';
     }
 
-    if (FIREBASE_CONFIG && !partyCode) {
-      openPartyModal();
-    } else {
+    if (partyCode) {
       startSync();
     }
 
-    if (!guestName) openNameModal(true);
+    if (!guestName || (FIREBASE_CONFIG && !partyCode)) {
+      openNameModal(true);
+    }
   }
 
   function showStageEmpty() {
@@ -680,6 +687,9 @@
       nameModal.classList.remove('active');
     });
     $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+    $('nameInput').addEventListener('input', updateNameSaveBtn);
+    $('nameModalPartyCode').addEventListener('input', updateNameSaveBtn);
+    $('nameModalPartyCode').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
 
     $('btnCreateParty').addEventListener('click', () => {
       partyCode = genId(6);
@@ -707,13 +717,40 @@
 
   function openNameModal(firstTime) {
     $('nameInput').value = guestName;
-    populateStageOptions();
-    const showSecondary = firstTime ? 'none' : 'inline-block';
+    const needsParty = firstTime && FIREBASE_CONFIG && !partyCode;
+    const partySection = $('partyCodeSection');
+    const stageSection = $('stageSection');
+    if (partySection) partySection.style.display = needsParty ? '' : 'none';
+    if (stageSection) stageSection.style.display = needsParty ? 'none' : '';
+    if (needsParty && partySection) $('nameModalPartyCode').value = '';
+    if (!needsParty) populateStageOptions();
+    const showControls = firstTime ? 'none' : 'inline-block';
     $('nameClose').style.display = firstTime ? 'none' : 'flex';
-    $('nameDelete').style.display = showSecondary;
+    $('nameDelete').style.display = showControls;
     $('nameActionsSecondary').style.display = firstTime ? 'none' : 'flex';
+    updateNameSaveBtn();
     nameModal.classList.add('active');
     setTimeout(() => $('nameInput').focus(), 50);
+  }
+
+  function updateNameSaveBtn() {
+    const btn = $('nameSave');
+    if (!btn) return;
+    const name = $('nameInput').value.trim();
+    const partySection = $('partyCodeSection');
+    const collectingParty = partySection && partySection.style.display !== 'none';
+    if (!name) {
+      btn.disabled = true;
+      btn.textContent = 'Save';
+      return;
+    }
+    btn.disabled = false;
+    if (collectingParty) {
+      const code = ($('nameModalPartyCode') && $('nameModalPartyCode').value.trim()) || '';
+      btn.textContent = code ? 'Join Party' : 'Start Party';
+    } else {
+      btn.textContent = 'Save';
+    }
   }
 
   function populateStageOptions() {
@@ -748,6 +785,18 @@
     localStorage.setItem(KEY_NAME, guestName);
     renderName();
 
+    const partySection = $('partyCodeSection');
+    if (partySection && partySection.style.display !== 'none') {
+      const enteredCode = $('nameModalPartyCode').value.trim().toUpperCase();
+      partyCode = enteredCode || genId(6);
+      localStorage.setItem(KEY_PARTY, partyCode);
+      updateUrlWithParty();
+      nameModal.classList.remove('active');
+      startSync();
+      syncLocalVotes();
+      return;
+    }
+
     const sel = $('stageSelect');
     const chosenStage = sel && SHOW_NAMES[sel.value] ? sel.value : STAGE;
     if (chosenStage !== STAGE) {
@@ -763,7 +812,8 @@
   }
 
   function renderName() {
-    $('nameValue').textContent = guestName || '—';
+    const pill = $('namePill');
+    if (pill) pill.title = (guestName || '—') + ' · Settings';
   }
 
   // ——— Rating flow ———
