@@ -7,31 +7,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-app-check-compat.js"></script>
+<script src="shared/config.js"></script>
+<script src="shared/scoring.js"></script>
+<script src="shared/storage.js"></script>
+<script src="shared/session.js"></script>
+<script src="shared/dialogs.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <!-- ============================================================
-     PARTY CONFIG — update "year" each contest year.
-     Set firebaseConfig to your Firebase project config object
-     to enable real-time score sharing; leave null for local-only.
+     PARTY CONFIG — see shared/config.js. Anonymous Auth and secure
+     party membership are prerequisites for shared scoring.
      ============================================================ -->
-<script type="application/json" id="party-config">
-{
-  "year": "2026",
-  "firebaseConfig": {
-    "apiKey": "AIzaSyBQ1OT4gV8j0uOeltypIAq4IWZ1vkvIx2Y",
-    "authDomain": "eurovision-watch-party.firebaseapp.com",
-    "databaseURL": "https://eurovision-watch-party-default-rtdb.firebaseio.com",
-    "projectId": "eurovision-watch-party",
-    "storageBucket": "eurovision-watch-party.firebasestorage.app",
-    "messagingSenderId": "267617361444",
-    "appId": "1:267617361444:web:cdcb248eacd071dde842b1"
-  }
-}
-</script>
+
 
 <!-- ============================================================
      ACTS DATA — see acts-data.js for the roster, running order,
@@ -75,17 +68,17 @@
       </g>
     </svg>
 
-    <div class="name-pill" id="namePill" title="Settings">
+    <button type="button" class="name-pill" id="namePill" title="Settings" aria-label="Settings">
       <span class="name-value" id="nameValue">⚙</span>
-    </div>
+    </button>
 
     <a class="help-btn" id="helpBtn" href="help.html" aria-label="Help" title="Help">?</a>
 
     <div class="party-bar" id="partyBar" style="display:none">
-      <div class="party-code" id="partyCodeChip" title="Copy invite link">
+      <button type="button" class="party-code" id="partyCodeChip" title="Copy invite link" aria-label="Copy invite link">
         <strong id="partyCodeValue"></strong>
         <span class="copy-icon" aria-hidden="true">⧉</span>
-      </div>
+      </button>
       <a class="party-action" id="navPartyVotes" href="party-votes.html">Party Votes <span class="party-action-arrow" aria-hidden="true">→</span></a>
     </div>
   </header>
@@ -133,6 +126,7 @@
       <textarea id="fRemind" rows="2" placeholder="(optional) reminds you of someone, other thoughts…" maxlength="200"></textarea>
     </div>
 
+    <p id="draftStatus" role="status" aria-live="polite"></p>
     <div class="editing-note" id="editingNote"></div>
 
     <div class="button-row">
@@ -149,6 +143,7 @@
 
   <section class="card done-banner" id="donePanel" style="display:none">
     <h2>All acts rated 🏆</h2>
+    <button class="btn" id="btnReviewSkipped" type="button">Rate skipped acts</button>
     <p>Sort the table below or click any row to revise a vote.</p>
     <button class="btn primary" id="btnReturnStart" style="margin-top:14px;display:none"></button>
     <button class="btn" id="btnSeeTrivia" style="margin-top:8px;display:none">See superlatives</button>
@@ -206,11 +201,14 @@
   <div class="modal">
     <button class="modal-close" id="nameClose" type="button" aria-label="Close" style="display:none">×</button>
     <h3>Welcome to the watch party!</h3>
+    <p id="nameError" role="alert"></p>
     <p>What's your name? It'll show in the header so you remember which device is yours.</p>
+    <label for="nameInput">Your name</label>
     <input type="text" id="nameInput" maxlength="40" placeholder="Your name">
     <div id="partyCodeSection" style="display:none">
+      <label for="nameModalPartyCode">Invite code (blank means host)</label>
       <input type="text" id="nameModalPartyCode" maxlength="8" placeholder="Party code (optional)" style="text-transform:uppercase">
-      <p class="modal-help-text">If you're at a watch party, ask the host for the party code</p>
+      <p class="modal-help-text">Leave the code blank to host a new party. To join, enter the invite code from your host.</p>
     </div>
     <div id="stageSection">
       <label class="modal-field-label" for="stageSelect">Contest</label>
@@ -231,14 +229,8 @@
 (function () {
   'use strict';
 
-  // Read party-config JSON block
-  let PARTY_YEAR = '2026';
-  let FIREBASE_CONFIG = null;
-  try {
-    const cfg = JSON.parse(document.getElementById('party-config').textContent);
-    PARTY_YEAR = cfg.year || '2026';
-    FIREBASE_CONFIG = cfg.firebaseConfig || null;
-  } catch (e) {}
+  const PARTY_YEAR = EurovisionConfig.year;
+  const FIREBASE_CONFIG = EurovisionConfig.firebaseConfig;
 
   // Eurovision stage selection — user-picked (settings modal), persisted in localStorage.
   // Falls back to the default contest configured in acts-data.js, then to grand-final.
@@ -250,12 +242,14 @@
 
   // Year-scoped localStorage keys
   const KEY_NAME    = 'ev_' + PARTY_YEAR + '_guest_name';
-  const KEY_VOTES   = 'ev_' + PARTY_YEAR + '_votes_' + STAGE + '_v1';
-  const KEY_VOTES_LEGACY = 'ev_' + PARTY_YEAR + '_votes_v1';
+  let KEY_VOTES = '';
+  const Session = window.EurovisionSession;
+  const Store = window.EurovisionStorage;
+  const Scoring = window.EurovisionScoring;
+  let restoring = false;
   const KEY_PARTY   = 'ev_' + PARTY_YEAR + '_party';
-  const KEY_USER_ID = 'ev_' + PARTY_YEAR + '_user_id';
 
-  const SCORE_FIELDS = ['vocals', 'performance', 'song', 'original', 'stage'];
+  const SCORE_FIELDS = Scoring.fields;
 
   const FIXED_COLS = [
     { key: 'order',   label: '#', cls: 'num' },
@@ -314,8 +308,7 @@
     acts.forEach((a, i) => { actOrder[a.code] = i + 1; });
 
     guestName = localStorage.getItem(KEY_NAME) || '';
-    userId    = localStorage.getItem(KEY_USER_ID) || genId(12);
-    localStorage.setItem(KEY_USER_ID, userId);
+    userId = ''; // Only Firebase auth determines ownership.
 
     const showEl = $('showName');
     if (showEl) showEl.textContent = showName;
@@ -332,7 +325,7 @@
       return;
     }
 
-    votes = loadVotes();
+    votes = {};
     buildScales();
     rebuildQueue();
     computeTopPickWidth();
@@ -342,23 +335,20 @@
       _resizeT = setTimeout(computeTopPickWidth, 150);
     });
 
-    // Resolve party code: URL param > localStorage
-    const urlParty = new URLSearchParams(window.location.search).get('party');
-    if (urlParty) {
-      partyCode = urlParty.toUpperCase().slice(0, 8);
-      localStorage.setItem(KEY_PARTY, partyCode);
+    const urlParty = new URLSearchParams(location.search).get('party');
+    const savedParty = localStorage.getItem(KEY_PARTY) || '';
+    if (urlParty && urlParty.toUpperCase() !== savedParty) {
+      partyCode = ''; openNameModal(true);
+      $('nameModalPartyCode').value = urlParty.toUpperCase(); updateNameSaveBtn();
+    } else if (savedParty && !new URLSearchParams(location.search).has('recover')) {
+      partyCode = savedParty;
+      startSync().catch(e => { Session.fail(e); partyCode = ''; openNameModal(true); });
     } else {
-      partyCode = localStorage.getItem(KEY_PARTY) || '';
+      partyCode = ''; openNameModal(true);
     }
-
-    if (partyCode) {
-      startSync();
-    }
-
-    if (!guestName || (FIREBASE_CONFIG && !partyCode)) {
-      openNameModal(true);
-    }
+    buildTableHead(); renderStats(); renderTable();
   }
+
 
   function showStageEmpty() {
     ['startPanel', 'entryPanel', 'donePanel'].forEach(id => {
@@ -372,84 +362,28 @@
     if (stageEmpty) stageEmpty.style.display = '';
   }
 
-  function startSync() {
-    initFirebase();
-    buildTableHead();
-    renderStats();
-    renderTable();
-    renderPartyBar();
-    if (queueIdx >= queue.length && acts.length > 0) {
-      startPanel.style.display = 'none';
-      donePanel.style.display = 'block';
-      updateDoneButton();
-    }
-  }
-
-  // ——— Firebase ———
-
-  function initFirebase() {
-    if (!FIREBASE_CONFIG || !partyCode) return;
-    try {
-      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-      db = firebase.database();
-      listenForParty();
-    } catch (e) {
-      console.warn('Firebase init failed:', e);
-    }
-  }
-
-  let _migratedRemoteFlat = false;
-
-  function listenForParty() {
-    if (!db || !partyCode) return;
-    const ref = db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users');
-    ref.on('value', snapshot => {
-      partyVotes = snapshot.val() || {};
-      maybeMigrateRemoteFlatVotes();
-      renderStats();
+  async function startSync() {
+    const auth = await Session.auth(); userId = auth.uid; db = auth.db;
+    KEY_VOTES = Store.key(partyCode, userId, STAGE, 'votes');
+    votes = loadVotes(); rebuildQueue();
+    await Session.connect(partyCode, STAGE, {
+      votes: remote => { votes = remote; renderStats(); renderTable(); updateDoneButton(); },
+      users: users => { partyVotes = users; }
     });
-    syncLocalVotes();
+    buildTableHead(); renderStats(); renderTable(); renderPartyBar(); rebuildQueue();
+    if (queueIdx >= queue.length && acts.length) { startPanel.style.display = 'none'; donePanel.style.display = 'block'; updateDoneButton(); }
   }
 
-  // One-time migration: legacy users had votes written flat at users/{uid}/votes/{actCode}.
-  // Move the current user's flat votes under votes/semi-1/ so they survive the new stage-scoped schema.
-  function maybeMigrateRemoteFlatVotes() {
-    if (_migratedRemoteFlat || !db || !partyCode || !userId) return;
-    const userNode = partyVotes[userId];
-    const votesNode = userNode && userNode.votes;
-    if (!votesNode || typeof votesNode !== 'object') { _migratedRemoteFlat = true; return; }
-    const flat = {};
-    Object.entries(votesNode).forEach(([k, v]) => {
-      if (v && typeof v === 'object' && typeof v.vocals === 'number') flat[k] = v;
-    });
-    if (!Object.keys(flat).length) { _migratedRemoteFlat = true; return; }
-    _migratedRemoteFlat = true;
-    const base = PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId + '/votes';
-    const updates = { '/semi-1': flat };
-    Object.keys(flat).forEach(code => { updates['/' + code] = null; });
-    db.ref(base).update(updates).catch(e => console.warn('Flat-vote migration failed:', e));
-  }
+  function syncLocalVotes() { /* Never replay a whole stage or legacy votes. */ }
 
-  function syncLocalVotes() {
-    if (!db || !partyCode || !userId) return;
-    const syncable = {};
-    Object.entries(votes).forEach(([code, v]) => {
-      if (v && ['vocals','performance','song','original','stage','total'].every(
-        f => typeof v[f] === 'number'
-      )) syncable[code] = v;
-    });
-    const userBase = PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId;
-    db.ref(userBase + '/name').set(guestName || 'Guest').catch(e => console.warn('Firebase name sync failed:', e));
-    db.ref(userBase + '/votes/' + STAGE).set(Object.keys(syncable).length ? syncable : null)
-      .catch(e => console.warn('Firebase votes sync failed:', e));
-  }
 
   // ——— Party UI ———
 
   function genId(len) {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let s = '';
-    for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    const bytes = crypto.getRandomValues(new Uint8Array(len));
+    for (const byte of bytes) s += chars[byte % chars.length];
     return s;
   }
 
@@ -476,6 +410,10 @@
   function updateDoneButton() {
     const btn = $('btnReturnStart');
     const triviaBtn = $('btnSeeTrivia');
+    const saved = acts.filter(a => Scoring.valid(votes[a.code])).length;
+    donePanel.querySelector('h2').textContent = saved === acts.length ? 'All acts rated 🏆' : saved + ' of ' + acts.length + ' acts rated';
+    donePanel.querySelector('p').textContent = saved === acts.length ? 'Click a saved rating to revise it.' : 'Skipped acts are still unrated. Return to them whenever you are ready.';
+    $('btnReviewSkipped').style.display = saved < acts.length ? '' : 'none';
     if (partyCode) {
       btn.textContent = 'See party votes';
       btn.style.display = '';
@@ -509,67 +447,24 @@
   // ——— Persistence ———
 
   function loadVotes() {
-    try {
-      let raw = localStorage.getItem(KEY_VOTES);
-      if (!raw && STAGE === 'semi-1') {
-        // One-time migration: pre-stage flat votes get attributed to semi-1.
-        const legacy = localStorage.getItem(KEY_VOTES_LEGACY);
-        if (legacy) {
-          localStorage.setItem(KEY_VOTES, legacy);
-          localStorage.removeItem(KEY_VOTES_LEGACY);
-          raw = legacy;
-        }
-      }
-      return raw ? JSON.parse(raw) : {};
-    } catch (e) {
-      return {};
-    }
+    if (!KEY_VOTES) return {};
+    return Object.fromEntries(Object.entries(Store.read(KEY_VOTES)).filter(([code, v]) => actOrder[code] && Scoring.valid(v)));
+  }
+  function saveVotes(code) {
+    Store.write(KEY_VOTES, votes);
+    Session.save(code, votes[code]);
+  }
+  function draftKey() { return Store.key(partyCode, userId, STAGE, 'drafts'); }
+  function saveDraft() {
+    const act = currentAct();
+    if (!act || restoring || !userId || !partyCode) return;
+    try { const drafts = Store.read(draftKey()); drafts[act.code] = readForm(); Store.write(draftKey(), drafts); $('draftStatus').textContent = 'Draft saved on this device — not shared.'; }
+    catch (e) { Session.fail(e); }
+  }
+  function discardDraft(code) {
+    const drafts = Store.read(draftKey()); delete drafts[code]; Store.write(draftKey(), drafts);
   }
 
-  function saveVotes() {
-    localStorage.setItem(KEY_VOTES, JSON.stringify(votes));
-    syncLocalVotes();
-  }
-
-  // Persist funniest comment to Firebase on vote save. Transaction-guarded so
-  // concurrent writers from multiple party members converge on the same pick.
-  // Tiebreak: higher score > longer comment > alphabetical voter name (lower
-  // localeCompare wins).
-  function syncFunniest(actCode) {
-    if (!db || !partyCode || !userId) return;
-    const Humor = window.EurovisionHumor;
-    if (!Humor || typeof Humor.scoreComment !== 'function') return;
-    const v = votes[actCode];
-    const remind = v && typeof v.remind === 'string' ? v.remind.trim() : '';
-    if (!remind) return;
-    const score = Humor.scoreComment(remind);
-    if (score < (Humor.DISPLAY_THRESHOLD || 4)) return;
-    const myName = (guestName || 'Guest').trim();
-    const newLen = remind.length;
-    const ref = db.ref(PARTY_YEAR + '/parties/' + partyCode + '/funniest/' + STAGE);
-    ref.transaction(current => {
-      if (current && typeof current.score === 'number') {
-        if (score < current.score) return;
-        if (score === current.score) {
-          const currLen = typeof current.comment === 'string' ? current.comment.trim().length : 0;
-          if (newLen < currLen) return;
-          if (newLen === currLen) {
-            const currUser = current.userId && partyVotes[current.userId];
-            const currName = ((currUser && currUser.name) || 'Guest').trim();
-            if (currName && myName.localeCompare(currName) >= 0) return;
-          }
-        }
-      }
-      return {
-        userId,
-        actCode,
-        comment: remind,
-        score,
-        scoredAt: firebase.database.ServerValue.TIMESTAMP,
-        scorerVersion: Humor.SCORER_VERSION || 'heuristic-v1',
-      };
-    }).catch(err => console.warn('Funniest write failed:', err));
-  }
 
   // ——— Queue ———
 
@@ -659,12 +554,15 @@
   // ——— Events ———
 
   function bindEvents() {
+    window.addEventListener('ev-sync', () => { renderTable(); updateSaveButtonState(); });
     $('btnStart').addEventListener('click', startRating);
+    $('btnReviewSkipped').addEventListener('click', () => { rebuildQueue(); startRating(); });
     $('btnSave').addEventListener('click', onSave);
-    $('btnClear').addEventListener('click', clearForm);
+    $('btnClear').addEventListener('click', () => { clearForm(); saveDraft(); });
+    $('entryPanel').addEventListener('change', () => { updateSaveButtonState(); saveDraft(); });
     $('btnSkip').addEventListener('click', onSkip);
     $('entryPanel').addEventListener('click', updateSaveButtonState);
-    $('fRemind').addEventListener('input', updateSaveButtonState);
+    $('fRemind').addEventListener('input', () => { updateSaveButtonState(); saveDraft(); });
     $('btnReturnStart').addEventListener('click', () => {
       if (partyCode) window.location.href = 'party-votes.html';
     });
@@ -691,22 +589,14 @@
     $('nameModalPartyCode').addEventListener('input', updateNameSaveBtn);
     $('nameModalPartyCode').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
 
-    $('btnCreateParty').addEventListener('click', () => {
-      partyCode = genId(6);
-      localStorage.setItem(KEY_PARTY, partyCode);
-      partyModal.classList.remove('active');
-      updateUrlWithParty();
-      startSync();
-    });
-    $('btnJoinParty').addEventListener('click', () => {
-      const code = $('joinCodeInput').value.trim().toUpperCase();
-      if (!code) { $('joinCodeInput').focus(); return; }
-      partyCode = code;
-      localStorage.setItem(KEY_PARTY, partyCode);
-      partyModal.classList.remove('active');
-      updateUrlWithParty();
-      startSync();
-    });
+    async function enterParty(create) {
+      try {
+        partyCode = await Session.enter(create ? genId(8) : $('joinCodeInput').value.trim().toUpperCase(), guestName, create);
+        partyModal.classList.remove('active'); updateUrlWithParty(); await startSync();
+      } catch (e) { Session.fail(e); }
+    }
+    $('btnCreateParty').addEventListener('click', () => enterParty(true));
+    $('btnJoinParty').addEventListener('click', () => enterParty(false));
     $('joinCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnJoinParty').click(); });
     $('partyBar').addEventListener('click', e => {
       if (!e.target.closest('.party-action')) copyPartyLink();
@@ -717,11 +607,12 @@
 
   function openNameModal(firstTime) {
     $('nameInput').value = guestName;
-    const needsParty = firstTime && FIREBASE_CONFIG && !partyCode;
+    const needsParty = firstTime && !partyCode;
     const partySection = $('partyCodeSection');
     const stageSection = $('stageSection');
     if (partySection) partySection.style.display = needsParty ? '' : 'none';
-    if (stageSection) stageSection.style.display = needsParty ? 'none' : '';
+    if (stageSection) stageSection.style.display = '';
+    populateStageOptions();
     if (needsParty && partySection) $('nameModalPartyCode').value = '';
     if (!needsParty) populateStageOptions();
     const showControls = firstTime ? 'none' : 'inline-block';
@@ -766,50 +657,37 @@
     sel.value = SHOW_NAMES[STAGE] ? STAGE : DEFAULT_STAGE;
   }
 
-  function deleteUser() {
-    if (!confirm('Delete your user from this party? Your name and votes will be removed for everyone. This cannot be undone.')) return;
-    if (db && partyCode && userId) {
-      db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId).remove().catch(() => {});
-    }
-    localStorage.removeItem(KEY_NAME);
-    localStorage.removeItem(KEY_VOTES);
-    localStorage.removeItem(KEY_USER_ID);
-    localStorage.removeItem(KEY_PARTY);
-    location.reload();
+  async function deleteUser() {
+    if (!confirm('Leave this party and remove your shared name and votes in every contest? Local results are preserved.')) return;
+    try {
+      await Session.leave(); localStorage.removeItem(KEY_NAME);
+      location.href = 'index.html' + (EurovisionConfig.emulator ? '?emulator=1' : '');
+    } catch (e) { Session.fail(e); }
   }
 
-  function saveName() {
-    const v = $('nameInput').value.trim();
-    if (!v) { $('nameInput').focus(); return; }
-    guestName = v;
-    localStorage.setItem(KEY_NAME, guestName);
-    renderName();
-
-    const partySection = $('partyCodeSection');
-    if (partySection && partySection.style.display !== 'none') {
-      const enteredCode = $('nameModalPartyCode').value.trim().toUpperCase();
-      partyCode = enteredCode || genId(6);
-      localStorage.setItem(KEY_PARTY, partyCode);
-      updateUrlWithParty();
-      nameModal.classList.remove('active');
-      startSync();
-      syncLocalVotes();
-      return;
-    }
-
-    const sel = $('stageSelect');
-    const chosenStage = sel && SHOW_NAMES[sel.value] ? sel.value : STAGE;
-    if (chosenStage !== STAGE) {
-      localStorage.setItem(KEY_STAGE, chosenStage);
-      // Stage change requires rebuilding acts, queue, votes, party listener.
-      // A reload is the simplest correct refresh.
-      location.reload();
-      return;
-    }
-
-    nameModal.classList.remove('active');
-    syncLocalVotes();  // update name in Firebase
+  async function saveName() {
+    const name = $('nameInput').value.trim(); if (!name) return;
+    $('nameSave').disabled = true; $('nameError').textContent = '';
+    try {
+      const chosen = $('stageSelect').value || STAGE;
+      const collecting = $('partyCodeSection').style.display !== 'none';
+      if (collecting) {
+        const entered = $('nameModalPartyCode').value.trim().toUpperCase();
+        partyCode = await Session.enter(entered || genId(8), name, !entered);
+        guestName = name; localStorage.setItem(KEY_NAME, name); localStorage.setItem(KEY_STAGE, chosen);
+        updateUrlWithParty();
+        if (chosen !== STAGE) { location.reload(); return; }
+        await startSync();
+      } else {
+        await Session.enter(partyCode, name);
+        guestName = name; localStorage.setItem(KEY_NAME, name);
+        if (chosen !== STAGE) { localStorage.setItem(KEY_STAGE, chosen); location.reload(); return; }
+      }
+      renderName(); nameModal.classList.remove('active'); $('btnStart').focus();
+    } catch (e) { $('nameError').textContent = e.message; Session.fail(e); partyCode = localStorage.getItem(KEY_PARTY) || ''; }
+    finally { updateNameSaveBtn(); }
   }
+
 
   function renderName() {
     const pill = $('namePill');
@@ -854,8 +732,10 @@
     $('actPerformer').textContent = act.performer;
     $('actSong').textContent = '“' + act.song + '”';
 
-    clearForm();
-    const v = votes[act.code];
+    restoring = true; clearForm();
+    const draft = Store.read(draftKey())[act.code];
+    $('draftStatus').textContent = draft ? 'Local draft restored — not shared.' : '';
+    const v = draft || votes[act.code];
     if (v) {
       $('fRemind').value = v.remind || '';
       SCORE_FIELDS.forEach(f => {
@@ -868,7 +748,8 @@
     $('editingNote').textContent = editingCode ? '✎ Editing saved vote'
       : votes[act.code] ? '↻ Updating prior vote' : '';
 
-    updateSaveButtonState();
+    restoring = false; updateSaveButtonState();
+    $('actCountry').setAttribute('tabindex', '-1'); $('actCountry').focus();
     window.scrollTo({ top: entryPanel.offsetTop - 20, behavior: 'smooth' });
   }
 
@@ -885,7 +766,7 @@
     let total = 0;
     SCORE_FIELDS.forEach(f => {
       const checked = document.querySelector('input[name="s_' + f + '"]:checked');
-      const val = checked ? parseInt(checked.value, 10) : 0;
+      const val = checked ? parseInt(checked.value, 10) : null;
       obj[f] = val;
       total += val;
     });
@@ -900,15 +781,19 @@
   }
 
   function updateSaveButtonState() {
-    $('btnSave').classList.toggle('primary', hasAnyInput());
+    const complete = Scoring.valid(readForm());
+    $('btnSave').classList.toggle('primary', complete);
+    $('btnSave').disabled = !complete || !Session.ready;
   }
 
   function onSave() {
     const act = currentAct();
     if (!act) return;
-    votes[act.code] = readForm();
-    saveVotes();
-    syncFunniest(act.code);
+    const vote = readForm();
+    if (!Scoring.valid(vote)) { Session.status('Select a score for all five categories. Zero is a valid score.'); return; }
+    try {
+      Session.save(act.code, vote); votes[act.code] = vote; Store.write(KEY_VOTES, votes); discardDraft(act.code);
+    } catch (e) { Session.fail(e); return; }
     renderStats();
     renderTable();
     advance();
@@ -916,7 +801,7 @@
 
   function onSkip() {
     if (!currentAct()) return;
-    clearForm();
+    saveDraft();
     advance();
   }
 
@@ -1114,6 +999,8 @@
               notes.textContent = r.remind;
               actLine.appendChild(notes);
             }
+            const sync = document.createElement('span'); sync.className = 'vote-sync-state';
+            sync.textContent = ' · ' + Session.state(r.code); country.appendChild(sync);
             td.appendChild(country);
             td.appendChild(actLine);
           } else {
@@ -1139,6 +1026,8 @@
         tdTotal.textContent = r.total !== null && r.total !== undefined ? String(r.total) : '—';
         tr.appendChild(tdTotal);
 
+        tr.tabIndex = 0; tr.setAttribute('role', 'button'); tr.setAttribute('aria-label', 'Edit ' + r.country + ' rating');
+        tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); editVote(r.code); } });
         tr.addEventListener('click', () => editVote(r.code));
         tbody.appendChild(tr);
       });
@@ -1149,22 +1038,15 @@
 
   // ——— Reset ———
 
-  function resetVotes() {
-    if (!confirm('Erase ALL your saved votes on this device? This cannot be undone.')) return;
-    votes = {};
-    localStorage.removeItem(KEY_VOTES);
-    if (db && partyCode && userId) {
-      db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users/' + userId + '/votes').remove().catch(() => {});
-    }
-    editingCode = null;
-    rebuildQueue();
-    renderStats();
-    renderTable();
-    entryPanel.classList.remove('active');
-    setRatingActive(false);
-    donePanel.style.display = 'none';
-    startPanel.style.display = 'block';
+  async function resetVotes() {
+    if (!confirm('Reset your ' + showName + ' votes, drafts and pending changes in this party? Shared votes are removed for everyone; other contests are kept.')) return;
+    try {
+      await Session.reset(); votes = {}; editingCode = null; rebuildQueue(); renderStats(); renderTable();
+      entryPanel.classList.remove('active'); setRatingActive(false); donePanel.style.display = 'none'; startPanel.style.display = 'block';
+      nameModal.classList.remove('active'); $('btnStart').focus();
+    } catch (e) { Session.fail(e); }
   }
+
 
   // ——— Scales ———
 
@@ -1180,6 +1062,7 @@
       left.className = 'scale-end';
       left.textContent = 'Terrible';
 
+      div.setAttribute('role', 'radiogroup'); div.setAttribute('aria-label', titleText);
       const title = document.createElement('span');
       title.className = 'scale-title';
       title.textContent = titleText;
@@ -1195,10 +1078,8 @@
         input.value = String(v);
         const lbl = document.createElement('label');
         lbl.textContent = String(v);
-        lbl.addEventListener('click', function () {
-          document.querySelectorAll('input[name="' + input.name + '"]').forEach(function(r) { r.checked = false; });
-          input.checked = true;
-        });
+        lbl.htmlFor = id;
+        input.setAttribute('aria-label', titleText + ': ' + v);
         opts.appendChild(input);
         opts.appendChild(lbl);
       }

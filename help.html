@@ -23,94 +23,31 @@
       A live scoring app for Eurovision watch parties. Rate each act as it performs, share scores with the room in real time, and see who's loving (or hating) the show.
     </p>
 
-    <h2>Your name &amp; settings</h2>
-    <p>Tap the gold pill in the top-right of the voter page (the one showing your name) to open the settings modal. The footer that used to hold these actions is gone — everything lives as buttons inside this modal now. From there you can:</p>
+    <h2>Host or join</h2>
+    <p>Enter your name and choose a contest. Leave the invite code blank and choose <strong>Start Party</strong> to host. Enter a host’s code (or open their invite link) and choose <strong>Join Party</strong> to join an existing party. Invites expire after seven days.</p>
+    <p>Your browser signs in anonymously; no password is needed. Another device gets a different identity even if you use the same name. Copy the invite link with the party-code button. Open Settings with the gear button to change your name or contest.</p>
+    <h2>Rate an act</h2>
+    <p>Choose <strong>Start Rating</strong>. Select a score from 0 (Terrible) to 5 (Amazing) for all five categories: Vocal quality, Performance flair, Song quality, Originality and Stagecraft. Zero is a deliberate score, not a default. Save stays disabled until all five are selected. The total is calculated automatically.</p>
+    <p>Notes are optional, up to 200 characters. Selections and notes are saved as a <strong>local draft</strong>, isolated by party, browser identity, contest and act. Drafts survive refresh but are never shared or included in results.</p>
     <ul>
-      <li><strong>Change your name</strong> — type into the name field (max 40 characters) and tap Save. Your column header in the Results Table updates everywhere instantly.</li>
-      <li><strong>Switch contest</strong> — use the Contest dropdown to flip between Semi-Final 1, Semi-Final 2, and the Grand Final. Each contest tracks its own votes.</li>
-      <li><strong>Reset votes</strong> — wipes all your saved votes for the current contest. A confirmation appears first. Other members' votes are untouched.</li>
-      <li><strong>Download my results</strong> — saves a copy of your ratings for the current contest.</li>
-      <li><strong>Delete user</strong> — clears this device's record entirely (name, votes, party).</li>
+      <li><strong>Save</strong> records a complete rating locally and queues only that act for sharing.</li>
+      <li><strong>Skip</strong> moves on without voting and preserves the draft. At the end, choose <strong>Rate skipped acts</strong> to return. The completion message counts only saved ratings.</li>
+      <li><strong>Clear</strong> clears the current form and its draft without deleting a previously saved vote.</li>
     </ul>
-
-    <h2>Your party</h2>
-    <p>The header shows your party code and gives you two cross-links:</p>
-    <ul>
-      <li><strong>Copy invite link</strong> — tap the party code chip to copy a shareable URL (<code>…/?party=ABC123</code>). Anyone opening that link lands directly in your party.</li>
-      <li><strong>Party Votes</strong> — see the whole party's scoreboard for the current contest.</li>
-      <li><strong>Superlatives</strong> — see superlatives like Biggest Hater and Wittiest.</li>
-    </ul>
-    <p>Votes you save sync to every other member in real time. Other members appear as their own columns in the Results Table.</p>
-
-    <h2>The voting page</h2>
-
-    <h3>Rating an act</h3>
-    <p>Each act has its own card showing flag, country, performer, and song. Rate it on five 0–5 scales:</p>
-    <ul>
-      <li><strong>Vocal quality</strong> — how strong and controlled the vocals are.</li>
-      <li><strong>Performance flair</strong> — energy, charisma, stage presence.</li>
-      <li><strong>Song quality</strong> — how good the song itself is.</li>
-      <li><strong>Originality</strong> — how fresh or distinctive the entry feels.</li>
-      <li><strong>Stagecraft</strong> — costumes, visuals, choreography, production.</li>
-    </ul>
-    <p>0 means Terrible, 5 means Amazing. The total (0–25) is calculated automatically. There's also a <strong>Replay-worthy?</strong> Yes/No toggle and an optional <strong>Notes</strong> field (max 200 characters) — drop quick observations or a "reminds me of…" line.</p>
-
-    <h3>Save, Skip, Clear</h3>
-    <ul>
-      <li><strong>Save</strong> — records your scores and moves to the next act. Votes sync to the rest of your party immediately.</li>
-      <li><strong>Skip</strong> — moves on without recording a vote. The act stays in the queue; you can come back.</li>
-      <li><strong>Clear</strong> — wipes the form but stays on the current act.</li>
-    </ul>
-    <p>Acts are presented in performance order. If the running order isn't out yet, they're alphabetical. Acts not in the final are skipped entirely.</p>
-
-    <h3>Editing a vote</h3>
-    <p>Click any row in the Results Table to reopen that act's form pre-filled with your saved scores. Click Save to commit changes.</p>
-
-    <h3>Results Table</h3>
-    <p>Shows every act at least one party member has rated. Columns:</p>
-    <ul>
-      <li><strong>#</strong> — running order slot ("—" if unknown).</li>
-      <li><strong>Act</strong> — flag, country, performer, song, and any note you left.</li>
-      <li><strong>One column per member</strong> — their total (0–25), "—" if unrated. Your own column is bold gold with a ★.</li>
-      <li><strong>Avg</strong> — average across everyone who's rated the act.</li>
-    </ul>
-    <p>Rows are sorted automatically with your highest-scoring acts on top.</p>
-
-    <h3>Stats bar</h3>
-    <ul>
-      <li><strong>Progress</strong> — how many acts you've rated out of the total.</li>
-      <li><strong>Your Average</strong> — your mean total across all your rated acts.</li>
-      <li><strong>Top Pick</strong> — the act with the highest party-wide average.</li>
-    </ul>
-
-    <h2>Party Votes page</h2>
-    <p>An overview of the whole party's scores for the current show.</p>
-    <ul>
-      <li><strong>Party Winner</strong> stat — the act with the highest average across everyone. Ties show every winner.</li>
-      <li><strong>Funniest Comment</strong> stat (when present) — surfaces the wittiest note left on any vote.</li>
-      <li><strong>Table</strong> — one row per act anyone rated, sorted by average score descending. Click a row to expand it inline and see each member's total and any comment they left for that act.</li>
-    </ul>
-
-    <h2>Superlatives page</h2>
-    <p>Superlatives based on everyone's votes and comments. A member needs to have rated at least 3 acts before they show up in score-based categories.</p>
-    <ul>
-      <li><strong>Biggest Hater</strong> — lowest average score across their rated acts.</li>
-      <li><strong>Biggest Lover</strong> — highest average score.</li>
-      <li><strong>Most Verbose Comment</strong> — longest single note left on any vote.</li>
-      <li><strong>Most Verbose Overall</strong> — most characters of comments combined.</li>
-      <li><strong>Wittiest</strong> — funniest comment as judged by the built-in humor scorer.</li>
-      <li><strong>Most Incomplete</strong> — has rated something but skipped the most acts.</li>
-    </ul>
-
-    <h2>Privacy &amp; data</h2>
-    <ul>
-      <li>Your name, party code, and votes are stored locally on this device.</li>
-      <li>If you're in a party, your name and saved votes are also written to Firebase so other members see them in real time. Only saved votes sync — in-progress selections aren't shared.</li>
-      <li>Reset removes your votes from both this device and the party.</li>
-    </ul>
-
-    <h2>Known issues</h2>
-    <p>On iOS Safari and some other mobile WebKit browsers, the 0–5 score buttons may not register taps reliably — votes can save as all zeros. Desktop Chrome, Firefox, and Edge are not affected. A fix is in progress.</p>
+    <p>The voting table shows your saved ratings, five category scores and total, sorted by total. Click a row or focus it and press Enter to edit. Top Pick is your own highest total.</p>
+    <h2>Sharing and connection status</h2>
+    <p><strong>Pending</strong> means the rating is saved locally, not yet acknowledged. <strong>Shared</strong> means the server accepted it. <strong>Offline</strong> keeps changes on this device and retries when connected. <strong>Not shared</strong> means a write or access failed; use Retry, or Party settings to host/join again. Do not clear browser storage while votes are pending.</p>
+    <p>Different acts never replace one another. If two tabs edit the same act, the last write accepted by the server wins (including an offline edit that reconnects later). Check your results before closing the tabs.</p>
+    <h2>Party Votes and Superlatives</h2>
+    <p>Party Votes lists acts rated by members, ordered by average. Click or press Enter on an act to see individual totals and comments. Party Winner shows tied highest averages. Funniest Comment and the Superlatives page use the built-in humor scorer on current saved notes; drafts and removed notes do not count.</p>
+    <p>Superlatives include Biggest Hater, Biggest Lover, Most Verbose Comment, Most Verbose Overall, Wittiest and Most Incomplete. Score-based categories require at least three complete ratings.</p>
+    <h2>Reset, leave and privacy</h2>
+    <p><strong>Reset votes</strong> in Settings deletes your shared ratings, local drafts and pending changes for the <strong>selected contest in this party</strong>. Other contests and other guests are preserved. Reconnect first; a failed reset leaves your data intact. Old offline tabs cannot restore pre-reset votes.</p>
+    <p><strong>Leave party</strong> removes your shared name and votes in every contest and revokes membership. Local results remain on this browser; pending changes and drafts are canceled so they cannot reappear if you rejoin. Download your results from Settings before leaving. Leaving as host does not delete other guests or their party.</p>
+    <p>Only signed-in party members can read shared names, scores and notes. Each member can write only their own records. Treat an invite link like a shared secret: anyone with a valid invite can join. Drafts stay on your device. Clearing browser sign-in/storage loses access to the old anonymous identity.</p>
+    <p>Older party codes without secure metadata cannot be claimed automatically. Ask the host to create a new party. Legacy local vote files are retained, never uploaded automatically; see the rollout documentation for deliberate export/import options.</p>
+    <h2>Keyboard access</h2>
+    <p>Tab to a score group, then use arrow keys to choose a score. Space selects, and Enter activates buttons and rating rows. Settings dialogs keep focus inside; Escape closes Settings when its Close button is available and restores focus to the previous control.</p>
   </section>
 
 </div>

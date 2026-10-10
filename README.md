@@ -38,3 +38,16 @@ Deployed via GitHub Pages from the `main` branch (root). Firebase Realtime Datab
 - `firebase.json` — Firebase project config
 - `SPEC.md` — full application specification
 - `ACCESSIBILITY_REPORT.md` — accessibility audit notes
+
+## Integrity development gates and rollout
+
+The app is still static HTML/CSS/JS; npm is development-only. Install Node 24.12.0 (the CI pin; Firebase 13/rules testing 6 require >=24.12.0), Java 21 and Python 3, then:
+
+```sh
+npm ci
+npx playwright install --with-deps chromium
+npm test
+npm run test:regressions
+```
+
+These commands use only the **demo-eurovision** Firebase Auth/Realtime Database emulators; they do not deploy or use the production project in `.firebaserc`. See [docs/ROLLOUT.md](docs/ROLLOUT.md) for architecture, test isolation, Anonymous Auth/App Check prerequisites, legacy preservation, cross-tab conflict semantics, coordinated rollout and security-conscious rollback. Production auth/rules/client changes must be performed by an operator, not these tests.

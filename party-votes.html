@@ -7,26 +7,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/13.0.0/firebase-app-check-compat.js"></script>
+<script src="shared/config.js"></script>
+<script src="shared/scoring.js"></script>
+<script src="shared/storage.js"></script>
+<script src="shared/session.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="party-page">
 
-<script type="application/json" id="party-config">
-{
-  "year": "2026",
-  "firebaseConfig": {
-    "apiKey": "AIzaSyBQ1OT4gV8j0uOeltypIAq4IWZ1vkvIx2Y",
-    "authDomain": "eurovision-watch-party.firebaseapp.com",
-    "databaseURL": "https://eurovision-watch-party-default-rtdb.firebaseio.com",
-    "projectId": "eurovision-watch-party",
-    "storageBucket": "eurovision-watch-party.firebasestorage.app",
-    "messagingSenderId": "267617361444",
-    "appId": "1:267617361444:web:cdcb248eacd071dde842b1"
-  }
-}
-</script>
+
 
 <script src="acts-data.js"></script>
 <script src="humor-scorer.js"></script>
@@ -129,7 +122,7 @@
 (function () {
   'use strict';
 
-  const cfg = JSON.parse(document.getElementById('party-config').textContent);
+  const cfg = window.EurovisionConfig;
   const PARTY_YEAR = cfg.year || '2026';
   const FIREBASE_CONFIG = cfg.firebaseConfig;
   const DATA = window.EUROVISION_DATA || {};
@@ -165,7 +158,6 @@
   let partyUsers = {};
   let userCols = [];
   const expandedCodes = new Set();
-  let persistedFunniest = null;
 
   const $ = id => document.getElementById(id);
 
@@ -179,7 +171,7 @@
   if (_helpBtn && partyCode) _helpBtn.href = 'help.html?party=' + encodeURIComponent(partyCode);
 
   if (!partyCode) {
-    console.warn('No party selected.');
+    EurovisionSession.status('No party selected. Open Party settings to host or join.');
     return;
   }
 
@@ -201,25 +193,10 @@
     });
   }
 
-  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-  const db = firebase.database();
-  db.ref(PARTY_YEAR + '/parties/' + partyCode + '/users').on('value', snap => {
-    partyUsers = snap.val() || {};
-    rebuildUserCols();
-    buildTableHead();
-    renderTable();
-    renderPartyWinner();
-    renderFunniest();
-  }, err => {
-    console.warn('Firebase read failed:', err);
-  });
-
-  db.ref(PARTY_YEAR + '/parties/' + partyCode + '/funniest/' + STAGE).on('value', snap => {
-    persistedFunniest = snap.val();
-    renderFunniest();
-  }, err => {
-    console.warn('Funniest read failed:', err);
-  });
+  EurovisionSession.connect(partyCode, STAGE, { users: users => {
+    partyUsers = users;
+    rebuildUserCols(); buildTableHead(); renderTable(); renderPartyWinner(); renderFunniest();
+  } }).catch(EurovisionSession.fail);
 
   computePartyWinnerWidth();
   let _resizeT;
@@ -242,18 +219,7 @@
 
   // Read votes for the active stage. Falls back to flat (pre-stage) votes
   // as semi-1 for back-compat with users whose data hasn't migrated yet.
-  function extractStageVotes(votesNode) {
-    if (!votesNode || typeof votesNode !== 'object') return {};
-    if (votesNode[STAGE] && typeof votesNode[STAGE] === 'object') return votesNode[STAGE];
-    if (STAGE === 'semi-1') {
-      const flat = {};
-      Object.entries(votesNode).forEach(([k, v]) => {
-        if (v && typeof v === 'object' && typeof v.vocals === 'number') flat[k] = v;
-      });
-      return flat;
-    }
-    return {};
-  }
+  function extractStageVotes(node) { return EurovisionScoring.stageVotes(node, STAGE); }
 
   function actAvg(code) {
     const totals = userCols
@@ -328,6 +294,8 @@
         const tr = document.createElement('tr');
         tr.className = 'body-row';
         tr.dataset.code = r.code;
+        tr.tabIndex = 0; tr.setAttribute('role', 'button'); tr.setAttribute('aria-label', 'Show votes for ' + r.country); tr.setAttribute('aria-expanded', expandedCodes.has(r.code));
+        tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(r.code, tr); } });
         tr.addEventListener('click', () => toggleExpand(r.code, tr));
 
         FIXED_COLS.forEach(col => {
@@ -475,30 +443,11 @@
     return best;
   }
 
-  // Resolves persisted funniest node into render-shape, validating that the
-  // referenced comment still matches the user's current vote. Returns null if
-  // stale (user edited/cleared the comment) or referenced data missing.
-  function resolvePersisted() {
-    if (!persistedFunniest || typeof persistedFunniest !== 'object') return null;
-    const { userId, actCode, comment, score } = persistedFunniest;
-    if (!userId || !actCode || typeof comment !== 'string') return null;
-    const user = partyUsers[userId];
-    if (!user) return null;
-    const userVotes = extractStageVotes(user.votes);
-    const vote = userVotes[actCode];
-    const currentRemind = vote && typeof vote.remind === 'string' ? vote.remind.trim() : '';
-    if (currentRemind !== comment.trim()) return null;
-    const act = acts.find(a => a.code === actCode);
-    if (!act) return null;
-    const voter = ((user.name) || 'Guest').trim();
-    return { voter, act, comment: comment.trim(), score: typeof score === 'number' ? score : 0 };
-  }
-
   function renderFunniest() {
     const host = $('funniestComment');
     const wrapper = $('funniestHost');
     if (!host || !wrapper) return;
-    const best = resolvePersisted() || findFunniest();
+    const best = findFunniest();
     if (!best) {
       wrapper.style.display = 'none';
       host.replaceChildren();
