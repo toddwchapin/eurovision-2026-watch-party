@@ -1,44 +1,91 @@
 {
   "rules": {
-    "$year": {
+    ".read": false,
+    ".write": false,
+    "2026": {
       "parties": {
         "$partyCode": {
-          "users": {
-            ".read": true,
+          "meta": {
+            ".read": "auth != null",
+            ".write": "auth != null && !data.exists() && !data.parent().exists() && $partyCode.matches(/^[A-Z2-9]{6,8}$/) && newData.child('hostUid').val() === auth.uid",
+            ".validate": "newData.hasChildren(['hostUid','createdAt','expiresAt'])",
+            "hostUid": {
+              ".validate": "newData.isString()"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() && newData.val() === now"
+            },
+            "expiresAt": {
+              ".validate": "newData.isNumber() && newData.val() > now && newData.val() <= now + 604800000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "members": {
             "$userId": {
-              ".write": true,
+              ".read": "auth != null && auth.uid === $userId",
+              ".write": "auth != null && auth.uid === $userId && ((!newData.exists() && data.exists()) || (!data.exists() && newData.val() === true && root.child('2026/parties').child($partyCode).child('meta/expiresAt').val() > now))",
+              ".validate": "newData.val() === true"
+            }
+          },
+          "users": {
+            ".read": "auth != null && root.child('2026/parties').child($partyCode).child('members').child(auth.uid).val() === true",
+            "$userId": {
+              ".write": "auth != null && root.child('2026/parties').child($partyCode).child('members').child(auth.uid).val() === true && auth.uid === $userId && (!data.child('epochs/semi-1').exists() || (newData.child('epochs/semi-1').isNumber() && newData.child('epochs/semi-1').val() >= data.child('epochs/semi-1').val())) && (!data.child('epochs/semi-2').exists() || (newData.child('epochs/semi-2').isNumber() && newData.child('epochs/semi-2').val() >= data.child('epochs/semi-2').val())) && (!data.child('epochs/grand-final').exists() || (newData.child('epochs/grand-final').isNumber() && newData.child('epochs/grand-final').val() >= data.child('epochs/grand-final').val()))",
               "name": {
-                ".validate": "newData.isString() && newData.val().length <= 40"
+                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+              },
+              "epochs": {
+                "$stage": {
+                  ".validate": "($stage === 'semi-1' || $stage === 'semi-2' || $stage === 'grand-final') && newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && (!data.exists() || newData.val() >= data.val())"
+                }
               },
               "votes": {
                 "$stage": {
+                  ".validate": "$stage === 'semi-1' || $stage === 'semi-2' || $stage === 'grand-final'",
                   "$actCode": {
-                    ".validate": "newData.hasChildren(['vocals','performance','song','original','stage','total'])",
-                    "vocals":      { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
-                    "performance": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
-                    "song":        { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
-                    "original":    { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
-                    "stage":       { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5" },
-                    "total":       { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 25" },
-                    "remind":      { ".validate": "newData.isString() && newData.val().length <= 200" }
+                    ".validate": "newData.hasChildren(['vocals','performance','song','original','stage','total','remind','epoch','updatedAt']) && newData.child('epoch').val() === (newData.parent().parent().parent().child('epochs').child($stage).exists() ? newData.parent().parent().parent().child('epochs').child($stage).val() : 0) && (($stage === \"semi-1\" && ($actCode === \"MD\" || $actCode === \"SE\" || $actCode === \"HR\" || $actCode === \"GR\" || $actCode === \"PT\" || $actCode === \"GE\" || $actCode === \"IT\" || $actCode === \"FI\" || $actCode === \"ME\" || $actCode === \"EE\" || $actCode === \"IL\" || $actCode === \"DE\" || $actCode === \"BE\" || $actCode === \"LT\" || $actCode === \"SM\" || $actCode === \"PL\" || $actCode === \"RS\")) || ($stage === \"semi-2\" && ($actCode === \"BG\" || $actCode === \"AZ\" || $actCode === \"RO\" || $actCode === \"LU\" || $actCode === \"CZ\" || $actCode === \"FR\" || $actCode === \"AM\" || $actCode === \"CH\" || $actCode === \"CY\" || $actCode === \"AT\" || $actCode === \"LV\" || $actCode === \"DK\" || $actCode === \"AU\" || $actCode === \"UA\" || $actCode === \"GB\" || $actCode === \"AL\" || $actCode === \"MT\" || $actCode === \"NO\")) || ($stage === \"grand-final\" && ($actCode === \"DK\" || $actCode === \"DE\" || $actCode === \"IL\" || $actCode === \"BE\" || $actCode === \"AL\" || $actCode === \"GR\" || $actCode === \"UA\" || $actCode === \"AU\" || $actCode === \"RS\" || $actCode === \"MT\" || $actCode === \"CZ\" || $actCode === \"BG\" || $actCode === \"HR\" || $actCode === \"GB\" || $actCode === \"FR\" || $actCode === \"MD\" || $actCode === \"FI\" || $actCode === \"PL\" || $actCode === \"LT\" || $actCode === \"SE\" || $actCode === \"CY\" || $actCode === \"IT\" || $actCode === \"NO\" || $actCode === \"RO\" || $actCode === \"AT\")))",
+                    "vocals": {
+                      ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5 && newData.val() % 1 === 0"
+                    },
+                    "performance": {
+                      ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5 && newData.val() % 1 === 0"
+                    },
+                    "song": {
+                      ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5 && newData.val() % 1 === 0"
+                    },
+                    "original": {
+                      ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5 && newData.val() % 1 === 0"
+                    },
+                    "stage": {
+                      ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5 && newData.val() % 1 === 0"
+                    },
+                    "total": {
+                      ".validate": "newData.isNumber() && newData.val() === newData.parent().child('vocals').val() + newData.parent().child('performance').val() + newData.parent().child('song').val() + newData.parent().child('original').val() + newData.parent().child('stage').val()"
+                    },
+                    "remind": {
+                      ".validate": "newData.isString() && newData.val().length <= 200"
+                    },
+                    "epoch": {
+                      ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0"
+                    },
+                    "updatedAt": {
+                      ".validate": "newData.isNumber() && newData.val() === now"
+                    },
+                    "$other": {
+                      ".validate": false
+                    }
                   }
                 }
+              },
+              "$other": {
+                ".validate": false
               }
             }
           },
-          "funniest": {
-            ".read": true,
-            "$stage": {
-              ".write": true,
-              ".validate": "newData.hasChildren(['userId','actCode','comment','score','scorerVersion'])",
-              "userId":        { ".validate": "newData.isString() && newData.val().length <= 32" },
-              "actCode":       { ".validate": "newData.isString() && newData.val().length <= 8" },
-              "comment":       { ".validate": "newData.isString() && newData.val().length <= 200" },
-              "score":         { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 25" },
-              "scoredAt":      { ".validate": "newData.isNumber()" },
-              "scorerVersion": { ".validate": "newData.isString() && newData.val().length <= 40" },
-              "$other":        { ".validate": false }
-            }
+          "$other": {
+            ".validate": false
           }
         }
       }

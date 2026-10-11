@@ -72,3 +72,9 @@ node_modules/
 .agents/
 .claude/
 skills-lock.json
+
+node_modules/
+playwright-report/
+test-results/
+*-debug.log
+.firebase/

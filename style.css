@@ -911,7 +911,7 @@
     transition: background 0.15s, color 0.15s;
   }
   .modal-close:hover { background: rgba(212,175,55,0.1); color: var(--gold-pale); }
-  .modal h3 {
+  .modal h2, .modal h3 {
     margin: 0 0 12px;
     font-family: 'Cormorant Garamond', serif;
     font-size: 22px;
@@ -1203,3 +1203,17 @@
     .help-page .help-title { font-size: 26px; }
     .help-page .back-btn { font-size: 12px; padding: 5px 10px; }
   }
+
+/* Integrity/accessibility additions retain the established palette. */
+html, body { background-color: var(--bg-deep); }
+.sync-status a { color: var(--gold-pale); text-underline-offset: .2em; }
+.vote-sync-state { font-size: .8em; color: var(--cream-mute); font-weight: 400; }
+.sync-status { margin: 20px auto; max-width: 65ch; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.sync-status span { flex-basis: 100%; overflow-wrap: anywhere; }
+.name-pill, .party-code { font: inherit; color: inherit; }
+.scale-options input[type="radio"] { display: block !important; position: absolute; width: 1px; height: 1px; opacity: 0; }
+.scale-options input[type="radio"]:focus-visible + label { outline: 2px solid var(--gold, #D4AF37); outline-offset: 3px; }
+button:focus-visible, a:focus-visible, tr[role="button"]:focus-visible { outline: 2px solid var(--gold, #D4AF37); outline-offset: 3px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.modal label { display: block; margin-block: 10px 6px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
