@@ -33,7 +33,7 @@
 <script src="acts-data.js"></script>
 <script src="humor-scorer.js"></script>
 
-<div class="wrap">
+<main class="wrap">
 
   <header class="app-header">
     <svg class="heart-logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -84,7 +84,7 @@
   </header>
 
   <div class="start-panel" id="startPanel">
-    <button class="btn-start" id="btnStart">Start Rating</button>
+    <button class="btn-start" id="btnStart" disabled autocomplete="off">Start Rating</button>
   </div>
 
   <section class="card entry-panel" id="entryPanel">
@@ -181,12 +181,12 @@
   </section>
 
 
-</div>
+</main>
 
 <!-- Party modal -->
 <div class="modal-backdrop" id="partyModal">
   <div class="modal">
-    <h3>Join the watch party</h3>
+    <h2>Join the watch party</h2>
     <p>Create a new party or enter a code from someone else to share scores in real-time.</p>
     <input type="text" id="joinCodeInput" maxlength="8" placeholder="Enter party code" style="text-transform:uppercase">
     <div class="modal-actions">
@@ -200,7 +200,7 @@
 <div class="modal-backdrop" id="nameModal">
   <div class="modal">
     <button class="modal-close" id="nameClose" type="button" aria-label="Close" style="display:none">×</button>
-    <h3>Welcome to the watch party!</h3>
+    <h2>Welcome to the watch party!</h2>
     <p id="nameError" role="alert"></p>
     <p>What's your name? It'll show in the header so you remember which device is yours.</p>
     <label for="nameInput">Your name</label>
@@ -327,6 +327,7 @@
 
     votes = {};
     buildScales();
+    updateSaveButtonState(); // Do not inherit Firefox's prior enabled button state.
     rebuildQueue();
     computeTopPickWidth();
     let _resizeT;
@@ -697,7 +698,8 @@
   // ——— Rating flow ———
 
   function startRating() {
-    if (queue.length === 0) return;
+    // A cold stage reload must restore the UID-scoped draft before opening it.
+    if (!userId || !partyCode || queue.length === 0) return;
     if (queueIdx >= queue.length) queueIdx = 0;
     showCurrent();
   }
@@ -781,6 +783,7 @@
   }
 
   function updateSaveButtonState() {
+    $('btnStart').disabled = !userId || !partyCode;
     const complete = Scoring.valid(readForm());
     $('btnSave').classList.toggle('primary', complete);
     $('btnSave').disabled = !complete || !Session.ready;

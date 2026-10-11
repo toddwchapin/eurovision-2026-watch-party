@@ -1,48 +1,5 @@
-import { test as base, expect } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-// Intercept SDK downloads with installed compat SDK; no production network is permitted.
-async function isolate(context) {
-  const forbidden = [];
-  await context.route('**/*', async route => {
-    const url = new URL(route.request().url());
-    if (url.hostname === 'www.gstatic.com' && /firebase-.*-compat.js$/.test(url.pathname)) {
-      return route.fulfill({ contentType: 'application/javascript', body: readFileSync('node_modules/firebase/' + url.pathname.split('/').at(-1)) });
-    }
-    if (['127.0.0.1', 'localhost'].includes(url.hostname)) return route.continue();
-    if (['fonts.googleapis.com', 'fonts.gstatic.com'].includes(url.hostname)) return route.abort();
-    forbidden.push(url.toString()); return route.abort();
-  });
-  // WebSocket destinations are also restricted, preventing accidental production DB access.
-  await context.routeWebSocket('**/*', ws => {
-    const u = new URL(ws.url());
-    if (!['127.0.0.1', 'localhost'].includes(u.hostname)) { forbidden.push(ws.url()); ws.close(); }
-    else ws.connectToServer();
-  });
-  return forbidden;
-}
-const test = base.extend({ context: async ({ context }, use) => {
-  const forbidden = await isolate(context);
-  await use(context); expect(forbidden, 'No production requests').toEqual([]);
-} });
-async function host(page, name='Host') {
-  await page.goto('/index.html?emulator=1');
-  await page.locator('#nameInput').fill(name);
-  await expect(page.locator('#nameSave')).toHaveText('Start Party');
-  await page.locator('#nameSave').click();
-  await expect(page.locator('#nameModal')).not.toHaveClass(/active/);
-  await expect(page.locator('#syncMessage')).toContainText('Shared');
-  return page.locator('#partyCodeValue').textContent();
-}
-async function rate(page, value=0) {
-  for (const field of ['vocals','performance','song','original','stage']) await page.locator(`label[for="s_${field}_${value}"]`).click();
-  await expect(page.locator('#btnSave')).toBeEnabled(); await page.locator('#btnSave').click();
-}
-async function remote(page) {
-  return page.evaluate(async () => {
-    const S = EurovisionSession;
-    return (await firebase.database().ref('2026/parties/' + localStorage.ev_2026_party + '/users/' + S.uid).once('value')).val();
-  });
-}
+import { expect } from '@playwright/test';
+import { test, isolate, host, rate, remote } from './helpers.mjs';
 test('hosting default, invite join, two guests, no overwrite; all pages load', async ({ page, browser }) => {
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
   const code = await host(page); await page.locator('#btnStart').click(); await rate(page);
@@ -82,6 +39,7 @@ test('offline save queued, reconnect acknowledged; reset preserves other stage; 
   // Other contest is deliberately seeded through the same authenticated own-write contract.
   await page.evaluate(async () => { await firebase.database().ref('2026/parties/'+localStorage.ev_2026_party+'/users/'+EurovisionSession.uid+'/votes/semi-1/MD').set({vocals:1,performance:1,song:1,original:1,stage:1,total:5,remind:'',epoch:0,updatedAt:firebase.database.ServerValue.TIMESTAMP}); });
   const tab=await context.newPage(); await tab.goto('/index.html?emulator=1'); await expect(tab.locator('#syncMessage')).toContainText('Shared');
+  await expect.poll(() => tab.evaluate(() => EurovisionSession.ready)).toBe(true);
   await tab.evaluate(()=>firebase.database().goOffline()); await tab.locator('#btnStart').click(); await rate(tab,4);
   page.on('dialog',d=>d.accept()); await page.locator('#namePill').click(); await page.locator('#nameReset').click();
   await expect(page.locator('#ratingsCount')).toHaveText('0 / 18');
@@ -112,6 +70,7 @@ test('missing invite gives recovery; denied writes never shared', async ({ page 
 test('same identity tabs preserve distinct acts, documented same-act last-server-write wins, leave cancels queues', async ({ page, context }) => {
   const code=await host(page); await page.locator('#btnStart').click(); await rate(page,1); await expect(page.locator('#syncMessage')).toContainText('Shared');
   const tab=await context.newPage(); await tab.goto('/index.html?emulator=1'); await expect(tab.locator('#syncMessage')).toContainText('Shared');
+  await expect.poll(() => tab.evaluate(() => EurovisionSession.ready)).toBe(true);
   expect(await tab.evaluate(()=>EurovisionSession.uid)).toBe(await page.evaluate(()=>EurovisionSession.uid));
   await tab.locator('#btnStart').click(); await rate(tab,2); await expect(tab.locator('#syncMessage')).toContainText('Shared');
   await page.locator('#tableBody tr[data-code="BG"]').click(); await rate(page,3); await expect(page.locator('#syncMessage')).toContainText('Shared');

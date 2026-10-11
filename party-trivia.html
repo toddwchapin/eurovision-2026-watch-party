@@ -24,7 +24,7 @@
 <script src="acts-data.js"></script>
 <script src="humor-scorer.js"></script>
 
-<div class="wrap">
+<main class="wrap">
 
   <header class="app-header">
     <svg class="heart-logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -79,12 +79,13 @@
   </section>
 
 
-</div>
+</main>
 
 <div class="trivia-explain-backdrop" id="triviaExplainBackdrop" style="display:none" aria-hidden="true">
-  <div class="trivia-explain-box" id="triviaExplainBox" role="dialog" aria-modal="true">
+  <div class="trivia-explain-box" id="triviaExplainBox" role="dialog" aria-modal="true" aria-labelledby="triviaExplainTitle" aria-describedby="triviaExplainBody">
     <div class="trivia-explain-title" id="triviaExplainTitle"></div>
     <div class="trivia-explain-body" id="triviaExplainBody"></div>
+    <button class="btn ghost" id="triviaExplainClose" type="button">Close</button>
   </div>
 </div>
 
@@ -364,27 +365,39 @@
     if (explain) {
       card.dataset.explain = explain;
       card.dataset.explainTitle = title;
+      card.tabIndex = 0; card.setAttribute('role', 'button'); card.setAttribute('aria-label', 'Explain ' + title);
       card.addEventListener('click', showExplain);
+      card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showExplain(e); } });
     }
 
     return card;
   }
 
+  let explainTrigger;
   function showExplain(e) {
-    const card = e.currentTarget;
+    const card = e.currentTarget; explainTrigger = card;
     const backdrop = $('triviaExplainBackdrop');
     $('triviaExplainTitle').textContent = card.dataset.explainTitle || '';
     $('triviaExplainBody').textContent = card.dataset.explain || '';
     backdrop.style.display = '';
     backdrop.removeAttribute('aria-hidden');
+    document.querySelector('.wrap').inert = true;
+    $('triviaExplainClose').focus();
   }
 
   function hideExplain() {
     const backdrop = $('triviaExplainBackdrop');
     backdrop.style.display = 'none';
     backdrop.setAttribute('aria-hidden', 'true');
+    document.querySelector('.wrap').inert = false;
+    explainTrigger?.focus();
   }
 
+  $('triviaExplainClose').addEventListener('click', hideExplain);
+  $('triviaExplainBox').addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); hideExplain(); }
+    if (e.key === 'Tab') { e.preventDefault(); $('triviaExplainClose').focus(); }
+  });
   $('triviaExplainBackdrop').addEventListener('click', function (e) {
     if (e.target === this) hideExplain();
   });

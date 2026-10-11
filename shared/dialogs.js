@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
     const panel = backdrop.querySelector('.modal');
     panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true');
-    const heading = panel.querySelector('h3'); heading.id ||= backdrop.id + 'Title'; panel.setAttribute('aria-labelledby', heading.id);
+    const heading = panel.querySelector('h2, h3'); heading.id ||= backdrop.id + 'Title'; panel.setAttribute('aria-labelledby', heading.id);
     let prior;
     new MutationObserver(() => {
       if (backdrop.classList.contains('active')) { prior = document.activeElement; panel.querySelector('input,button,select')?.focus(); }

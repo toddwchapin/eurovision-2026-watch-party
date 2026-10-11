@@ -9,6 +9,10 @@ Plain HTML/CSS/JS + Firebase; preserve current visual identity. First-run defaul
 2. Use demo project and localhost emulator config; forbid production requests in tests.
 3. Cover hosting/invite, validation, drafts, skips, keyboard, two guests, offline/reconnect, reset and denied writes.
 4. Add GitHub Actions test job with deterministic setup, failure artifacts and documented local commands.
+5. Run all gates in Chromium/Firefox/WebKit with axe scans of named onboarding, rating, results/breakdowns and trivia/explanation.
+6. Seed real authenticated multi-guest emulator data and assert rendered averages/totals, ranking/ties and trivia correctness.
+7. Interrupt real SDK/emulator transport before commit and after commit/before acknowledgement; test pending reload, Chromium renderer crash and reset/leave recovery. Use abrupt document disposal on Firefox/WebKit and document the distinction.
+8. Provide an isolated read-only-source Linux Docker fallback for macOS 27’s upstream Firefox startup failure; never skip a failing engine to create a green native result.
 
 ## Acceptance and verification
 - [ ] One documented command runs unit/rules/browser gates.
